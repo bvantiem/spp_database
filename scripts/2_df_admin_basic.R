@@ -1,16 +1,24 @@
-# Set up ---------------------------------- ####
-rm(list=ls())
-source("scripts/00_packages.R")
-source("scripts/0_utils.R")
-
-# Notes ####
+# ================================================================= ####
+# Notes to Script ####
+# -- Objective ####
+# Clean basic demographic data 
+# -- Readme ####
 # Level of observation: individual*date_datapull
 # This may eventually need to become a dataset at the individual*survey participation level
 # While most variables in this file are static - some change over the course of a person's incarceration
 # Some individuals have multiple asca codes - meaning this reflects multiple admissions
+# -- To do ####
 # To do: ASCA classification is sometimes NULL while the offense code is the same as that of other variables, e.g "STRANGULATION: APPLYING PRESSURE TO THROAT OR NECK" is sometimes classified as violent and sometimes as NULL. Manually recategorize.
 
-# Data cleaning tools ####
+# ================================================================= ####
+# Set up ####
+# -- Prepare environment ####
+rm(list=ls())
+source("scripts/00_packages.R")
+source("scripts/0_utils.R")
+
+# -- Functions ####
+# Data cleaning tools 
 assess_variable <- function(x) {
   # Check data type
   data_type <- class(x)
@@ -61,17 +69,20 @@ remove_leading_zeros <- function(x) {
   return(cleaned_x)
 }
 
-# Load Data ####
+# -- Read in Data ####
 basic <- readRDS("data/processed/processing_layer_1/basic.Rds")
 
-# Data Manipulation ----------------------- ####
-# Rename variables ####
+# ================================================================= ####
+# Clean existing dataset
+# -- Rename raw variables ####
 # Append _raw to all columns except "research_id"
 basic <- basic |>
-  rename_with(~ paste0(., "_raw"), .cols = setdiff(names(basic), c("research_id", "date_datapull", "control_number_pull")))
+  rename_with(~ paste0(., "_raw"), .cols = setdiff(names(basic), c("date_datapull", "control_number_pull")))
 
 # Rename columns and put them in order
 basic <- basic %>%
+  mutate(inmate_id = inmate_id_raw,
+         control_number = control_number_raw) %>%
   mutate(sent_class = class_of_sent_raw,
          sent_min_cort_yrs = min_cort_sent_yrs_raw,
          sent_min_cort_mths = min_cort_sent_mths_raw,
@@ -91,20 +102,22 @@ basic <- basic %>%
          dem_edu_grade = grade_complete_raw,
          dem_mhcode = MHCode_raw,
          dem_stg_yes = STG_raw) %>%
-  relocate(ends_with("_raw"), .after = last_col())
+  relocate(ends_with("_raw"), .after = last_col()) %>%
+  relocate(inmate_id, control_number)
 
-# Clean variables ####
+# -- Clean variables ####
 cols_cort <- c("sent_min_cort_yrs",
-          "sent_min_cort_mths",
-          "sent_min_cort_days",
-          "sent_max_cort_yrs",
-          "sent_max_cort_mths",
-          "sent_max_cort_days")
+               "sent_min_cort_mths",
+               "sent_min_cort_days",
+               "sent_max_cort_yrs",
+               "sent_max_cort_mths",
+               "sent_max_cort_days")
 
 cols_expir <- c("sent_min_expir_dt",
-          "sent_max_expir_dt")
+                "sent_max_expir_dt")
 
 basic <- basic %>%
+  mutate(inmate_id = tolower(inmate_id)) %>%
   # Set any empty strings to NA
   mutate(across(everything(), ~ replace(., grepl("^\\s*$", .), NA))) %>%
   # SENTENCING DATES
@@ -150,10 +163,12 @@ basic <- basic %>%
     dem_marital == "UNK" ~ "Unknown",
     dem_marital == "WID" ~ "Widow",
     TRUE ~ marital_status_code_raw
-    )) %>%
+  )) %>%
   mutate(dem_edu_grade = remove_leading_zeros(dem_edu_grade) |> as.numeric()) %>%
   mutate(dem_mhcode = gsub("\\s+$", "", dem_mhcode)) %>%
   mutate(dem_stg_yes = as.numeric(dem_stg_yes))
+
+# ================================================================= ####
 
 # New Variables ####
 basic <- basic %>%
@@ -177,6 +192,7 @@ basic <- basic %>%
     sent_min_in_days = (sent_min_cort_yrs*365)+(sent_min_cort_mths*31)+sent_min_cort_days,
     sent_max_in_days = (sent_max_cort_yrs*365)+(sent_max_cort_mths*31)+sent_max_cort_days)
 
+# ================================================================= ####
 # RELEVANT OLD CODE TO INTEGRATE LATER, INCL TIME SERVED ####
 
 # Merge in age at treatment
