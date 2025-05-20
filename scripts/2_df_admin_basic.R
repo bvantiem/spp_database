@@ -70,19 +70,17 @@ remove_leading_zeros <- function(x) {
 }
 
 # -- Read in Data ####
-basic <- readRDS("data/processed/processing_layer_1/basic.Rds")
+basic <- readRDS("data/processed/processing_layer_2/basic_masked.Rds")
 
 # ================================================================= ####
 # Clean existing dataset
 # -- Rename raw variables ####
 # Append _raw to all columns except "research_id"
 basic <- basic |>
-  rename_with(~ paste0(., "_raw"), .cols = setdiff(names(basic), c("date_datapull", "control_number_pull")))
+  rename_with(~ paste0(., "_raw"), .cols = setdiff(names(basic), c("research_id","date_datapull", "control_number_pull")))
 
 # Rename columns and put them in order
 basic <- basic %>%
-  mutate(inmate_id = inmate_id_raw,
-         control_number = control_number_raw) %>%
   mutate(sent_class = class_of_sent_raw,
          sent_min_cort_yrs = min_cort_sent_yrs_raw,
          sent_min_cort_mths = min_cort_sent_mths_raw,
@@ -102,8 +100,7 @@ basic <- basic %>%
          dem_edu_grade = grade_complete_raw,
          dem_mhcode = MHCode_raw,
          dem_stg_yes = STG_raw) %>%
-  relocate(ends_with("_raw"), .after = last_col()) %>%
-  relocate(inmate_id, control_number)
+  relocate(ends_with("_raw"), .after = last_col()) 
 
 # -- Clean variables ####
 cols_cort <- c("sent_min_cort_yrs",
@@ -117,7 +114,6 @@ cols_expir <- c("sent_min_expir_dt",
                 "sent_max_expir_dt")
 
 basic <- basic %>%
-  mutate(inmate_id = tolower(inmate_id)) %>%
   # Set any empty strings to NA
   mutate(across(everything(), ~ replace(., grepl("^\\s*$", .), NA))) %>%
   # SENTENCING DATES
