@@ -187,7 +187,10 @@ basic <- basic %>%
   mutate(
     sent_min_in_days = (sent_min_cort_yrs*365)+(sent_min_cort_mths*31)+sent_min_cort_days,
     sent_max_in_days = (sent_max_cort_yrs*365)+(sent_max_cort_mths*31)+sent_max_cort_days)
-
+# ================================================================= ####
+# Save dataframe ####
+saveRDS(basic, file = "data/processed/processing_layer_3/basic_cleaned.Rds")
+        
 # ================================================================= ####
 # RELEVANT OLD CODE TO INTEGRATE LATER, INCL TIME SERVED ####
 
