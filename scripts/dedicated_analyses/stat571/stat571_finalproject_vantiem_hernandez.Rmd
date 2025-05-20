@@ -1,0 +1,770 @@
+---
+title: "Final Project"
+author: "Wilson Hernandez & Britte van Tiem"
+output:
+  html_document:
+    code_folding: hide
+    highlight: haddock
+    number_sections: yes
+    theme: lumen
+    toc: yes
+    toc_depth: 4
+    toc_float: yes
+  pdf_document:
+    number_sections: yes
+    toc: yes
+    toc_depth: '4'
+  word_document:
+    toc: yes
+    toc_depth: '4'
+urlcolor: blue
+editor_options: 
+  chunk_output_type: console #inline
+always_allow_html: true
+---
+
+
+```{r setup, include=FALSE}
+knitr::opts_chunk$set(echo = TRUE, fig.align = 'center')
+#knitr::opts_chunk$set(echo = TRUE, fig.width=8, fig.height=4)
+options(scipen = 0, digits = 3) 
+if(!require('pacman')) {
+  install.packages('pacman')
+}
+pacman::p_load(tidyverse, dplyr, readxl, tidyverse, naniar, xtable, Amelia, mice, ggmice, psych, missForest)
+`%ni%` = Negate(`%in%`)
+```
+
+
+\tableofcontents
+
+# Executive Summary
+The Prison Climate Questionnaire (PCQ) is a self-report instrument developed to measure the perceived quality of prison life. A Pennsylvania-based research team administered an adapted version of the PCQ twice for use in one medium-security State Correctional Institution in Pennsylvania. In this analysis, we used data from the first survey wave as a 'training set' to identify a 'data driven' factor structure through an exploratory factor analysis (EFA). We then combined our theoretical knowledge with the results from the EFA to re-specify the factor structure and used data from the second survey wave as a 'test set' to obtain model fit indices in a confirmatory factor analysis. We find that models that more closely reflect the results of the EFA perform better than models that more heavily reflect the researchers a priori assumptions.
+
+
+# Background and aims 
+Prison climate is widely thought to relate directly to the rehabilitation and reintegration of offenders, reflecting the broader idea that positive institutional climates improve outcomes. Over the past fifty years, researchers have made efforts to identify ‘what matters’ in correctional environments, and to develop and improve survey instruments that measure incarcerated people’s  perceptions and experience of the conditions in which they are confined. Prison climate surveys can serve to gauge how the quality of prison life differs across institutions, and be used to answer more difficult questions about whether and why those differences matter. 
+
+## Description of Data 
+The Prison Climate Questionnaire (PCQ) is a self-report instrument developed to measure the perceived quality of prison life.  It was designed by researchers at Leiden University and supported by the Dutch prison service, and aims to both help the prison service in monitoring prison performance and to facilitate academic research on the quality of prison life. The PCQ measures six primary domains of prison climate (relationships in prison, safety and order, contact with the outside world, facilities, meaningful activities and autonomy) that are measured using 14 scales and 64 items. Each of the scales are composed of 3-8 items that are rated on a five-point Likert scale, with responses ranging from "strongly disagree" to "strongly agree." That is, each variable contains ordinal data. The survey also asks about individual characteristics not readily available through administrative data.
+
+A Pennsylvania-based research team adapted the PCQ for use in a State Correctional Institution in Pennsylvania (USA). The prison held 972 individuals during data collection in the spring of 2022, spread across 14 housing units. Researchers went door-to-door during the afternoon count, when the large majority of individuals were in their cells. Every individual in their cell was given a copy of the pencil-and-paper instrument to complete while in their cell. Individuals provided their ID number on the survey to enable the payment of compensation and to facilitate administrative data linking. A total of 641 respondents completed a survey. Survey respondents provided their ID and survey data was linked to administrative data for all but twelve individuals who chose to participate anonymously. 
+The full prison was surveyed again in fall 2022. During this second survey wave, 679 indidividuals completed a survey. 346 of these individuals (49.6%) were repeat respondents. The remainder completed a survey for the second time. 
+
+# Aims of the analysis
+We aim to identify the underlying latent variables in the prison climate questionnaire. While the researchers have pre-existing ideas about what these underlying variables are, we decide to first use a data driven approach. We will use the data from the first survey wave as a 'training set', and impute missing data using a random forest approach. We will identify a 'data driven' factor structure through an exploratory factor analysis (EFA). EFA is a close cousin to Principal Components Analysis we have learnt in this class. We will then combine our theoretical knowledge with the results from the EFA to re-specify the factor structure. We will use data from 'new' individuals in the second survey wave as a 'test set' to obtain model fit indices in a confirmatory factor analysis. We will use the model from the EFA to identify if individuals appear to cluster by the unit on which they live. 
+
+# Exploratory Data Analysis
+In this section, we conduct our exploratory data analysis based on data from the first survey wave. A few individuals completed more than one survey in the first survey wave, because they moved between units while data collection was ongoing. We drop the second survey from these individuals from the data. 
+
+```{r}
+load("data/processed/pcq_for_stat571.Rda")
+pcq_lookup <- read_xlsx("data/raw/230207_pcq_survey_questions_NL_PA.xlsx")
+
+pcq_lookup <- pcq_lookup %>%
+  mutate(question_qno = paste0("q", question_no_pa_2022a), .after = question_no_pa_2022a)
+pcq_lookup <- as.data.frame(pcq_lookup)
+
+# Subset data to analysis based on wave 1 alone
+pcq <- pcq[which(pcq$survey_wave==1),]
+
+# Because this has just 1 individual in there, generates issues with regressions 
+pcq <- pcq[pcq$unit_type!="inf",]
+
+# Delete individuals who completed the survey for a second time within wave one.
+pcq$survey_no <- 1
+temp <- data.frame(table(pcq$research_id))
+index <- temp[temp$Freq==2,"Var1"]
+pcq[pcq$research_id %in% index & pcq$block!="a","survey_no"] <- 2 # all these individuals moved from an a block to another unit, where they completed a second survey
+pcq <- pcq[pcq$survey_no==1,] # Drops the second survey of these 3 individuals.
+
+# save full dataset
+pcq_full <- pcq
+
+# Retain only questions needed for psychometrics analysis
+retain <- pcq_lookup[which(pcq_lookup$include_comparative_psych_analysis=="yes"),]$question_qno
+retain <- retain[which(retain %ni% paste0("q", c(1,7,8,9)))]
+pcq <- pcq[,c(retain, "research_id", "unit_type")]
+```
+
+```{r}
+# pcq & pcq2 - to distinguish responses that are complete but may include 'no opinion' or 'not applicable' answers, from cases that have missing data (999)
+# pcq - 999 is set to NA, no opinion = 111, not applicable = 996
+# pcq2 - 999, 111, and 996 are all set to NA
+
+pcq2 <- pcq
+pcq2 <- pcq2 %>% replace_with_na_all(condition = ~.x == 111)
+pcq2 <- pcq2 %>% replace_with_na_all(condition = ~.x == 996)
+```
+
+## Missing data 
+511 out of 641 respondents (79.7%) answered all items on the prison climate scales of the PCQ. This number includes individuals who answered ‘no opinion’ on at least one of the items where this was an answer option  but excludes individuals who left one or more questions blank or had one or more illegible answers. We will hereafter refer to these as complete questionnaires. Of the 130 individuals with incomplete questionnaires, three individuals left all prison climate items on the survey blank. Another seven individuals had more than 10 missing answers. We drop these 10 individuals in this analysis, leaving us with 631 respondents. 
+
+```{r, include=FALSE}
+tail(sort(rowSums(is.na(pcq))), n=15) # use pcq because it doesn't count 'no opinion' answers as missing
+# Drop individuals with more than 10 missing answers
+i <- which(rowSums(is.na(pcq))>=10)
+pcq2 <- pcq2[-i,]
+```
+
+‘No opinion’ answer options were provided in 23 out of 64 items on the survey. This generates a particular type of 'missing' data that is distinct from instances where an individual did not answer an item or provided an illegible answer. 
+The table below tabulates these two different types of missing data for each item on the questionnaire. In the first column, we list the scale to which the researchers hypothesize the item belongs. A particularly large number of respondents selected ‘no opinion’ on the questions concerning visits, which is likely to reflect the fact that these individuals do not receive visits. Other individual items with high ‘no opinion’ prevalence are items asking about an individual’s satisfaction with religious services, the dentist and the psychologist. This too, is likely to reflect the fact that individuals have not used these services. The researchers mistakenly left out ‘no opinion’ options for items in the frequency of contact scale, and this is reflected in disproportionate missingness on questions that ask about individual’s satisfaction with how often they can see their children and lawyer. 
+
+
+```{r, results='asis'}
+# Missing data table
+dat <- pcq %>% select(- unit_type, -research_id)
+tab <- data.frame(question = pcq_lookup[pcq_lookup$question_qno %in% names(dat[,1:ncol(dat)]),"question_pa_2022a"],
+                  question_qno = pcq_lookup[pcq_lookup$question_qno %in% names(dat[,1:ncol(dat)]),"question_qno"],
+                  domain = pcq_lookup[pcq_lookup$question_qno %in% names(dat[,1:ncol(dat)]),"domain_no_bosma"],
+                  scale = pcq_lookup[pcq_lookup$question_qno %in% names(dat[,1:ncol(dat)]),"scale_theory_long"],
+                  missing = NA,
+                  no_opinion = NA)
+for(i in names(dat[which(rowSums(is.na(dat))<=10),1:ncol(dat)])){
+  tab[tab$question_qno==i,"missing"] <- length(which(is.na(dat[,i])))
+  tab[tab$question_qno==i,"no_opinion"] <- length(which(dat[,i]==111))
+}
+tab <- tab[order(tab$domain),c("scale","question", "missing", "no_opinion")]
+names(tab) <- c("Scale","Item","Missing", "No Opinion")
+tab$Scale[which(tab$Scale=="Satisfaction with Frequency of Contact")] <- "Frequency of Contact"
+print(xtable(tab, digits=c(0,0,0,0,0), caption="Missingness by Item"), include.rownames = FALSE, type="html",caption.placement="top")
+```
+
+## "No opinion" Patterns 
+We explore "no opinion" patterns for each of the scales where 'no opinion' answers options were provided. We use plots to visualize patterns of 'no opinion' answers. On the top x-axis, we have the variable name. On the bottom x-axis, we observe how often this variable is missing. The left y-axis indicates how often a particular missing data pattern is observed, and the right x-axis indicates how many variables are missing.
+
+The patterns in "no opinion" patterns align with expectations about how often individuals use certain services. Individuals indicate that they have 'no opinion' much more frequently for types of activities that not all incarcerated individuals participate in. For example, many individuals do not access religious services, and many do not work or participate in education. In contrast, outdoor activities and recreation activities are available to all. This is where we observe much less use of the "no opinion" answer.
+
+Notably, only about two thirds of respondents answer all questions on the visits scale. 15% of respondents (97 individuals) answered "no opinion" on every single visits question. This is likely explained by the fact that these individuals received no visits. Note also that individuals are more likely to respond to questions about how they feel after a visit ("I enjoy receiving visits" and "After receiving a visit, I feel good") and about the frequency and length of the visiting hours, than about the nature of the visiting room or how their visitors were treated. This, too, makes intuitive sense: people may know how they feel after being visited, or have something to say about how frequent the visiting hours are, even if they have never set foot in the visiting room. 
+
+```{r}
+pcq3 <- pcq
+pcq3 <- as.data.frame(pcq3)
+for(i in names(pcq3)){
+k <- which(is.na(pcq3[,i]))
+pcq3[k,i]  <- 999
+b <- which(pcq3[,i]==111)
+pcq3[b,i] <- NA
+}
+
+# Visits 
+vars <- paste0("q", seq(139,146,1))
+temp <- pcq3[,vars]
+names(temp) <- c("visiting_room", "physical_contact", "length", "privacy","visitor_treatment", "frequency", "enjoy_visits", "feel_good")
+# https://amices.org/ggmice/reference/plot_pattern.html
+temp <- as_tibble(temp)
+plot_pattern(
+  temp,
+  vrb = "all") +
+  ggtitle("Missing Data distribution for items on the Visits Scale")
+
+# Satisfaction with Activities
+vars <- paste0("q", seq(62,68,1))
+temp <- pcq3[,vars]
+names(temp) <- c("recreation", "sports", "library", "work", "education", "outdoor", "religious_services")
+# https://amices.org/ggmice/reference/plot_pattern.html
+plot_pattern(
+  temp,
+  vrb = "all") +
+  ggtitle("Missing Data distribution for items on the Satisfaction with Activities Scale")
+
+# Quality of Care
+# Note: q111 and 112 also belong to this scale (on access and adequate care) but they do not have a no opinion option 
+vars <- paste0("q", seq(119,122,1))
+temp <- pcq3[,vars]
+names(temp) <- c("doctor", "nurse", "dentist", "psychologist")
+# https://amices.org/ggmice/reference/plot_pattern.html
+plot_pattern(
+  temp,
+  vrb = "all") +
+  ggtitle("Missing Data distribution for items on the Quality of Care Scale")
+```
+
+The survey includes questions about individuals' service use in the past month. The barplots below show that the likelihood of 'no opinion' responses are indeed related to use of these services in the past month. Formal tests (not displayed here) show that these relationships are highly significant.  
+
+```{r}
+# Visits - visiting room is pleasant 
+pcq_full$q138_dummy <- ifelse(pcq_full$q138=="1",0,1)
+pcq_full$q139_dummy <- ifelse(pcq_full$q139=="111", 1,0)
+
+pcq_full$q139_dummy <- ifelse(pcq_full$q139_dummy=="1", "No Opinion", "Question Answered")
+pcq_full$q138_dummy <- ifelse(pcq_full$q138_dummy=="1", "Yes", "No")
+ggplot(pcq_full[which(!is.na(pcq_full$q138_dummy) & !is.na(pcq_full$q139_dummy)),], aes(x = as.factor(q138_dummy), fill = q139_dummy)) + geom_bar(position="dodge") + 
+  xlab("Received a Visit in the past month") +
+  ylab("The visiting room is pleasant") +
+  theme_bw() +
+  theme(legend.title=element_blank())
+
+
+# Psychologist 
+pcq_full$q118_dummy <- ifelse(pcq_full$q118=="1", 0,1)
+pcq_full$q122_dummy <- ifelse(pcq_full$q122=="111", 1,0)
+
+pcq_full$q122_dummy <- ifelse(pcq_full$q122_dummy=="1", "No Opinion", "Question Answered")
+pcq_full$q118_dummy <- ifelse(pcq_full$q118_dummy=="1", "Yes", "No")
+ggplot(pcq_full[which(!is.na(pcq_full$q118_dummy) & !is.na(pcq_full$q122_dummy)),], aes(x = as.factor(q118_dummy), fill = q122_dummy)) + 
+  geom_bar(position="dodge") + 
+  xlab("Seen Psychologist in past month") +
+  ylab("Satisfied with the work of \n the Psychologist")+
+  theme_bw()+
+  theme(legend.title=element_blank()) 
+
+# Library
+pcq_full$q57_dummy <- ifelse(pcq_full$q57=="1", 0,1)
+pcq_full$q64_dummy <- ifelse(pcq_full$q64=="111", 1,0)
+
+pcq_full$q64_dummy <- ifelse(pcq_full$q64_dummy=="1", "No Opinion", "Question Answered")
+pcq_full$q57_dummy <- ifelse(pcq_full$q57_dummy=="1", "Yes", "No")
+ggplot(pcq_full[which(!is.na(pcq_full$q57_dummy) & !is.na(pcq_full$q64_dummy)),], aes(x = as.factor(q57_dummy), fill = q64_dummy)) + 
+  geom_bar(position="dodge") + 
+  xlab("Used Library in past month") +
+  ylab("Satisfied with the Library")+
+  theme_bw()+
+  theme(legend.title=element_blank()) 
+```
+
+## Solutions to missingness
+In most cases where someone answered "no opinion", a variable is not defined because it has no meaning. Just like a question about ‘‘marital happiness’’ has no meaning for people who are not married, "I am satisfied with the library" has no meaning for people who have never visited the library. Most data imputation methods are designed for situations in which a real value is missing. In cases where the library was never used, there is no "real" value to be imputed because the data does not exist. Ignoring this fact and imputing the data anyway is likely to lead to bias in the results, particularly if there is something about people who never use the library, or who never receive visits, that makes them different from people who do. 
+
+We therefore generate several data sets on which we will conduct our factor analysis separately:
+
+1. Dataset 1: All items except "I am satisfied with how often I can see my children here", because this item by definition cannot be answered by a substantial subset of individuals. It retains only complete cases. This dataset is automatically the smallest because it only includes individuals who answered all available questions *and* never selected no opinion for an answer. (N=280, V=59)
+2. Dataset 2: All items that belong to scales where 'no opinion' was not an answer option. Less than one percent of the data on these scales is missing. We impute this missing data using a *random forest* approach (N = 631, V=36)
+3. Datasets 3-5: Three datasets for the quality of care, visits, and activity scales separately. It retains only complete cases within each scale. (N=516, V=6 / N=394, V=10 / N=487, V=7) 
+
+As the author of the psych library in R (William Revelle) writes, "Extracting interpretable factors means that the number of factors reflects the investigators creativity more than the data." We will work from the perspective that any differences between factor analyses (model 1 vs model 2, and model 1 vs models 3-5) are informative with respect to margins for model adjustment. 
+
+```{r create datasets for factor analysis, include = FALSE}
+# Dataset 1: all items, complete cases ####
+pcq2_cc <- pcq2[,-which(names(pcq2) %in% c("q136", "unit_type", "research_id"))]
+pcq2_cc <- pcq2_cc[complete.cases(pcq2_cc),] # 276 cases 
+
+
+# Dataset 2: Scales without no opinion answers, complete cases  ####
+# Drop questions in scales with "no opinion" option + contact scale (where the 'no opinion' option was mistakenly left out)
+no_opinion_scales <- paste0("q", c(62:68,111:112,119:122,135:137,139:146))
+pcq_lookup$no_opinion_scales <- ifelse(pcq_lookup$question_qno %in% no_opinion_scales, 1,0)
+i <- which(names(pcq2) %in% c(no_opinion_scales, "unit_type", "research_id"))
+pcq2_of <- pcq2[,-i]
+length(which(is.na(pcq2_of)))/(nrow(pcq2_of)*length(names(pcq2_of))) # only 0.638 % of the data is missing
+
+# Impute missing data 
+# https://academic-oup-com.proxy.library.upenn.edu/bioinformatics/article/28/1/112/219101?login=true&token=
+pcq2_of <- as.data.frame(pcq2_of)
+for(i in names(pcq2_of)){
+  pcq2_of[,i] <- as.factor(pcq2_of[,i])
+}
+pcq2_imp <- missForest(pcq2_of)
+pcq2_of <- pcq2_imp$ximp
+rm(pcq2_imp)
+
+# Because fa.parallel needs numeric data
+for(i in names(pcq2_of)){
+  pcq2_of[,i] <- as.numeric(pcq2_of[,i])
+}
+
+# Data set 3: Care Scale ####
+qnos <- with(pcq_lookup, pcq_lookup[scale_theory=="care" & include_comparative_psych_analysis=="yes",c("question_qno")])
+pcq2_care <- pcq2[complete.cases(pcq2[,qnos]),qnos] # (dropping dentist and nurse questions ups obs to 588
+
+# Data set 4: Visits Scale (including frequency of contact with family) ####
+qnos <- with(pcq_lookup, pcq_lookup[scale_theory=="visits" & include_comparative_psych_analysis=="yes",c("question_qno")])
+pcq2_visits <- pcq2[complete.cases(pcq2[,c(qnos, "q135", "q137")]),c(qnos, "q135", "q137")] #includes satisfaction with seeing family/friends
+
+# Data set 5: ActSat Scale  ####
+qnos <- with(pcq_lookup, pcq_lookup[scale_theory=="actsat" & include_comparative_psych_analysis=="yes",c("question_qno")])
+pcq2_act <- pcq2[complete.cases(pcq2[,qnos]),qnos]
+```
+
+# Exploratory Factor analysis 
+After identifying the number of factors in the data, we run an exploratory factor analysis for each dataset. Exploratory factor analysis is based on a common factor model, where each observed variable is a linear function of one or more common underlying latent variables ('factors') and one unique factor (i.e., error- or item-specific information). It partitions item variance into two components: (1) Common variance, which is accounted for by underlying latent factors, and (2) unique variance, which is a combination of item-specific reliable variance and random error. Exploratory factor analysis is a data-driven (rather than model-driven) approach to identifying the underlying latent variables. The researchers who designed the PCQ had theoretical hypotheses about the factors underlying the data. We ignore these presumptions for now, and focus on what the data tells us. 
+
+Note: Exploratory Factor analysis is a close cousin to principal components analysis. Unlike PCA, which accounts for the variance in the items, EFA accounts for the correlations among them. EFA is not a data reduction method. The two approaches are similar but are used for different ends. EFA is used to identify latent variables, whereas PCA is a data reduction method.
+
+## Parallel Analysis - Identify # of factors in the data 
+An exploratory factor analysis requires the researcher to specify the number of factors in the data. 
+There are multiple ways to determine the appropriate number of factors in exploratory factor analysis. One such way is to do a “parallel" analysis that compares the scree plot of factors of the observed data with that of a random data matrix of the same size as the original. 
+
+Below, we display the scree plot for dataset 1 as an illustration. In the below table, we also provide the number of factors identified in the parallel analysis for all other datasets. 
+
+```{r Parallel Analysis Model 1}
+# Include plot for illustrative purposes
+parallel1cc <- fa.parallel(pcq2_cc, fm="pa", fa="both", sim=FALSE) # nfactors = 11
+```
+
+
+```{r Parallel Analysis Models 2-6, include=FALSE}
+# Assumes continuous data
+# principal axis factoring: does not require the data to be multivariate normal. 
+# parallel1 <- fa.parallel(pcq2, fm="pa", fa="both", sim=FALSE) # nfactors = 13
+# parallel1f <- fa.parallel(pcq2_forest, fm="pa", fa="both", sim=FALSE) # nfactors = 14
+parallel1of <- fa.parallel(pcq2_of, fm="pa", fa="both", sim=FALSE,  plot=FALSE) # nfactors = 8
+
+# Scales with no opinion options 
+parallel1c <- fa.parallel(pcq2_care, fm="pa", fa="both", sim=FALSE, plot=FALSE) #2
+parallel1v <- fa.parallel(pcq2_visits, fm="pa", fa="both", sim=FALSE, plot=FALSE) #3
+parallel1a <- fa.parallel(pcq2_act, fm="pa", fa="both", sim=FALSE, plot=FALSE) #2
+
+# Alternative way to estimate: 
+# Use polychoric correlations, a technique for estimating the correlation between two hypothesized normally distributed continuous latent variables, from two observed ordinal variables.
+# Says items have different answer options. Presumably because some questions do not have a response for every single response option 1-5. 
+# parallel2o <- fa.parallel(pcq2_cc, fm="pa", fa="both", cor = "poly", sim=FALSE) # nfactors = 9
+```
+
+```{r}
+tab <- data.frame(model = c(1,2,3,4,5),
+                 observations = c(276,631,516,412,487),
+                 variables = c(60,36,6,9,7),
+                 factors = c(11,8,2,3,2))
+knitr::kable(tab)
+```
+
+## Results
+We conduct the exploratory factor analys with the number of factors as identified in the parallel analysis. In the table, the first column indicates the factor that the researchers the researchers hypothesized the item would belong to. Columns F1, F2, and F3-5 contain the factors that the items loaded onto in the exploratory factor analysis using each of the different datasets. Column F3-5 contains the results of factor analyses with datasets 3-5. The accompanying L-columns contain the loadings on each factor. 
+
+In both datasets, the staff relationships and procedural justice items load onto one scale. In the factor analysis with dataset 1, several of the 'availability of activities' items load onto the reintegration factor.
+In fact, several items double-load onto both the reintegration and the satisfaction with activities scales. The item "The daily program is interesting enough" is the only item that has a higher loading on the satisfaction with activities scale. In the dataset with complete cases for the no opinion scales, however, we see that the items load onto the two factors as originally expected. 
+
+The two items about how individuals feel split off onto a separate factor both when using the full dataset and when using complete cases on visits only. Two items about satisfaction with frequency of contact load onto the visits scale, but with low factor loadings. They split off when using complete cases on visits only. 
+
+Note that for the smaller datasets in columns F3-5/L3-5, the parallel analysis tends to identify more factors. For example, in the visits scale, the items about the frequency and length of the visiting hours load onto a separate factor. Similarly, items about the library, religious services, work and education split off from the other items. It is notable that these are the items on which we know there is more missingness because not everyone participates in these activities. We run this analysis again with just 1 factor per hypothesized scale to examine the loadings. Results now more closely resemble those of the full dataset. The factor loadings generally appear acceptable. 
+
+```{r Factor Analysis, include=FALSE}
+
+# To test function
+# n_factors <- parallel1of$nfact
+# data <- pcq2_of
+# model.name <- "of"
+
+# Code for factor analysis
+fa_tab <- function(n_factors, data, model.name){
+fa.results <- fa(r=data,  
+                    nfactors = n_factors, 
+                    fm="pa", 
+                    rotate="oblimin",
+                    warnings=TRUE,
+                    missing=FALSE) # all datasets are set to cc or have already been imputed 
+
+# Link factors to PCQ scales
+# Using the scales of the question with the highest loading for this
+temp <- data.frame(unclass(fa.results$loadings)) # Extract factor loadings
+temp$question_qno <- rownames(temp)
+temp <- left_join(temp, pcq_lookup[,c("question_qno", "question_no_pa_2022a","question_pa_2022a", "scale_theory")])
+for(i in 1:n_factors){
+  names(temp)[i] <- temp[which.max(abs(temp[,i])),"scale_theory"]
+}
+temp <- temp[,c((n_factors+1):ncol(temp),1:n_factors)] # Shuffle columns 
+
+# Build Table 2 in Bosma 
+# Retain only those values with more than .265 (Bosma uses .4, in our case, I feel safe in this institution is .29, and satisfaction with religious services loads at .269)
+
+# Set up dataframe keep based on first factor
+temp2 <- temp[,4+1] # Hard coded 
+k <- which(abs(temp2)>.25)
+keep <- data.frame(loading.value=temp[k,4+1],
+                   factor=rep(names(temp)[4+1], length(k)),
+                   question_no_pa_2022a=temp[k,"question_no_pa_2022a"],
+                   question_pa_2022a=temp[k,"question_pa_2022a"])
+
+# repeat for all other factors
+if(n_factors>1){
+for(i in 2:n_factors){
+  temp2 <- temp[,4+i] 
+  k <- which(abs(temp2)>.25)
+  temp3 <- data.frame(loading.value=temp[k,4+i],
+                      factor=rep(names(temp)[4+i], length(k)),
+                      question_no_pa_2022a=temp[k,"question_no_pa_2022a"],
+                      question_pa_2022a=temp[k,"question_pa_2022a"])
+  keep <- rbind(keep, temp3)
+}
+}
+
+# Check that a question loads onto the anticipated factor 
+tab <- left_join(keep,pcq_lookup[which(pcq_lookup$question_qno %in% retain),c("question_pa_2022a", "factor_no_bosma")]) 
+tab$loading.value <- as.numeric(tab$loading.value)
+duplicated_items <- tab$question_pa_2022a[which(duplicated(tab$question_pa_2022a))]
+if(length(duplicated_items>0)){
+print(paste("The following items double loaded:", duplicated_items))
+for(i in duplicated_items){
+print(i)
+print(tab[which(tab$question_pa_2022a==i),c("factor","loading.value")])
+temp <- tab[which(tab$question_pa_2022a==i),c("factor","loading.value")]
+temp <- temp[temp$loading.value == min(temp$loading.value),]
+k <- which(tab$loading.value == temp$loading.value & tab$factor == temp$factor)
+tab <- tab[-k,]
+}
+}
+
+# Format table for output
+tab <- tab[order(tab$factor_no_bosma),]
+tab <- tab[,c("question_pa_2022a","factor","loading.value")]
+names(tab) <- c("Item", paste0("Factor_",model.name), paste0("Loading_", model.name))
+return(tab)
+}
+
+fa_tab_1of <- fa_tab(parallel1of$nfact, pcq2_of, "of")
+fa_tab_1cc <- fa_tab(parallel1cc$nfact, pcq2_cc, "cc")
+
+fa_tab_1c <- fa_tab(parallel1c$nfact, pcq2_care[complete.cases(pcq2_care),], "ss")
+fa_tab_1v <- fa_tab(parallel1v$nfact, pcq2_visits[complete.cases(pcq2_visits),], "ss")
+fa_tab_1a <- fa_tab(parallel1a$nfact, pcq2_act[complete.cases(pcq2_act),], "ss")
+
+fa_tab_1c1 <- fa_tab(1, pcq2_care[complete.cases(pcq2_care),], "ss1")
+fa_tab_1v1 <- fa_tab(1, pcq2_visits[complete.cases(pcq2_visits),], "ss1")
+fa_tab_1a1 <- fa_tab(1, pcq2_act[complete.cases(pcq2_act),], "ss1")
+```
+
+```{r Prepare data for factor analysis table, include = FALSE}
+keep <- pcq_lookup[which(pcq_lookup$question_qno %in% retain),c("no_opinion_scales","scale_theory","scale_no_bosma", "question_pa_2022a")]
+names(keep)[which(names(keep)=="question_pa_2022a")] <- "Item"
+keep <- left_join(keep, fa_tab_1cc)
+keep <- left_join(keep, fa_tab_1of)
+temp <- rbind(fa_tab_1c, fa_tab_1v, fa_tab_1a)
+keep <- left_join(keep, temp)
+temp <- rbind(fa_tab_1c1, fa_tab_1v1, fa_tab_1a1)
+keep <- left_join(keep, temp)
+keep <- keep %>% arrange(no_opinion_scales, scale_no_bosma) %>%
+  select(-no_opinion_scales, -scale_no_bosma)
+names(keep) <- c("Theory", "Item", "F1", "L1", "F2", "L2", "F3-5", "L3-5","F3-5 (2)", "L3-5 (2)")
+```
+
+
+```{r Print table, results='asis'}
+knitr::kable(keep)
+
+# print(xtable(keep, digits=c(0,0,0,0,2,0,2,0,2), caption="Results of Exploratory Factor Analysis"), include.rownames = FALSE, type="html",caption.placement="top")
+```
+
+# Confirmatory Factor analysis
+Both EFA and CFA are based on the common factor model, so they are mathematically related procedures. We will use CFA to examine whether the structure identified in the EFA works in a new sample. For this, we use data from a second round of data collection (conducted a few months after the first). This second round of data collection includes individuals who take the survey for a second time. We only use data on individuals who participated for the first time, which is about half of the total number of participants in wave 2. 
+
+## Data preparation 
+Like before, we use several subsets of the data for analysis. 
+
+1. Dataset 1: All items except "I am satisfied with how often I can see my children here", because this item by definition cannot be answered by a substantial subset of individuals. It retains only complete cases. This dataset is automatically the smallest because it only includes individuals who answered all available questions *and* never selected the 'no opinion' answer.  (N=122, V=59)
+2. Dataset 2: All items that belong to scales without 'no opinion' answers. Less than one percent of the data on these scales is missing. We impute this missing data using a *random forest* approach. (N = 320, V=36)
+3. Datasets 3-5: Three datasets for the quality of care, visits, and activity scales separately. It retains only complete cases within each scale. (N=229, V=6 / N=175, V=10 / N=226, V=7) 
+
+```{r Prepare data for wave 2, include=FALSE}
+load("data/processed/pcq_for_stat571.Rda")
+pcq <- as.data.frame(pcq)
+# Drop individuals who completed the survey for the second time
+i <- pcq[which(pcq$survey_wave==1), "research_id"]
+pcq <- pcq[which(pcq$survey_wave==2 & pcq$research_id %ni% i),]
+
+# Because this has just 1 individual in there, generates issues with regressions 
+pcq <- pcq[pcq$unit_type!="inf",]
+
+# Delete individuals who completed the survey for a second time within wave one.
+pcq$survey_no <- 1
+temp <- data.frame(table(pcq$research_id))
+index <- temp[temp$Freq==2,"Var1"]
+pcq[pcq$research_id %in% index & pcq$block!="a","survey_no"] <- 2 # all these individuals moved from an a block to another unit, where they completed a second survey
+pcq <- pcq[pcq$survey_no==1,] # Drops the second survey of these 3 individuals.
+
+# save full dataset
+pcq_full <- pcq
+
+# Retain only questions needed for psychometrics analysis
+retain <- pcq_lookup[which(pcq_lookup$include_comparative_psych_analysis=="yes"),]$question_qno
+retain <- retain[which(retain %ni% paste0("q", c(1,7,8,9)))]
+pcq <- pcq[,c(retain, "unit_type", "research_id")]
+
+# Set no opinion answers and missing answers to NA
+pcq2_w2 <- pcq
+pcq2_w2 <- pcq2_w2 %>% replace_with_na_all(condition = ~.x == 111)
+pcq2_w2 <- pcq2_w2 %>% replace_with_na_all(condition = ~.x == 996)
+
+# Datasets for analysis 
+# Dataset 1: all items, complete cases ####
+pcq2_w2_cc <- pcq2_w2[,-which(names(pcq2_w2) %in% c("q136", "unit_type", "research_id"))]
+pcq2_w2_cc <- pcq2_w2_cc[complete.cases(pcq2_w2_cc),] # 276 cases 
+
+
+# Dataset 2: Scales without no opinion answers, complete cases  ####
+# Drop questions in scales with "no opinion" option + contact scale (where the 'no opinion' option was mistakenly left out)
+no_opinion_scales <- paste0("q", c(62:68,111:112,119:122,135:137,139:146))
+pcq_lookup$no_opinion_scales <- ifelse(pcq_lookup$question_qno %in% no_opinion_scales, 1,0)
+i <- which(names(pcq2_w2) %in% c(no_opinion_scales, "unit_type", "research_id"))
+pcq2_w2_of <- pcq2_w2[,-i]
+length(which(is.na(pcq2_w2_of)))/(nrow(pcq2_w2_of)*length(names(pcq2_w2_of))) # only 0.638 % of the data is missing
+
+# Impute missing data 
+# https://academic-oup-com.proxy.library.upenn.edu/bioinformatics/article/28/1/112/219101?login=true&token=
+pcq2_w2_of <- as.data.frame(pcq2_w2_of)
+for(i in names(pcq2_w2_of)){
+  pcq2_w2_of[,i] <- as.factor(pcq2_w2_of[,i])
+}
+pcq2_w2_imp <- missForest(pcq2_w2_of)
+pcq2_w2_of <- pcq2_w2_imp$ximp
+rm(pcq2_w2_imp)
+# Because fa.parallel needs numeric data
+for(i in names(pcq2_w2_of)){
+  pcq2_w2_of[,i] <- as.numeric(pcq2_w2_of[,i])
+}
+
+# Data set 3: Care Scale ####
+qnos <- with(pcq_lookup, pcq_lookup[scale_theory=="care" & include_comparative_psych_analysis=="yes",c("question_qno")])
+pcq2_w2_care <- pcq2_w2[complete.cases(pcq2_w2[,qnos]),qnos] # (dropping dentist and nurse questions ups obs to 588
+
+# Data set 4: Visits Scale (including frequency of contact with family) ####
+qnos <- with(pcq_lookup, pcq_lookup[scale_theory=="visits" & include_comparative_psych_analysis=="yes",c("question_qno")])
+pcq2_w2_visits <- pcq2_w2[complete.cases(pcq2_w2[,c(qnos, "q135", "q137")]),c(qnos, "q135", "q137")] #includes satisfaction with seeing family/friends
+
+# Data set 5: ActSat Scale  ####
+qnos <- with(pcq_lookup, pcq_lookup[scale_theory=="actsat" & include_comparative_psych_analysis=="yes",c("question_qno")])
+pcq2_w2_act <- pcq2_w2[complete.cases(pcq2_w2[,qnos]),qnos]
+```
+
+## CFA Model
+In the confirmatory factor analysis, we specify a model. This model makes several adjustments from the originally envisioned scales, based on the results from the Exploratory Factor Analysis. We specify both a one-factor model and a model with the number of factors identified in the parallel analysis for the care, visits, and activities scales. 
+We are interested in building an analysis structure that is broadly applicable across samples. We are concerned that the multiple factors represent differences in satisfaction with activities in the sample of interest, or of samples at this specific institution, and thus may not generalize well to other populations. 
+
+We drop the two items on how individuals feel about visits because these did not load onto the visits factor in the 1 factor solution. There is general evidence that these items measure something different from general satisfaction with the visits facilities. 
+
+We conduct the CFA using a diagonally weighted least squares estimator because the data are ordinal. We allow factors to covary. We cannot conduct a CFA for the full dataset because we have fewer observations (complete cases) than model parameters. We run the analysis for the other datasets only.
+
+```{r Confirmatory Factor Analysis, include=FALSE}
+library(foreign) 
+library(lavaan)
+
+# Examine data
+pcq_lookup[pcq_lookup$question_qno %in% names(pcq2_w2_cc),c("question_qno", "scale_theory","question_pa_2022a")]
+
+# Specify a model for dataset 1 first
+# NOTE: this has fewer observations than model parameters!
+# NOTE: does not compute when specify that these are ordered variables 
+# f1 (prisoners), f2 (staff+procedure), f3 (safety), f4 (visits), f5 (care), f6 (shop), f7 (actsat), f8 (actav), f9 (reint), f10 (autonomy)
+# f1 =~ q10 + q11 + q12 + q13 + q14 
+# f2 =~ q15 + q16 + q17 + q18 + q19 + q20 + q21 + q22
+# f3 =~ q26 + q29 + q32 + q30 + q31 
+# f4 =~ q135 + q137 + q139 + q140 + q141 + q142 + q143 + q144
+# f5 =~ q111 + q112 + q119 + q120 + q121 + q122 
+# f6 =~ q99 + q100 + q101
+# f7 =~ q62 + q63 + q64 + q65 + q66 + q67 + q68
+# f8 =~ q69 + q70 + q71 + q72
+# f9 =~ q73 + q74 + q75 + q76
+# f10 =~ q82 + q83 + q84 + q85
+
+# Dataset2: Scales without no opinion options only (no visits, care, and actsat)
+# Tried a model in which I combined actav and reint, but larger RMSEA
+m1 <- 'f1 =~ q10 + q11 + q12 + q13 + q14 
+       f2 =~ q15 + q16 + q17 + q18 + q19 + q20 + q21 + q22
+       f3 =~ q26 + q29 + q30 + q31 + q32 
+       f6 =~ q99 + q100 + q101
+       f8 =~ q69 + q70 + q71 + q72
+       f9 =~ q73 + q74 + q75 + q76
+       f10 =~ q82 + q83 + q84 + q85'
+
+dat <- pcq2_w2_of %>% select(q10, q11, q12, q13, q14,
+                             q15, q16, q17, q18, q19, q20, q21, q22,
+                             q26, q29, q30, q31, q32,
+                             q99, q100, q101,
+                             q69, q70, q71, q72,
+                             q73, q74, q75, q76,
+                             q82, q83, q84, q85)
+dat <- as.data.frame(dat) # dataframe format is required if using ordered, below
+m1_cfa <- cfa(m1, data=dat,std.lv=TRUE, ordered=TRUE) # takes a lot longer when ordered 
+summary(m1_cfa,fit.measures=TRUE,standardized=TRUE) # Although lavaan defaults to the marker method, by specifying standardized=TRUE we implement the variance standardization method.
+modindices(m1_cfa, sort = TRUE, maximum.number=10)
+m2_cfa <- m1_cfa
+
+# Dataset 3 - Care
+# 1 factor 
+m1 <- 'f5 =~ q111 + q112 + q119 + q120 + q121 + q122'
+dat <- pcq2_w2_care %>% select(q111, q112, q119, q120, q121, q122)
+dat <- as.data.frame(dat) # dataframe format is required if using ordered, below
+m1_cfa <- cfa(m1, data=dat,std.lv=TRUE, ordered=TRUE) # takes a lot longer when ordered 
+summary(m1_cfa,fit.measures=TRUE,standardized=TRUE)
+modindices(m1_cfa, sort = TRUE, maximum.number=10)
+m3a_cfa <- m1_cfa
+
+# factors as identified in parallel 
+m1 <- 'f5a =~ q119 + q120 + q121 + q122
+       f5b =~ q111 + q112 + q119'
+dat <- pcq2_w2_care %>% select(q111, q112, q119, q120, q121, q122)
+dat <- as.data.frame(dat) # dataframe format is required if using ordered, below
+m1_cfa <- cfa(m1, data=dat,std.lv=TRUE, ordered=TRUE) # takes a lot longer when ordered 
+summary(m1_cfa,fit.measures=TRUE,standardized=TRUE)
+modindices(m1_cfa, sort = TRUE, maximum.number=10)
+m3b_cfa <- m1_cfa
+
+
+# Dataset 4 - Visits 
+# 1 factor 
+m1 <- 'f4 =~ q135 + q137 + q139 + q140 + q141 + q142 + q143 + q144'
+dat <- pcq2_w2_visits %>% select(q135, q137, q139, q140, q141, q142, q143, q144)
+dat <- as.data.frame(dat) # dataframe format is required if using ordered, below
+m1_cfa <- cfa(m1, data=dat,std.lv=TRUE, ordered=TRUE) # takes a lot longer when ordered 
+summary(m1_cfa,fit.measures=TRUE,standardized=TRUE)
+m4a_cfa <- m1_cfa
+
+# factors as identified in parallel analysis 
+m1 <- 'f4a =~ q139 + q140 + q142 + q143
+       f4b =~ q141 + q144
+       f4c =~ q135 + q137'
+dat <- pcq2_w2_visits %>% select(q135, q137, q139, q140, q141, q142, q143, q144)
+dat <- as.data.frame(dat) # dataframe format is required if using ordered, below
+m1_cfa <- cfa(m1, data=dat,std.lv=TRUE, ordered=TRUE) # takes a lot longer when ordered 
+summary(m1_cfa,fit.measures=TRUE,standardized=TRUE)
+m4b_cfa <- m1_cfa
+
+# Dataset 5 - Actsat
+# 1 factor
+m1 <- 'f7 =~ q62 + q63 + q64 + q65 + q66 + q67 + q68'
+dat <- pcq2_w2_act %>% select(q62, q63, q64, q65, q66, q67, q68)
+dat <- as.data.frame(pcq2_w2_act) # dataframe format is required if using ordered, below
+m1_cfa <- cfa(m1, data=dat,std.lv=TRUE, ordered=TRUE) # takes a lot longer when ordered 
+summary(m1_cfa,fit.measures=TRUE,standardized=TRUE)
+m5a_cfa <- m1_cfa
+
+# factors as identified in parallel
+m1 <- 'f7a =~ q62 + q63 + q67
+       f7b =~ q64 + q65 + q66 + q68'
+dat <- pcq2_w2_act %>% select(q62, q63, q64, q65, q66, q67, q68)
+dat <- as.data.frame(pcq2_w2_act) # dataframe format is required if using ordered, below
+m1_cfa <- cfa(m1, data=dat,std.lv=TRUE, ordered=TRUE) # takes a lot longer when ordered 
+summary(m1_cfa,fit.measures=TRUE,standardized=TRUE)
+m5b_cfa <- m1_cfa
+
+```
+
+## CFA Results 
+We construct a summary table with the results from the CFA analysis. We focus on model fit indices here. 
+We report:
+
+1. Comparative Fit Index (CFI), which is a relative fit index. It assesses the ratio of the deviation of the user model from the worst fitting model against the deviation of the saturated model from the worst fitting model. Conceptually, if the deviation of the researcher-specified model is the same as the deviation of the best fitting model, then the ratio should be one. Values greater than 0.90, conservatively 0.95 indicate good fit. 
+2. The Root Mean Square Error of Approximation (RMSEA), is an absolute fit index. It compares the researcher-specified model to the observed data. Values below .05 indicate close model fit, values between .05 and .10 indicate a reasonable model fit, and values greater than .1 indicate a poor model fit. We report both the RMSEA point estimate and the confidence interval for the RMSEA. 
+
+Results indicate a reasonable model fit for the model using data on scales without no opinion options. All 1-factor models fit poorly, whereas the models based on the number of factors as identified in the parallel analysis reach good (care, activities) and reasonable (visits) model fit. 
+
+
+```{r cfa summary table}
+# Build summary table
+tab <- data.frame(dataset = c("Scales without no opinion options", 
+                       "Care 1",
+                       "Care 2",
+                       "Visits 1",
+                       "Visits 2",
+                       "Activities 1",
+                       "Activities 2"),
+           factors = c(7,1,2,1,3,1,2),
+           TLI = c(fitMeasures(m2_cfa)["tli"], 
+                   fitMeasures(m3a_cfa)["tli"], 
+                   fitMeasures(m3b_cfa)["tli"],
+                   fitMeasures(m4a_cfa)["tli"], 
+                   fitMeasures(m4b_cfa)["tli"], 
+                   fitMeasures(m5a_cfa)["tli"], 
+                   fitMeasures(m5b_cfa)["tli"]),
+           CFI = c(fitMeasures(m2_cfa)["cfi"], 
+                   fitMeasures(m3a_cfa)["cfi"], 
+                   fitMeasures(m3b_cfa)["cfi"], 
+                   fitMeasures(m4a_cfa)["cfi"], 
+                   fitMeasures(m4b_cfa)["cfi"], 
+                   fitMeasures(m5a_cfa)["cfi"], 
+                   fitMeasures(m5b_cfa)["cfi"]),
+           RMSEA = c(fitMeasures(m2_cfa)["rmsea"], 
+                           fitMeasures(m3a_cfa)["rmsea"],
+                           fitMeasures(m3b_cfa)["rmsea"],
+                           fitMeasures(m4a_cfa)["rmsea"],
+                           fitMeasures(m4b_cfa)["rmsea"],
+                           fitMeasures(m5a_cfa)["rmsea"],
+                           fitMeasures(m5b_cfa)["rmsea"]),
+           RMSEA_Lower = c(fitMeasures(m2_cfa)["rmsea.ci.lower"], 
+                           fitMeasures(m3a_cfa)["rmsea.ci.lower"],
+                           fitMeasures(m3b_cfa)["rmsea.ci.lower"],
+                           fitMeasures(m4a_cfa)["rmsea.ci.lower"],
+                           fitMeasures(m4b_cfa)["rmsea.ci.lower"],
+                           fitMeasures(m5a_cfa)["rmsea.ci.lower"],
+                           fitMeasures(m5b_cfa)["rmsea.ci.lower"]),
+           RMSEA_Upper = c(fitMeasures(m2_cfa)["rmsea.ci.upper"],
+                           fitMeasures(m3a_cfa)["rmsea.ci.upper"], 
+                           fitMeasures(m3b_cfa)["rmsea.ci.upper"],
+                           fitMeasures(m4a_cfa)["rmsea.ci.upper"], 
+                           fitMeasures(m4b_cfa)["rmsea.ci.upper"],
+                           fitMeasures(m5a_cfa)["rmsea.ci.upper"],
+                           fitMeasures(m5b_cfa)["rmsea.ci.upper"]))
+knitr::kable(tab)
+```
+
+# Clustering based on CFA model ####
+Incarcerated men on different types of units have different privileges and different access to activity. There is a general sense that climate differs on different types of unit. 'GP' units are a generic unit type, "GP-TC" holds individuals required to complete drug programming, and "HONS" units have enhanced privileges because of good behavior. We would like to find out if clustering patterns in the data align with unit type. We will use data set 2 from wave 2 (N=320), which contains all scales without no opinion options and has imputed missing values. We first calculate scale scores based on the factors identified in the exploratory data analysis. 
+
+
+```{r}
+
+i <- match(pcq_lookup$question_pa_2022a,fa_tab_1of$Item)
+pcq_lookup$factor_of <- fa_tab_1of$Factor_of[i]
+dat <- pcq2_w2_of %>% select(q10, q11, q12, q13, q14,
+                             q15, q16, q17, q18, q19, q20, q21, q22,
+                             q26, q29, q30, q31, q32,
+                             q99, q100, q101,
+                             q69, q70, q71, q72,
+                             q73, q74, q75, q76,
+                             q82, q83, q84, q85)
+qnos <- names(dat)
+# merge unit_type back into dat
+# have dropped no cases so can just use the vector of IDs in pcq2_w2
+dat$unit_type <- pcq2_w2$unit_type
+
+# Score scales
+scale.key <- list(prisoners = c("q10", "q11", "q12", "q13", "q14") ,
+                  staff = c("q15", "q16", "q17", "q18", "q19", "q20", "q21", "q22"),
+                  safety = c("q26", "q29", "q30", "q31", "q32"),
+                  shop = c("q99", "q100", "q101"),
+                  actav = c("q69", "q70", "q71", "q72"), 
+                  reint = c("q73", "q74", "q75", "q76") ,
+                  autonomy = c("q82", "q83", "q84", "q85"))
+dat <- cbind(dat, scoreItems(scale.key, dat)$scores)
+```
+
+Next, identify the number of clusters in the data containing scale means. Reasonable minds could differ on where the break in the scree plot is. We go with the first two clusters for ease of interpretation. We then plot these clusters by unit type. We use two different pairs of scales to do so. First, we use the staff and prisoner relationships scales. Second, we use the Autonomy and Availability of Activities scales. The two clusters identified appear to slice the plot down the diagnonal. Interestingly, individuals in cluster 1 have relatively high scores on staff and prisoner relationships while having relatively low scores on the autonomy and availability of activity scales, and vice versa for individuals in cluster 2. There appear to be individuals in each group on each unit type. It is hard, however, to see a clear division by unit type in the plots.
+ 
+```{r}
+library(factoextra)
+fviz_nbclust(dat %>% select(-starts_with(c("q", "unit_type"))), kmeans, method = "wss")
+k <- 2
+
+# Cluster by unit type. Any clear patterns?
+# Retain only unit types with more than 10 individuals in it
+data.clusters <- kmeans(dat %>% select(-starts_with(c("q", "unit_type"))), centers = k)
+temp1 <- as.data.frame(cbind(unit_type = as.character(dat$unit_type), 
+                             cluster = as.numeric(data.clusters$cluster)))
+temp1$cluster <- as.numeric(temp1$cluster)
+
+# Staff / Prisoner
+temp2 <- as.data.frame(dat %>% select(staff, prisoners))
+data.clusters <- kmeans(temp2, centers = k)
+temp3 <- as.data.frame(cbind(unit_type = as.character(dat$unit_type), 
+                             cluster = data.clusters$cluster,
+                             staff_score = dat$staff,
+                             prisoner_score = dat$prisoner))
+temp3$cluster <- as.factor(temp3$cluster)
+temp3$staff_score <- as.numeric(temp3$staff_score)
+temp3$prisoner_score <- as.numeric(temp3$prisoner_score)
+
+ggplot(temp3 %>% filter(unit_type %in% c("gp", "gp-tc", "hons")), 
+       aes(y = staff_score, x = prisoner_score, color = cluster, shape = unit_type)) + 
+  geom_point()
+
+# Autonomy / Actav 
+temp2 <- as.data.frame(dat %>% select(autonomy, actav))
+data.clusters <- kmeans(temp2, centers = k)
+temp3 <- as.data.frame(cbind(unit_type = as.character(dat$unit_type), 
+                             cluster = data.clusters$cluster,
+                             autonomy_score = dat$autonomy,
+                             actav_score = dat$actav))
+temp3$cluster <- as.factor(temp3$cluster)
+temp3$autonomy_score <- as.numeric(temp3$autonomy_score)
+temp3$actav_score <- as.numeric(temp3$actav_score)
+data.plot <- temp3 %>% filter(unit_type %in% c("gp", "gp-tc", "hons"))
+ggplot(data.plot, 
+       aes(y = autonomy_score, x = actav_score, color = cluster, shape = unit_type)) + 
+  geom_point()
+```
+
+# Conclusion
+The EFA identified several deviations from the hypothesized factor structure. The EFA proved illustrative in that it points to issues in the framing of items that the researchers had not considered. For example, the items on how individuals 'feel' after visits are likely to reflect more individual variation than questions about the pleasantness of the visiting room. This could explain why the two items on visits consistently did not load onto the hypothesized scale. The EFA helped us in making adjustments to the latent factor models prior to running a confirmatory factor analysis. We conducted the CFA on a new sample, and this confirms that models fit better when we use models that reflect the factor structure identified in the EFA. We found no evidence of clustering by the unit on which individuals live. 
+
+
+

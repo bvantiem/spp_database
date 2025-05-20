@@ -1,0 +1,307 @@
+---
+title: "Assess"
+author: "Mona Baishya"
+date: "2025-04-15"
+output: html_document
+---
+```{r setup, include=FALSE}
+knitr::opts_chunk$set(echo = TRUE)
+install.packages("dplyr")  
+library(dplyr)
+install.packages("tidyr") 
+library(tidyr)
+install.packages("lubridate")  
+library(lubridate)
+```
+
+```{r read in data}
+#Read Data
+assess <- readRDS("/Users/mona/Desktop/house_for_mona.rds")
+```
+```{r evaluate data}
+#object type
+class(assess)   
+#structure
+str(assess)
+```
+```{r data cleaning using xx people}
+##Randomly select 1 unique research_ids
+##expanded this to 1, 2, 5, then 10 before applying to entire sample
+###NOTE: Once you are done testing this subsample, you will apply the code to the entire data
+##NOTE: two hashtags=notes, one hashtag=uncommented code.
+
+##Setting a seed for reproducibility 
+#set.seed(123)  
+#random_ids <- sample(assess$research_id, size = 10)
+
+##Subset the data for the randomly selected 10 people
+#random_assess <- assess[assess$research_id %in% random_ids, ]
+```
+```{r clean data for just 1 random participants DATES}
+##Start with dates
+##install.packages("lubridate")  
+library(lubridate)
+##NOTE: the code is being applied to all of the data. If you want to work with just a subsample, you will need to activate the lines of cod in the above section. These have only one '#'. The name of the test data set is 'random_assess' and the total data is named 'assess'. So if you want to use the test dataset, you will have to replace 'assess' with 'random_assess' and vice versa. 
+
+##Parse the dates with multiple formats two variables: date_in and date_out
+assess$date_in_clean <- parse_date_time(assess$date_in, orders = c("ymd", "dmy", "mdy", "b d, Y"))
+##Warning: xx  failed to parse.
+assess$date_out_clean <- parse_date_time(assess$date_out, orders = c("ymd", "dmy", "mdy", "b d, Y"))
+##Warning:  xx failed to parse.
+##There are several dates in the data that do not make sense
+
+##Start with date_in variable
+##QA: Check for any dates earlier than January 1, 1900
+invalid_dates <- assess[assess$date_in_clean < as.Date("1990-01-01"), ]
+head(invalid_dates)
+##It looks like some dates are mddyyy. Next steps will address these dates.
+
+##Find rows where date_in  are 7 digits long
+mddyyyy_rows <- grepl("^\\d{7}$", assess$date_in)
+##Extract the original strings
+mddyyyy_strings <- assess$date_in[mddyyyy_rows]
+
+##Reformat into mmddyyyy by padding the month with 0
+formatted_strings <- paste0(
+  sprintf("%02d", as.numeric(substr(mddyyyy_strings, 1, 1))),  # pad month
+  substr(mddyyyy_strings, 2, 2),                               # first digit of day
+  substr(mddyyyy_strings, 3, 2),                               # second digit of day
+  substr(mddyyyy_strings, 4, 7)                                # year
+)
+
+##Convert to date
+parsed_dates <- as.Date(formatted_strings, format = "%m%d%Y")
+
+##Assign back into date column
+assess$date_in_clean <- parse_date_time(assess$date_in, orders = c("ymd", "mdy", "dmy"))
+
+##Overwrite only the 7-digit ones with fixed version
+assess$date_in_clean[mddyyyy_rows] <- parsed_dates
+
+##QA: View the cleaned column
+assess[, c("date_in", "date_in_clean", "date_out", "date_out_clean")]
+##QA: Check for NA values
+sum(is.na(assess$date_in_clean))
+##some years are showing as 0024 or 0023 instead of 2024 and 2023. 
+
+##Identify dates with year less than 100 (i.e., parsed as year 0023, etc.)
+wrong_years <- which(!is.na(assess$date_in_clean) & year(assess$date_in_clean) < 100)
+
+##Fix them: add 2000 to the year
+assess$date_in_clean[wrong_years] <- 
+  update(assess$date_in_clean[wrong_years], 
+         year = year(assess$date_in_clean[wrong_years]) + 2000)
+
+##QA: View the cleaned column and compare to the original raw data
+##Here you need to make sure that the dates are lining up and making sense.
+assess[, c("date_in","date_in_clean","date_out","date_out_clean")]
+
+##QA: Check for NA values
+sum(is.na(assess$date_in_clean))
+###I adjust this code based on what variable I would like to QA
+##Still a few incorrect dates
+
+##Get all 7-digit "mddyyyy" entries
+mddyyyy_rows <- grepl("^\\d{7}$", assess$date_in)
+
+##Extract those strings
+raw_dates <- assess$date_in[mddyyyy_rows]
+
+##Build proper mmddyyyy by:
+## grabbing 1 digit for month
+## grabbing 2 digits for day
+## grabbing 4 digits for year
+## and padding the month with 0
+formatted_dates <- paste0(
+  sprintf("%02d", as.numeric(substr(raw_dates, 1, 1))),  # pad month
+  substr(raw_dates, 2, 3),                               # day
+  substr(raw_dates, 4, 7)                                # year
+)
+
+##Convert to date
+parsed_dates <- as.Date(formatted_dates, format = "%m%d%Y")
+
+##Save to your clean date column
+assess$date_in_clean <- parse_date_time(assess$date_in, orders = c("ymd", "mdy", "dmy"))
+
+##Overwrite the 7-digit parsed values with corrected ones
+assess$date_in_clean[mddyyyy_rows] <- parsed_dates
+
+##REPEAT ABOVE STEPS FOR date_out VARIABLE
+##QA: Check for any dates earlier than January 1, 1900
+invalid_dates <- assess[assess$date_out_clean < as.Date("1990-01-01"), ]
+head(invalid_dates)
+##It looks like some dates are mddyyy. Next steps will address these dates.
+
+##Find rows where date_in  are 7 digits long
+mddyyyy_rows <- grepl("^\\d{7}$", assess$date_out)
+##Extract the original strings
+mddyyyy_strings <- assess$date_in[mddyyyy_rows]
+
+##Reformat into mmddyyyy by padding the month with 0
+formatted_strings <- paste0(
+  sprintf("%02d", as.numeric(substr(mddyyyy_strings, 1, 1))),  # pad month
+  substr(mddyyyy_strings, 2, 2),                               # first digit of day
+  substr(mddyyyy_strings, 3, 2),                               # second digit of day
+  substr(mddyyyy_strings, 4, 7)                                # year
+)
+
+##Convert to date
+parsed_dates <- as.Date(formatted_strings, format = "%m%d%Y")
+
+##Assign back into date column
+assess$date_out_clean <- parse_date_time(assess$date_out, orders = c("ymd", "mdy", "dmy"))
+
+##Overwrite only the 7-digit ones with fixed version
+assess$date_out_clean[mddyyyy_rows] <- parsed_dates
+
+##QA: Check for NA values
+sum(is.na(assess$date_out_clean))
+##some years are showing as 0024 or 0023 instead of 2024 and 2023. 
+
+##Identify dates with year less than 100 (i.e., parsed as year 0023, etc.)
+wrong_years <- which(!is.na(assess$date_out_clean) & year(assess$date_out_clean) < 100)
+
+##Fix them: add 2000 to the year
+assess$date_out_clean[wrong_years] <- 
+  update(assess$date_out_clean[wrong_years], 
+         year = year(assess$date_out_clean[wrong_years]) + 2000)
+
+##QA: View the cleaned column
+assess[, c("date_in","date_in_clean","date_out","date_out_clean")]
+
+##QA: Check for NA values
+sum(is.na(assess$date_out_clean))
+###I adjust this code based on what variable I would like to QA
+##Still a few incorrect dates
+
+##Get all 7-digit "mddyyyy" entries
+mddyyyy_rows <- grepl("^\\d{7}$", assess$date_out)
+
+##Extract those strings
+raw_dates <- assess$date_out[mddyyyy_rows]
+
+##Build proper mmddyyyy by:
+##grabbing 1 digit for month
+##grabbing 2 digits for day
+##grabbing 4 digits for year
+##and padding the month with 0
+formatted_dates <- paste0(
+  sprintf("%02d", as.numeric(substr(raw_dates, 1, 1))),  # pad month
+  substr(raw_dates, 2, 3),                               # day
+  substr(raw_dates, 4, 7)                                # year
+)
+
+##Convert to date
+parsed_dates <- as.Date(formatted_dates, format = "%m%d%Y")
+
+##Save to your clean date column
+assess$date_out_clean <- parse_date_time(assess$date_out, orders = c("ymd", "mdy", "dmy"))
+
+##Overwrite the 7-digit parsed values with corrected ones
+assess$date_out_clean[mddyyyy_rows] <- parsed_dates
+
+##There are still some inaccuracies. for example one record rid_ah7020 in date_out reads 08262021.  date_out_clean is 2021-08-22. 
+
+##QA: View the cleaned column
+assess[, c("date_in", "date_in_clean", "date_out", "date_out_clean")]
+
+##QA step:
+str(assess$date_in_clean)
+str(assess$date_out_clean)
+##Force conversion 
+assess$date_in_clean <- as.Date(assess$date_in_clean)
+assess$date_out_clean <- as.Date(assess$date_out_clean)
+##Create a number of days variable
+assess$daysbetween <- as.numeric(assess$date_out_clean -assess$date_in_clean)
+```
+```{r clean data by ordering and deduplicating}
+##The name of the test data set is 'random_assess' and the total data is named 'assess'. So if you want to use the test dataset, you will have to replace 'assess' with 'random_assess' and vice versa. 
+
+##drop date_datapull 
+assess_ordered <- assess %>%
+  select(-date_datapull)
+##drop records where daysbetween equal 0 (unsure if this step is needed)
+##assess_ordered1 <- assess_ordered %>%
+  ##filter(daysbetween != 0)
+##dedupe data based on date_in and date_out
+##create a variable that counts the number of days between date_out in one line and date_in in the next line
+
+##order data based on id, and date variables
+analysis <- assess_ordered %>%
+  distinct(research_id,  date_in_clean, date_out_clean, .keep_all = TRUE)
+
+##created a variable that counts the days between the date_out_clean of one record and date_in_clean of the next record.
+analysis <- analysis %>%
+  arrange(research_id, date_in_clean) %>%
+  group_by(research_id) %>%
+  mutate(
+    next_date_in = lead(date_in_clean),
+    days_between_records = as.numeric(next_date_in - date_out_clean)
+  ) %>%
+  ungroup()
+
+##Count how many sentences a person had assuming that each sentence is indicated by a gap of more than one day
+analysis <- analysis %>%
+  arrange(research_id, date_in_clean) %>%
+  group_by(research_id) %>%
+  mutate(
+##This identifies when a new sentence starts
+##You can change this rule by changing the '1' to whichever number indicates a new sentence.
+    new_sentence = ifelse(is.na(days_between_records) | days_between_records > 1, 1, 0),
+    
+##Create a cumulative sentence ID per person
+    sentence_id = cumsum(lag(new_sentence, default = 1))
+  ) %>%
+  ungroup()
+##Count how many sentences each person had
+sentence_counts <- analysis %>%
+  group_by(research_id) %>%
+  summarise(total_sentences = n_distinct(sentence_id))
+
+##Count how many moves within each sentence
+move_counts <- analysis %>%
+  group_by(research_id, sentence_id) %>%
+  summarise(moves_within_sentence = n() - 1) %>%
+  ungroup()
+
+##Counts the number of sentences that a person had prior to their current sentence. Each of these values should have one added to it if they are currently incarcerated.
+gap_counts <- analysis %>%
+  group_by(research_id) %>%
+  summarise(records_with_gap = sum(days_between_records > 1, na.rm = TRUE)) %>%
+  ungroup()
+##Count number of moves per person
+within_sentence_moves <- move_counts %>%
+  group_by(research_id) %>%
+  summarise(total_moves_within_sentences = sum(moves_within_sentence), .groups = "drop")
+
+
+```
+```{r Final Table}
+##Calculate the average number of sentences per person
+avg_sentences_per_person <- sentence_counts %>%
+  summarise(avg_sentences = mean(total_sentences), 
+            sd_sentences = sd(total_sentences))
+
+##Calculate the average number of moves per person
+avg_moves_per_sentence <- move_counts %>%
+  summarise(avg_moves = mean(moves_within_sentence), 
+            sd_moves = sd(moves_within_sentence))
+
+##Combine averages and standard deviations into one summary table
+##Calculate the summary statistics directly into a table
+summary_stats <- tibble(
+  avg_sentences_per_person = mean(sentence_counts$total_sentences, na.rm = TRUE),
+  sd_sentences_per_person  = sd(sentence_counts$total_sentences, na.rm = TRUE),
+  
+  avg_moves_per_sentence   = mean(move_counts$moves_within_sentence, na.rm = TRUE),
+  sd_moves_per_sentence    = sd(move_counts$moves_within_sentence, na.rm = TRUE)
+)
+
+# Print the summary statistics table
+print(summary_stats)
+
+
+
+##rm(list = ls())
+```
