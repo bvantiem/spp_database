@@ -1,12 +1,29 @@
+# ================================================================= ####
+# Notes to Script ####
+# -- Objective ####
+
+# -- Readme ####
+
+# -- To do ####
+
+
+# ================================================================= ####
 # Set up ####
+# -- Prepare environment ####
 rm(list=ls())
 source("scripts/00_packages.R")
 source("scripts/0_utils.R")
 source("scripts/0_id_masking_function.R")
-randassign <- readRDS("data/processed/randassign.Rds")
-basic <- readRDS("data/processed/basic.Rds")
-basic <- dummy_cols(basic, select_columns = "marital_status_code")
 
+# -- Read in Data ####
+
+randassign <- readRDS("data/processed/randassign.Rds")
+basic <- readRDS("data/processed/processing_layer_3/basic_cleaned.Rds")
+
+
+# ====================================================== ####
+# Old Code ####
+basic <- dummy_cols(basic, select_columns = "marital_status_code")
 # Merge with static characteristics from basic ####
 static_vars <- c(#"est_days_served_on_20220501",
                  "min_sent_days", "max_sent_days",
