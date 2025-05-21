@@ -10,12 +10,14 @@ library("lubridate")
 library("excel.link")
 library("writexl")
 source("scripts/0_id_masking_function.R")
+source("scripts/0_control_no_masking_function.R")
 `%ni%` = Negate(`%in%`)
 
 # Set Seed ####
 set.seed(1962)
 
 # Load data  ####
+control <- readRDS("data/processed/processing_layer_1/control_nos_inmate_ids.Rds")
 # Life sentenced individuals ####
 # BH6778 and AY5858 were treated after one lifer was released due to commuted sentence
 randassign0 <- data.frame(treated = c(rep(1,7), rep(0,7), rep(1,1), rep(0,2)),
@@ -108,13 +110,13 @@ randassign <- rbind(randassign0, randassign1, randassign2, randassign3, randassi
 randassign$id_num <- tolower(randassign$id_num)
 rm(randassign0, randassign1, randassign2, randassign3, randassign4, randassign5, randassign6)
 
-# Notes on specific individuals
+# Notes on specific individuals ####
 randassign$notes <- NA
 randassign$notes[which(randassign$id_num=="qn1884")] <- "left_ls_2022_05_19"
 randassign$notes[which(randassign$id_num=="ns9433")] <- "missing_admin_data"
 randassign$notes[which(randassign$id_num=="qn2340")] <- "removed_ls_2023_04"
 
-# Merge in release dates
+# Merge in release dates ####
 rel$release_date[which(rel$release_date=="")] <- NA
 rel$id_num <- gsub(" ", "", rel$id_num)
 rel$release_type <- gsub("(^ )(.*)", "\\2", rel$release_type)
@@ -123,9 +125,45 @@ rel$release_date <- as.Date(rel$release_date)
 
 randassign <- left_join(randassign, rel)
 
-# Save ####
-saveRDS(randassign, file="data/processed/randassign.Rds")
+# Link random assignment with control numbers
+control$inmate_id_1 <- tolower(control$inmate_id_1)
+control$inmate_id_2 <- tolower(control$inmate_id_2)
+# Join on id_1
+join_1 <- randassign |>
+  left_join(control[,c("control_number", "inmate_id_1")], by = c("id_num" = "inmate_id_1"))
+
+# Join on id_2
+join_2 <- randassign |>
+  left_join(control[,c("control_number", "inmate_id_2")], by = c("id_num" = "inmate_id_2"))
+
+# Merge results: prefer match on id_1, fallback to id_2
+randassign <- join_1 |>
+  mutate(
+    control_number = coalesce(control_number, join_2$control_number)
+  ) 
+
+# Missing data on 3 individuals in our sample! ####
+randassign[which(is.na(randassign$control_number)),]
+
+randassign <- randassign %>%
+  relocate(control_number, .after = id_num)
+
+# Save unmasked file ####
 stopifnot(length(unique(randassign$id_num))==nrow(randassign))
+saveRDS(randassign, file="data/processed/randassign.Rds")
+
+# Mask IDs  ====================== ####
+i <- unique(control$control_number)
+id.link <- mask_control_nos(i) # Generate masked Research IDs
+
+randassign_masked <- randassign %>%
+    left_join(id.link, by = "control_number") %>%
+    select(-any_of(c("id_num", "control_number"))) %>%
+    relocate(research_id) # moves research id to the front
+  
+# Save masked file ####
+saveRDS(randassign_masked, file="data/processed/randassign_masked.Rds")
+
 
 # OLD ####
 # Old release date code

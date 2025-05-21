@@ -11,28 +11,32 @@
 # Set up ####
 # -- Prepare environment ####
 rm(list=ls())
+library(webshot2) # for PDF building below
 source("scripts/00_packages.R")
 source("scripts/0_utils.R")
 source("scripts/0_id_masking_function.R")
 
 # -- Read in Data ####
 
-randassign <- readRDS("data/processed/randassign.Rds")
+randassign <- readRDS("data/processed/randassign_masked.Rds")
 basic <- readRDS("data/processed/processing_layer_3/basic_cleaned.Rds")
 
-
 # ====================================================== ####
-# New code ####
-# De-duplicate basic 
+# De-duplicate basic ####
 basic <- basic |>
   distinct(research_id, .keep_all = TRUE)
 
 # Re-generate variables
-basic %>% 
-  mutate(violent_offense = ifelse(sent_off_asca == "Violent", 1, 0))
-
-
-basic <- dummy_cols(basic, select_columns = "marital_status_code")
+basic <- basic %>% 
+  mutate(violent_offense = ifelse(sent_off_asca == "Violent", 1, 0)) %>%
+  mutate(drugs_offense = ifelse(sent_off_asca == "Drugs", 1, 0)) %>%
+  mutate(property_offense = ifelse(sent_off_asca == "Property", 1, 0)) %>%
+  mutate(publicorder_offense = ifelse(sent_off_asca == "Public Order", 1, 0)) %>%
+  mutate(race_black = ifelse(race_raw == "BLACK", 1, 0)) %>%
+  mutate(race_white = ifelse(race_raw == "WHITE", 1, 0)) %>% 
+  mutate(married = ifelse(marital_status_code_raw == "MAR", 1, 0)) %>%
+  mutate(high_school = dem_edu_high_school)
+  
 # Merge with static characteristics from basic ####
 static_vars <- c(#"est_days_served_on_20220501",
   "sent_min_cort_days", "sent_max_cort_days",
@@ -44,62 +48,22 @@ static_vars <- c(#"est_days_served_on_20220501",
   # "notanarrest_offense",
   # "race_code", "race",
   "race_black","race_white",
-  "age_at_treatment",
+  # "age_at_treatment",
   #"sex_type",
-  "marital_status_code_MAR",
+  "married", 
   # "mh_code",
   #"STG",
   #"grade_complete",
   # "age_on_20220501",
   "high_school")
 
-
-data.balance <- left_join(randassign, basic[-which(duplicated(basic$research_id)),c("research_id", static_vars)])
-
-# Drop lifers
-data.balance <- data.balance[which(data.balance$stratum!="lifer"),]
-
-# Override one indidivual whose sentence was presumably commuted (checking this with Jordan)
-data.balance[which(data.balance$research_id=="rid_hy1664"),"life"] <- 0
-
-# Check for missing data
-for(i in static_vars){
-  print(i)
-  print(length(which(is.na(data.balance[,i]))))
-}
-
-
-# ====================================================== ####
-# Old Code ####
-basic <- dummy_cols(basic, select_columns = "marital_status_code")
-# Merge with static characteristics from basic ####
-static_vars <- c(#"est_days_served_on_20220501",
-                 "min_sent_days", "max_sent_days",
-                 #"days_to_min_at_treatment",
-                 # "life",
-                 #"commit_cnty", "cnty_name",
-                 #"asca",
-                 "violent_offense", "property_offense", "drugs_offense","publicorder_offense",
-                 # "notanarrest_offense",
-                 # "race_code", "race",
-                 "race_black","race_white",
-                 "age_at_treatment",
-                 #"sex_type",
-                 "marital_status_code_MAR",
-                 # "mh_code",
-                 #"STG",
-                 #"grade_complete",
-                 # "age_on_20220501",
-                 "high_school")
-
-
-data.balance <- left_join(randassign, basic[-which(duplicated(basic$research_id)),c("research_id", static_vars)])
+data.balance <- left_join(randassign, basic[,c("research_id", static_vars)])
 
 # Drop lifers
 data.balance <- data.balance[which(data.balance$stratum!="lifer"),]
 
 # Override one indidivual whose sentence was presumably commuted (checking this with Jordan)
-data.balance[which(data.balance$research_id=="rid_hy1664"),"life"] <- 0
+# data.balance[which(data.balance$research_id=="rid_hy1664"),"life"] <- 0
 
 # Check for missing data
 for(i in static_vars){
@@ -113,15 +77,15 @@ prepare_summary_column <- function(data.balance){
   tab <- data.balance %>%
     transmute(
       # Sentence Characteristics
-      minimum_sentence = min_sent_days/365,
-      maximum_sentence = max_sent_days/365,
-      life = life)
-
+      minimum_sentence = sent_min_cort_days/365,
+      maximum_sentence = sent_max_cort_days/365)
+      # life = life)
+  
   tab <- data.balance %>%
     transmute(
       # Sentence Characteristics
-      r01a_minimum_sentence = min_sent_days/365,
-      r01b_maximum_sentence = max_sent_days/365,
+      r01a_minimum_sentence = sent_min_cort_days/365,
+      r01b_maximum_sentence = sent_max_cort_days/365,
       # r01c_life = life,
       # Offense Characteristics
       r02a_violent_offense = violent_offense,
@@ -131,11 +95,11 @@ prepare_summary_column <- function(data.balance){
       # Demographics
       r03a_black = race_black,
       r03b_white = race_white,
-      r03c_age_at_treatment = age_at_treatment,
-      r03d_married = marital_status_code_MAR,
+      # r03c_age_at_treatment = age_at_treatment,
+      r03d_married = married,
       r03e_high_school_degree = high_school)
-      #r03e_security_threat_group = STG)
-
+  #r03e_security_threat_group = STG)
+  
   tab <- tab %>%
     tidyr::gather(variable, value) %>%
     # Summarize by variable
@@ -143,7 +107,7 @@ prepare_summary_column <- function(data.balance){
     # summarise all columns
     summarise(`Mean` = round(mean(value, na.rm=TRUE),3)) %>% # Check number of NA values after getting full data.balance
     mutate(Mean = format(Mean, digits = 3))
-
+  
   tab_2 <- data.balance %>%
     select(
       r99a_N = research_id) %>%
@@ -152,10 +116,10 @@ prepare_summary_column <- function(data.balance){
     group_by(variable) %>%
     # summarise all columns
     summarise(`Mean` = length(unique(value)))
-
+  
   tab <- rbind(tab,
                tab_2)
-
+  
   variable_names <- gsub("(....)(_)(.*)", "\\3", tab$variable)
   variable_names <- str_to_title(gsub("_", " ", variable_names))
   variable_names[which(variable_names=="Publicorder Offense")] <- "Public Order Offense"
@@ -264,7 +228,7 @@ tab <- cbind(tab,
 tab
 
 # Output balance table to PDF and latex ####
-# PDF
+# # PDF
 tab %>%
   kbl(caption = "Balance Table",
       align = c("lrrrrr"),
@@ -275,11 +239,11 @@ tab %>%
   #add_header_above(c(" " = 1, "Subset" = 3)) %>%
   pack_rows("Sentence Characteristics",1,2,bold=T) %>%
   pack_rows("Offense Characteristics",3,6,bold=T) %>%
-  pack_rows("Demographics",7,11,bold=T) %>%
-  row_spec(c(13,14),
+  pack_rows("Demographics",7,10,bold=T) %>%
+  row_spec(c(12,13),
            hline_after=TRUE,
            extra_css = "border-bottom: 1px solid") %>%
-  save_kable(file = "output/tables/tabx_balance_table.pdf",
+  save_kable(file = "output/tables/tabx_balance_table_waves123456.pdf",
              self_contained = T,density = 200)
 
 # Latex
@@ -296,12 +260,13 @@ tab %>%
   #add_header_above(c(" " = 1, "Subset" = 3)) %>%
   pack_rows("Sentence Characteristics",1,2,bold=T) %>%
   pack_rows("Offense Characteristics",3,6,bold=T) %>%
-  pack_rows("Demographics",7,11,bold=T) %>%
-  row_spec(c(13,14),
+  pack_rows("Demographics",7,10,bold=T) %>%
+  row_spec(c(12,13),
            hline_after=TRUE,
            extra_css = "border-bottom: 1px solid") %>%
   footnote(threeparttable = T,
            "P-values are computed using randomization inference and with randomization permuted at the level of each stratum.") %>%
-  save_kable(file = "output/tables/tabx_balance_table.tex",
+  save_kable(file = "output/tables/tabx_balance_table_waves123456.tex",
              self_contained = T,density = 200)
+
 
