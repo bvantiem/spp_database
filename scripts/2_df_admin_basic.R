@@ -150,16 +150,31 @@ basic <- basic %>%
     dem_race == "B" ~ "Black",
     dem_race == "O" ~ "Other",
     dem_race == "W" ~ "White",
+    dem_race == "I" ~ "American Indian",
     TRUE ~ dem_race)) %>%
+  # mutate(dem_marital = case_when(
+  #   dem_marital == "SIN" ~ "Single",
+  #   dem_marital == "SEP" ~ "Separated",
+  #   dem_marital == "MAR" ~ "Married",
+  #   dem_marital == "DIV" ~ "Divorced",
+  #   dem_marital == "UNK" ~ "Unknown",
+  #   dem_marital == "WID" ~ "Widow",
+  #   TRUE ~ marital_status_code_raw
+  # )) %>% # new version of this code below
   mutate(dem_marital = case_when(
-    dem_marital == "SIN" ~ "Single",
-    dem_marital == "SEP" ~ "Separated",
-    dem_marital == "MAR" ~ "Married",
-    dem_marital == "DIV" ~ "Divorced",
-    dem_marital == "UNK" ~ "Unknown",
-    dem_marital == "WID" ~ "Widow",
-    TRUE ~ marital_status_code_raw
-  )) %>%
+    # UNK responses in marital_status_raw are missing from marital_Status_code_raw
+    # this ensures that all responses in these variables are caught for completed data
+      marital_status_code_raw %in% c("UNK", "UNKNOWN") | 
+        marital_status_raw %in% c("UNK", "UNKNOWN") ~ "Unknown", 
+      marital_status_code_raw == "MAR" ~ "Married",
+      marital_status_code_raw == "DIV" ~ "Divorced",
+      marital_status_code_raw == "SIN" ~ "Single",
+      marital_status_code_raw == "SEP" ~ "Separated",
+      marital_status_code_raw == "WID" ~ "Widow",
+      is.na(marital_status_code_raw) & !is.na(marital_status_raw) ~ marital_status_raw, #
+      TRUE ~ NA_character_
+    )
+  )
   mutate(dem_edu_grade = remove_leading_zeros(dem_edu_grade) |> as.numeric()) %>%
   mutate(dem_mhcode = gsub("\\s+$", "", dem_mhcode)) %>%
   mutate(dem_stg_yes = as.numeric(dem_stg_yes))
