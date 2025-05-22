@@ -173,9 +173,64 @@ basic <- basic %>%
   mutate(dem_stg_yes = as.numeric(dem_stg_yes))
 # -- Add Notes to Variables ####
   # to view notes added use str() or comment()
-comment(basic$dem_stg_yes) <- "2162 NA values, unknown cause for this"
+# -- -- Cleaned Variables ####
+comment(basic$sent_class) <- "5 NA values, unknown cause for this otherwise cleaned variable"
+comment(basic$sent_status) <- "no missing values, fully cleaned variable"
+comment(basic$sent_min_cort_yrs) <- "318 missing values explained by those serving life, fully cleaned variable"
+comment(basic$sent_min_cort_mths) <- "318 missing values explained by those serving life, fully cleaned variable"
+comment(basic$sent_min_cort_days) <- "318 missing values explained by those serving life, fully cleaned variable"
+comment(basic$sent_max_cort_yrs) <- "318 missing values explained by those serving life, fully cleaned variable"
+comment(basic$sent_max_cort_mths) <- "318 missing values explained by those serving life, fully cleaned variable"
+comment(basic$sent_max_cort_days) <- "318 missing values explained by those serving life, fully cleaned variable"
+comment(basic$sent_min_expir_dt) <- "322 missing values" #what could be the reason for this?
+comment(basic$sent_max_expir_dt) <- "359 missing values" #what could be the reason for this?
+comment(basic$sent_max_expir_recmp_dt) <- "4577 missing values" #what could be the reason for this?
+comment(basic$sent_commitment_cnty) <- "city of offense, fully cleaned variable"
+comment(basic$sent_cust_lev) <- "161 missing values" #do we know why this could be?
+comment(basic$sent_off_asca) <- "4 missing values, not fully cleaned variable"
+comment(basic$chg_off_code) <- "9 missing values, not fully cleaned variable"
+comment(basic$chg_des) <- "9 missing values, not fully cleaned need to fix capitalization"
+comment(basic$inc_pris) <- "no missing values, fully cleaned"
+comment(basic$dem_dob_dt) <- "no missing values, fully cleaned"
 comment(basic$dem_race) <- "no missing values, fully cleaned variable"
-comment(basic$delete_date_raw) <- "uncleaned variable, available in raw form"
+comment(basic$dem_marital) <- "no missing values, fully cleaned variable"
+comment(basic$dem_edu_grade) <- "3 NA values, fully cleaned variable"
+comment(basic$dem_mhcode) <- "5 null values, fully cleaned variable"
+comment(basic$dem_stg_yes) <- "2162 NA values, unknown cause for this"
+# -- -- Raw Variables ####
+comment(basic$location_permanent_raw) <- "raw data, cleaned non raw variable avail"
+comment(basic$delete_date_raw) <- "uncleaned variable, available only in raw form"
+comment(basic$sentence_status_raw) <- "raw data, cleaned non raw variable avail"
+comment(basic$custody_raw) <- "raw data, cleaned non raw variable avail"
+comment(basic$temp_custody_raw)
+comment(basic$class_of_sent_raw) <- "raw data, cleaned non raw variable avail"
+comment(basic$sentence_class_raw) <- "raw data, cleaned non raw variable avail"
+comment(basic$min_cort_sent_yrs_raw) <- "raw data, cleaned non raw variable avail"
+comment(basic$min_cort_sent_mths_raw) <- "raw data, cleaned non raw variable avail"
+comment(basic$min_cort_sent_days_raw) <- "raw data, cleaned non raw variable avail"
+comment(basic$max_cort_sent_yrs_raw) <- "raw data, cleaned non raw variable avail"
+comment(basic$max_cort_sent_mths_raw) <- "raw data, cleaned non raw variable avail"
+comment(basic$max_cort_sent_days_raw) <- "raw data, cleaned non raw variable avail"
+comment(basic$commit_cnty_raw) <- "raw data, cleaned non raw variable avail"
+comment(basic$cnty_name_raw) <- "raw data, cleaned non raw variable avail"
+comment(basic$offense_code_raw) <- "raw data, non raw variable avail still being cleaned"
+comment(basic$offense_raw) <- "raw data, non raw variable avail still being cleaned"
+comment(basic$`ASCA Category - Ranked_raw`) <- "raw data, cleaned non raw variable avail"
+comment(basic$min_expir_date_raw) <- "raw data, cleaned non raw variable avail"
+comment(basic$max_expir_date_raw) <- "raw data, cleaned non raw variable avail"
+comment(basic$RecmpMax_Dt_raw) <- "raw data, cleaned non raw variable avail"
+comment(basic$date_of_birth_raw) <- "raw data, cleaned non raw variable avail"
+comment(basic$race_code_raw) <- "raw data, cleaned non raw variable avail"
+comment(basic$race_raw) <- "raw data, cleaned non raw variable avail"
+comment(basic$sex_type_raw) <- "raw data, cleaned non raw variable avail"
+comment(basic$sex_raw) <- "raw data, cleaned non raw variable avail"
+comment(basic$marital_status_code_raw) <- "raw data, cleaned non raw variable avail"
+comment(basic$marital_status_raw) <- "raw data, cleaned non raw variable avail"
+comment(basic$grade_complete_raw) <- "raw data, cleaned non raw variable avail"
+comment(basic$MHCode_raw) <-"raw data, cleaned non raw variable avail"
+comment(basic$STG_raw) <- "raw data, cleaned non raw variable avail"
+comment(basic$wave_raw) <- "no cleaned non raw variable currently"
+
 # ================================================================= ####
 
 # New Variables ####
