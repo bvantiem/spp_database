@@ -25,8 +25,8 @@ randassign0 <- data.frame(treated = c(rep(1,7), rep(0,7), rep(1,1), rep(0,2)),
                                      "as2609","bh6778",
                                      "af4296", "am8328", "ap1973", "be8100", "eg5999",
                                      "bj8105", "ay5858",
-                                     "dl3766", "eq1988", "jc9806"), # lifers
-                          stratum = "lifer",
+                                     "dl3766", "eq1988", "jc9806"), 
+                          stratum = c(rep("lifer",14), rep("commuted death", 3)),
                           treatment_wave = c(rep(0,6), 2.5, rep(0,6), 2.5, rep(NA,3)),
                           treatment_date = c(rep(NA,6), "2023/4/4", rep(NA,6), "2023/4/4", rep("2024/11/6", 3)))
 
