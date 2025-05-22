@@ -82,6 +82,7 @@ basic <- basic |>
 # Rename columns and put them in order
 basic <- basic %>%
   mutate(sent_class = class_of_sent_raw,
+         sent_status = sentence_status_raw,
          sent_min_cort_yrs = min_cort_sent_yrs_raw,
          sent_min_cort_mths = min_cort_sent_mths_raw,
          sent_min_cort_days = min_cort_sent_days_raw,
@@ -92,7 +93,10 @@ basic <- basic %>%
          sent_max_expir_dt = max_expir_date_raw,
          sent_max_expir_recmp_dt = RecmpMax_Dt_raw,
          sent_commitment_cnty = cnty_name_raw,
-         sent_off_asca = `ASCA Category - Ranked_raw`) %>%
+         sent_cust_lev = custody_raw,
+         sent_off_asca = `ASCA Category - Ranked_raw`)%>%
+  mutate(chg_off_code = offense_code_raw,
+         chg_des = offense_raw)
   mutate(inc_pris = location_permanent_raw) %>%
   mutate(dem_dob_dt = date_of_birth_raw,
          dem_race = race_code_raw,
@@ -152,20 +156,10 @@ basic <- basic %>%
     dem_race == "W" ~ "White",
     dem_race == "I" ~ "American Indian",
     TRUE ~ dem_race)) %>%
-  # mutate(dem_marital = case_when(
-  #   dem_marital == "SIN" ~ "Single",
-  #   dem_marital == "SEP" ~ "Separated",
-  #   dem_marital == "MAR" ~ "Married",
-  #   dem_marital == "DIV" ~ "Divorced",
-  #   dem_marital == "UNK" ~ "Unknown",
-  #   dem_marital == "WID" ~ "Widow",
-  #   TRUE ~ marital_status_code_raw
-  # )) %>% # new version of this code below
   mutate(dem_marital = case_when(
-    # UNK responses in marital_status_raw are missing from marital_Status_code_raw
-    # this ensures that all responses in these variables are caught for completed data
-      marital_status_code_raw %in% c("UNK", "UNKNOWN") | 
-        marital_status_raw %in% c("UNK", "UNKNOWN") ~ "Unknown", 
+    # NA values in marital_status_code_raw are listed as Unknown in marital_status_raw. 
+    # Code ensures that both are recorded as "Unknown".
+      marital_status_code_raw == "UNK" ~ "Unknown" | marital_status_raw == "UNKNOWN" ~ "Unknown", 
       marital_status_code_raw == "MAR" ~ "Married",
       marital_status_code_raw == "DIV" ~ "Divorced",
       marital_status_code_raw == "SIN" ~ "Single",
@@ -178,7 +172,11 @@ basic <- basic %>%
   mutate(dem_edu_grade = remove_leading_zeros(dem_edu_grade) |> as.numeric()) %>%
   mutate(dem_mhcode = gsub("\\s+$", "", dem_mhcode)) %>%
   mutate(dem_stg_yes = as.numeric(dem_stg_yes))
-
+# -- Add Notes to Variables ####
+  # to view notes added use str() or comment()
+comment(basic$dem_stg_yes) <- "2162 NA values, unknown cause for this"
+comment(basic$dem_race) <- "no missing values, fully cleaned variable"
+comment(basic$delete_date_raw) <- "uncleaned variable, available in raw form"
 # ================================================================= ####
 
 # New Variables ####
