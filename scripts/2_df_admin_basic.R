@@ -171,6 +171,36 @@ basic <- basic %>%
   mutate(dem_edu_grade = remove_leading_zeros(dem_edu_grade) |> as.numeric()) %>%
   mutate(dem_mhcode = gsub("\\s+$", "", dem_mhcode)) %>%
   mutate(dem_stg_yes = as.numeric(dem_stg_yes))
+
+# clean offense_raw to standardize capitalization of words.
+# save these acronyms to ensure they stay capitalized
+acronyms <- c("DUI", "IDSI")
+standardize_offense <- function(x) {
+  x <- x %>%
+    str_squish() %>%
+    str_replace_all("\\s*-\\s*", " - ") %>%                         # Normalize dash spacing
+    str_replace_all("\\bMoveable\\b", "Movable") %>%               # Fix spelling
+    str_replace_all("Mdse", "Merchandise") %>%                     # Expand abbreviation
+    str_to_title()
+  
+  # Preserve acronyms (re-insert after title case)
+  for (acro in acronyms) {
+    pattern <- paste0("\\b", str_to_title(acro), "\\b")
+    x <- str_replace_all(x, pattern, acro)
+  }
+  
+  # Custom replacements
+  x <- x %>%
+    str_replace_all("^Murder\\s*-\\s*(1st|2nd|3rd) Degree$", "Murder (\\1 Degree)") %>%
+    str_replace_all("^Person Not To Possess[, ]*Use[, ]*Etc\\.?[, ]*Firearms$", 
+                    "Person Not To Possess, Use, Etc. Firearms")
+  
+  return(x)
+}
+
+# Apply to dataframe
+basic <- basic %>%
+  mutate(offense_raw = standardize_offense(offense_raw))
 # -- Add Notes to Variables ####
   # to view notes added use str() or comment()
 # -- -- Cleaned Variables ####
