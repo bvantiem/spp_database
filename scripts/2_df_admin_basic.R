@@ -96,7 +96,7 @@ basic <- basic %>%
          sent_cust_lev = custody_raw,
          sent_off_asca = `ASCA Category - Ranked_raw`)%>%
   mutate(chg_off_code = offense_code_raw,
-         chg_des = offense_raw)
+         chg_des = offense_raw) %>%
   mutate(inc_pris = location_permanent_raw) %>%
   mutate(dem_dob_dt = date_of_birth_raw,
          dem_race = race_code_raw,
@@ -156,19 +156,18 @@ basic <- basic %>%
     dem_race == "W" ~ "White",
     dem_race == "I" ~ "American Indian",
     TRUE ~ dem_race)) %>%
-  mutate(dem_marital = case_when(
-    # NA values in marital_status_code_raw are listed as Unknown in marital_status_raw. 
-    # Code ensures that both are recorded as "Unknown".
-      marital_status_code_raw == "UNK" ~ "Unknown" | marital_status_raw == "UNKNOWN" ~ "Unknown", 
+    mutate(dem_marital = case_when(
+      # NA values in marital_status_code_raw are listed as Unknown in marital_status_raw. 
+      # Code ensures that both are recorded as "Unknown".
+      marital_status_code_raw == "UNK" | marital_status_raw == "UNKNOWN" ~ "Unknown",
       marital_status_code_raw == "MAR" ~ "Married",
       marital_status_code_raw == "DIV" ~ "Divorced",
       marital_status_code_raw == "SIN" ~ "Single",
       marital_status_code_raw == "SEP" ~ "Separated",
       marital_status_code_raw == "WID" ~ "Widow",
-      is.na(marital_status_code_raw) & !is.na(marital_status_raw) ~ marital_status_raw, #
+      is.na(marital_status_code_raw) & !is.na(marital_status_raw) ~ marital_status_raw,
       TRUE ~ NA_character_
-    )
-  )
+    )) %>%
   mutate(dem_edu_grade = remove_leading_zeros(dem_edu_grade) |> as.numeric()) %>%
   mutate(dem_mhcode = gsub("\\s+$", "", dem_mhcode)) %>%
   mutate(dem_stg_yes = as.numeric(dem_stg_yes))
