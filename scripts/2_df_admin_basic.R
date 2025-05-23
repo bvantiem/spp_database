@@ -211,19 +211,19 @@ basic <- basic %>%
 
 # Change custody level into numeric result (ex L1 to 1)
 basic <- basic %>%
-  mutate(sent_cust_lev = as.numeric(str_replace(sent_cust_lev, "^L", "")))
+  mutate(pris_custody_lvl = as.numeric(str_replace(pris_custody_lvl, "^L", "")))
 # -- -- Prison Lookup Table ####
 prison_lookup <- tribble(
   ~pris_loc,     ~pris_loc_full,
   "ALB",          "Albion",
   "BEN",          "Benner Township",
   "CAM",          "Cambridge Springs",
-  "CHR",          "Chester",
+  "CHS",          "Chester",
   "COA",          "Coal Township",
   "DAL",         "Dallas",
   "FRA",          "Frackville",
-  "FAY",          "Fayette",
-  "FOR",         "Forest",
+  "FYT",          "Fayette",
+  "FRS",         "Forest",
   "GRN",          "Greene",
   "HOU",          "Houtzdale",
   "HUN",          "Huntingdon",
@@ -233,11 +233,12 @@ prison_lookup <- tribble(
   "MUN",          "Muncy",
   "PHX",          "Phoenix",
   "PIT",          "Pittsburgh",
+  "QUE",          "Quehanna Boot Camp",
   "RET",          "Retreat",
   "ROC",          "Rockview",
-  "SMT",          "Smithfield",
-  "SOM",          "Somerset",
-  "WAY",          "Waymart"
+  "SMI",          "Smithfield",
+  "SMR",          "Somerset",
+  "WAM",          "Waymart"
 ) 
 
 basic <- basic %>%
@@ -270,6 +271,7 @@ comment(basic$dem_marital) <- "Marital status, no missing values, fully cleaned 
 comment(basic$dem_edu_grade) <- "Highest level of education completed, 3 NA values, fully cleaned variable, created using grade_complete_raw"
 comment(basic$dem_mhcode) <- "Classification of mental health, 5 NA values, unknown cause fully cleaned variable, created using MHCode_raw" 
 comment(basic$dem_stg_yes) <- "Known gang affiliation = 1, 2162 NA values appears to be missing data, those without a stg are recorded as 0, created using STG_raw"
+comment(basic$pris_loc_full)
 # -- -- Raw Variables ####
 ### add name of cleaned variable verison
 
