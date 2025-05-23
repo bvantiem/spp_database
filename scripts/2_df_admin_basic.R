@@ -204,13 +204,20 @@ cols_to_standardize <- c("offense_raw", "sent_status", "sent_commitment_cnty", "
 basic <- basic %>%
   mutate(across(all_of(cols_to_standardize), standardize_uppercase))
 
+# responses are coded as NULL instead of NA
+basic <- basic %>%
+  mutate(dem_mhcode = na_if(dem_mhcode, "NULL"))
+
+# Change custody level into numeric result (ex L1 to 1)
+basic <- basic %>%
+  mutate(sent_cust_lev = as.numeric(str_replace(sent_cust_lev, "^L", "")))
 # -- Add Notes to Variables ####
   # to view notes added use str() or comment()
 # -- -- Cleaned Variables ####
 ### what raw variable(s) created each cleaned?
 
 comment(basic$sent_class) <- "Description of sentence type, 5 NA values, unknown cause otherwise cleaned variable, created using sentence_status_raw"
-comment(basic$sent_status) <- "no missing values, fully cleaned variable"
+comment(basic$sent_status) <- "Sentence status, no missing values, fully cleaned variable"
 comment(basic$sent_min_cort_yrs) <- "318 missing values explained by those serving life, fully cleaned variable" # what percent of the pop is 318?
 comment(basic$sent_min_cort_mths) <- "318 missing values explained by those serving life, fully cleaned variable"
 comment(basic$sent_min_cort_days) <- "318 missing values explained by those serving life, fully cleaned variable"
@@ -221,16 +228,16 @@ comment(basic$sent_min_expir_dt) <- "322 missing values" #what could be the reas
 comment(basic$sent_max_expir_dt) <- "359 missing values" #what could be the reason for this?
 comment(basic$sent_max_expir_recmp_dt) <- "4577 missing values" 
 comment(basic$sent_commitment_cnty) <- "county of offense, fully cleaned variable"
-comment(basic$sent_cust_lev) <- "161 missing values for unknown reason, explore further" # to do
-comment(basic$sent_off_asca) <- "4 missing values, not fully cleaned variable" # to do make L1 into 1
+comment(basic$sent_cust_lev) <- "161 missing values for unknown reason, explore further" 
+comment(basic$sent_off_asca) <- "4 missing values and 91 NULL, fully cleaned variable" # why are there 4 NA and 91 NULL? Should these be combined 
 comment(basic$chg_off_code) <- "9 missing values, fully cleaned variable"
-comment(basic$chg_des) <- "9 missing values, not fully cleaned need to fix capitalization" # to do
+comment(basic$chg_des) <- "9 missing values, not fully cleaned need to fix capitalization"
 comment(basic$inc_pris) <- "no missing values, fully cleaned"
 comment(basic$dem_dob_dt) <- "no missing values, fully cleaned"
 comment(basic$dem_race) <- "no missing values, fully cleaned variable"
 comment(basic$dem_marital) <- "no missing values, fully cleaned variable"
 comment(basic$dem_edu_grade) <- "3 NA values, fully cleaned variable"
-comment(basic$dem_mhcode) <- "5 null values, fully cleaned variable" # to do turn NULL into NA
+comment(basic$dem_mhcode) <- "Classification of mental health, 5 NA values, unknown cause fully cleaned variable" 
 comment(basic$dem_stg_yes) <- "2162 NA values appears to be missing data, those without a stg are recorded as 0"
 # -- -- Raw Variables ####
 ### add name of cleaned variable verison
