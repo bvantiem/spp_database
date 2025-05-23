@@ -264,14 +264,14 @@ comment(basic$pris_custody_lvl) <- "Individual custody level, 161 missing values
 comment(basic$sent_off_asca) <- "Type of offense, 4 missing values and 91 NULL, fully cleaned variable,  created using ASCA Category - Ranked_raw" # why are there 4 NA and 91 NULL? Should these be combined 
 comment(basic$chg_off_code) <- "Offense code,9 missing values, fully cleaned variable, created using offense_code_raw"
 comment(basic$chg_des) <- "Offense description, 9 missing values, not fully cleaned need to fix capitalization, created using offense_raw"
-comment(basic$pris_loc) <- "Facility name, no missing values, fully cleaned, created using location_permanent_raw"
+comment(basic$pris_loc) <- "Facility abr, no missing values, fully cleaned, created using location_permanent_raw"
+comment(basic$pris_loc_full) <- "Full facility name, no missing values, fully cleaned, created using leftjoin with prison_lookup"
 comment(basic$dem_dob_dt) <- "Date of birth, no missing values, fully cleaned, created using date_of_birth_raw"
 comment(basic$dem_race) <- "Race, no missing values, fully cleaned variable, created using race_code_raw"
 comment(basic$dem_marital) <- "Marital status, no missing values, fully cleaned variable, created using marital_status_code_raw"
 comment(basic$dem_edu_grade) <- "Highest level of education completed, 3 NA values, fully cleaned variable, created using grade_complete_raw"
 comment(basic$dem_mhcode) <- "Classification of mental health, 5 NA values, unknown cause fully cleaned variable, created using MHCode_raw" 
 comment(basic$dem_stg_yes) <- "Known gang affiliation = 1, 2162 NA values appears to be missing data, those without a stg are recorded as 0, created using STG_raw"
-comment(basic$pris_loc_full)
 # -- -- Raw Variables ####
 ### add name of cleaned variable verison
 
