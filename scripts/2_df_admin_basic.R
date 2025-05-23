@@ -9,7 +9,7 @@
 # Some individuals have multiple asca codes - meaning this reflects multiple admissions
 # -- To do ####
 # To do: ASCA classification is sometimes NULL while the offense code is the same as that of other variables, e.g "STRANGULATION: APPLYING PRESSURE TO THROAT OR NECK" is sometimes classified as violent and sometimes as NULL. Manually recategorize.
-
+# To do: Look into 55 NAs for research_id
 # ================================================================= ####
 # Set up ####
 # -- Prepare environment ####
@@ -77,7 +77,7 @@ basic <- readRDS("data/processed/processing_layer_2/basic_masked.Rds")
 # -- Rename raw variables ####
 # Append _raw to all columns except "research_id"
 basic <- basic |>
-  rename_with(~ paste0(., "_raw"), .cols = setdiff(names(basic), c("research_id","date_datapull", "control_number_pull")))
+  rename_with(~ paste0(., "_raw"), .cols = setdiff(names(basic), c("research_id","date_datapull", "control_number_pull", "wave")))
 
 # Rename columns and put them in order
 basic <- basic %>%
@@ -172,10 +172,10 @@ basic <- basic %>%
   mutate(dem_mhcode = gsub("\\s+$", "", dem_mhcode)) %>%
   mutate(dem_stg_yes = as.numeric(dem_stg_yes))
 
-# clean offense_raw to standardize capitalization of words.
+# clean offense_raw typos and standardize capitalization of words.
 # save these acronyms to ensure they stay capitalized
 acronyms <- c("DUI", "IDSI")
-standardize_offense <- function(x) {
+standardize_uppercase <- function(x) {
   x <- x %>%
     str_squish() %>%
     str_replace_all("\\s*-\\s*", " - ") %>%                         # Normalize dash spacing
@@ -198,15 +198,20 @@ standardize_offense <- function(x) {
   return(x)
 }
 
-# Apply to dataframe
+# columns that need to be reformatted for the standardization of uppercase letters
+cols_to_standardize <- c("offense_raw", "sent_status", "sent_commitment_cnty", "chg_des")
+
 basic <- basic %>%
-  mutate(offense_raw = standardize_offense(offense_raw))
+  mutate(across(all_of(cols_to_standardize), standardize_uppercase))
+
 # -- Add Notes to Variables ####
   # to view notes added use str() or comment()
 # -- -- Cleaned Variables ####
-comment(basic$sent_class) <- "5 NA values, unknown cause for this otherwise cleaned variable"
+### what raw variable(s) created each cleaned?
+
+comment(basic$sent_class) <- "Description of sentence type, 5 NA values, unknown cause otherwise cleaned variable, created using sentence_status_raw"
 comment(basic$sent_status) <- "no missing values, fully cleaned variable"
-comment(basic$sent_min_cort_yrs) <- "318 missing values explained by those serving life, fully cleaned variable"
+comment(basic$sent_min_cort_yrs) <- "318 missing values explained by those serving life, fully cleaned variable" # what percent of the pop is 318?
 comment(basic$sent_min_cort_mths) <- "318 missing values explained by those serving life, fully cleaned variable"
 comment(basic$sent_min_cort_days) <- "318 missing values explained by those serving life, fully cleaned variable"
 comment(basic$sent_max_cort_yrs) <- "318 missing values explained by those serving life, fully cleaned variable"
@@ -214,25 +219,27 @@ comment(basic$sent_max_cort_mths) <- "318 missing values explained by those serv
 comment(basic$sent_max_cort_days) <- "318 missing values explained by those serving life, fully cleaned variable"
 comment(basic$sent_min_expir_dt) <- "322 missing values" #what could be the reason for this?
 comment(basic$sent_max_expir_dt) <- "359 missing values" #what could be the reason for this?
-comment(basic$sent_max_expir_recmp_dt) <- "4577 missing values" #what could be the reason for this?
-comment(basic$sent_commitment_cnty) <- "city of offense, fully cleaned variable"
-comment(basic$sent_cust_lev) <- "161 missing values" #do we know why this could be?
-comment(basic$sent_off_asca) <- "4 missing values, not fully cleaned variable"
-comment(basic$chg_off_code) <- "9 missing values, not fully cleaned variable"
-comment(basic$chg_des) <- "9 missing values, not fully cleaned need to fix capitalization"
+comment(basic$sent_max_expir_recmp_dt) <- "4577 missing values" 
+comment(basic$sent_commitment_cnty) <- "county of offense, fully cleaned variable"
+comment(basic$sent_cust_lev) <- "161 missing values for unknown reason, explore further" # to do
+comment(basic$sent_off_asca) <- "4 missing values, not fully cleaned variable" # to do make L1 into 1
+comment(basic$chg_off_code) <- "9 missing values, fully cleaned variable"
+comment(basic$chg_des) <- "9 missing values, not fully cleaned need to fix capitalization" # to do
 comment(basic$inc_pris) <- "no missing values, fully cleaned"
 comment(basic$dem_dob_dt) <- "no missing values, fully cleaned"
 comment(basic$dem_race) <- "no missing values, fully cleaned variable"
 comment(basic$dem_marital) <- "no missing values, fully cleaned variable"
 comment(basic$dem_edu_grade) <- "3 NA values, fully cleaned variable"
-comment(basic$dem_mhcode) <- "5 null values, fully cleaned variable"
-comment(basic$dem_stg_yes) <- "2162 NA values, unknown cause for this"
+comment(basic$dem_mhcode) <- "5 null values, fully cleaned variable" # to do turn NULL into NA
+comment(basic$dem_stg_yes) <- "2162 NA values appears to be missing data, those without a stg are recorded as 0"
 # -- -- Raw Variables ####
+### add name of cleaned variable verison
+
 comment(basic$location_permanent_raw) <- "raw data, cleaned non raw variable avail"
-comment(basic$delete_date_raw) <- "uncleaned variable, available only in raw form"
+comment(basic$delete_date_raw) <- "raw data, uncleaned variable, available only in raw form"
 comment(basic$sentence_status_raw) <- "raw data, cleaned non raw variable avail"
 comment(basic$custody_raw) <- "raw data, cleaned non raw variable avail"
-comment(basic$temp_custody_raw)
+comment(basic$temp_custody_raw) <- "raw data, uncleaned variable, available only in raw form"
 comment(basic$class_of_sent_raw) <- "raw data, cleaned non raw variable avail"
 comment(basic$sentence_class_raw) <- "raw data, cleaned non raw variable avail"
 comment(basic$min_cort_sent_yrs_raw) <- "raw data, cleaned non raw variable avail"
@@ -259,7 +266,6 @@ comment(basic$marital_status_raw) <- "raw data, cleaned non raw variable avail"
 comment(basic$grade_complete_raw) <- "raw data, cleaned non raw variable avail"
 comment(basic$MHCode_raw) <-"raw data, cleaned non raw variable avail"
 comment(basic$STG_raw) <- "raw data, cleaned non raw variable avail"
-comment(basic$wave_raw) <- "no cleaned non raw variable currently"
 
 # ================================================================= ####
 
