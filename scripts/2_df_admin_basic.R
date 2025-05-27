@@ -201,7 +201,13 @@ basic <- basic %>%
     )) %>%
   mutate(dem_edu_grade = remove_leading_zeros(dem_edu_grade) |> as.numeric()) %>%
   mutate(dem_mhcode = gsub("\\s+$", "", dem_mhcode)) %>%
-  mutate(dem_stg_yes = as.numeric(dem_stg_yes))
+  mutate(dem_stg_yes = as.numeric(dem_stg_yes)) %>%
+  # responses are coded as NULL instead of NA
+  mutate(dem_mhcode = na_if(dem_mhcode, "NULL")) %>%
+  # change custody level into numeric result (ex L1 to 1)
+  mutate(pris_custody_lvl = as.numeric(str_replace(pris_custody_lvl, "^L", ""))) %>%
+  left_join(prison_lookup, by = "pris_loc") %>%
+  relocate(ends_with("_raw"), .after = last_col())
 
 # clean offense_raw typos and standardize capitalization of words.
 # save these acronyms to ensure they stay capitalized
@@ -235,17 +241,6 @@ cols_to_standardize <- c("offense_raw", "sent_status", "sent_commitment_cnty", "
 basic <- basic %>%
   mutate(across(all_of(cols_to_standardize), standardize_uppercase))
 
-# responses are coded as NULL instead of NA
-basic <- basic %>%
-  mutate(dem_mhcode = na_if(dem_mhcode, "NULL"))
-
-# Change custody level into numeric result (ex L1 to 1)
-basic <- basic %>%
-  mutate(pris_custody_lvl = as.numeric(str_replace(pris_custody_lvl, "^L", "")))
-
-basic <- basic %>%
-  left_join(prison_lookup, by = "pris_loc") %>%
-  relocate(ends_with("_raw"), .after = last_col())
 # ================================================================= ####
 # Define new dataframes ####
 # -- Static demographics ####
