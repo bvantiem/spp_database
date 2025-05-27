@@ -10,7 +10,7 @@
 # -- To do ####
 # To do: ASCA classification is sometimes NULL while the offense code is the same as that of other variables, e.g "STRANGULATION: APPLYING PRESSURE TO THROAT OR NECK" is sometimes classified as violent and sometimes as NULL. Manually recategorize.
 # To do: Look into 55 NAs for research_id
-# To do: Finish adding cleaned variable name to raw comments
+# To do: Explore sent_min_expir_dt, sent_max_expir_dt, sent_off_asca, sent_max_expir_recmp_dt variables
 # ================================================================= ####
 # Set up ####
 # -- Prepare environment ####
