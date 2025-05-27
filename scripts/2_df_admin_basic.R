@@ -253,7 +253,7 @@ basic <- basic %>%
 # dem_edu_grade
 # dem_dob_dt
 # date_of_birth_raw
-# -- -- ~mostly~ Static Variables List: ####
+# -- -- Mostly Static Variables List: ####
 # dem_race       2 ids (out of 2401) have changing race categorization
 # race_code_raw  2 ids (out of 2401) have changing race categorization
 # race_raw       2 ids (out of 2401) have changing race categorization
