@@ -251,28 +251,28 @@ basic <- basic %>%
 # -- Cleaned Variables ####
 comment(basic$sent_class) <- "Description of sentence type, 5 NA values, unknown cause otherwise cleaned variable, created using class_of_sent_raw"
 comment(basic$sent_status) <- "Sentence status, no missing values, fully cleaned variable, created using sentence_status_raw"
-comment(basic$sent_min_cort_yrs) <- "Min number of years sentenced, 318 missing values explained by those serving life, fully cleaned variable, created using min_cort_sent_yrs_raw" # what percent of the pop is 318?
-comment(basic$sent_min_cort_mths) <- "Min number of months in sentence, 318 missing values explained by those serving life, fully cleaned variable, created using min_cort_sent_mnths_raw"
-comment(basic$sent_min_cort_days) <- "Min number of days in sentence, 318 missing values explained by those serving life, fully cleaned variable, created using min_cort_sent_days_raw"
-comment(basic$sent_max_cort_yrs) <- "Max number of years sentenced, 318 missing values explained by those serving life, fully cleaned variable, created using max_cort_sent_yrs_raw"
-comment(basic$sent_max_cort_mths) <- "Max number of months in sentence, 318 missing values explained by those serving life, fully cleaned variable, created using max_cort_sent_mnths_raw"
-comment(basic$sent_max_cort_days) <- "Max number of days in sentece, 318 missing values explained by those serving life, fully cleaned variable, created using max_cort_sent_days_raw"
-comment(basic$sent_min_expir_dt) <- "Earliest date of end of sentence, 322 missing values, explore this further, created using min_expir_date_raw" 
-comment(basic$sent_max_expir_dt) <- "Latest date of end of sentence, 359 missing values, explore this further, created using max_expir_date_raw" 
-comment(basic$sent_max_expir_recmp_dt) <- "Latest date of recomputed sentence, 4577 missing values, created using RecmpMax_Dt_raw" 
+comment(basic$sent_min_cort_yrs) <- "Min number of years sentenced, 318 (6.6%) missing values explained by those serving life, fully cleaned variable, created using min_cort_sent_yrs_raw" # what percent of the pop is 318?
+comment(basic$sent_min_cort_mths) <- "Min number of months in sentence, 318 (6.6%) missing values explained by those serving life, fully cleaned variable, created using min_cort_sent_mnths_raw"
+comment(basic$sent_min_cort_days) <- "Min number of days in sentence, 318 (6.6%) missing values explained by those serving life, fully cleaned variable, created using min_cort_sent_days_raw"
+comment(basic$sent_max_cort_yrs) <- "Max number of years sentenced, 318 (6.6%) missing values explained by those serving life, fully cleaned variable, created using max_cort_sent_yrs_raw"
+comment(basic$sent_max_cort_mths) <- "Max number of months in sentence, 318 (6.6%) missing values explained by those serving life, fully cleaned variable, created using max_cort_sent_mnths_raw"
+comment(basic$sent_max_cort_days) <- "Max number of days in sentece, 318 (6.6%) missing values explained by those serving life, fully cleaned variable, created using max_cort_sent_days_raw"
+comment(basic$sent_min_expir_dt) <- "Earliest date of end of sentence, 322 (6.7%) missing values, explore this further, created using min_expir_date_raw" 
+comment(basic$sent_max_expir_dt) <- "Latest date of end of sentence, 359 (7.5%) missing values, explore this further, created using max_expir_date_raw" 
+comment(basic$sent_max_expir_recmp_dt) <- "Latest date of recomputed sentence, 4577 (95.4%) missing values, created using RecmpMax_Dt_raw" 
 comment(basic$sent_commitment_cnty) <- "County of commitment, fully cleaned variable, created using commit_cnty_raw"
-comment(basic$pris_custody_lvl) <- "Individual custody level, 161 missing values for unknown reason, explore further, created using custody_raw" 
-comment(basic$sent_off_asca) <- "Type of offense, 4 missing values and 91 NULL, fully cleaned variable,  created using ASCA Category - Ranked_raw" # why are there 4 NA and 91 NULL? Should these be combined 
-comment(basic$chg_off_code) <- "Offense code,9 missing values, fully cleaned variable, created using offense_code_raw"
-comment(basic$chg_des) <- "Offense description, 9 missing values, not fully cleaned need to fix capitalization, created using offense_raw"
+comment(basic$pris_custody_lvl) <- "Individual custody level, 161 (3.4%) missing values for unknown reason, explore further, created using custody_raw" 
+comment(basic$sent_off_asca) <- "Type of offense, 4 missing values and 91 NULL (1.9%), fully cleaned variable,  created using ASCA Category - Ranked_raw" # why are there 4 NA and 91 NULL? Should these be combined 
+comment(basic$chg_off_code) <- "Offense code,9 (0.2%) missing values, fully cleaned variable, created using offense_code_raw"
+comment(basic$chg_des) <- "Offense description, 9 (0.2%) missing values, not fully cleaned need to fix capitalization, created using offense_raw"
 comment(basic$pris_loc) <- "Facility abr, no missing values, fully cleaned, created using location_permanent_raw"
 comment(basic$pris_loc_full) <- "Full facility name, no missing values, fully cleaned, created using leftjoin with prison_lookup"
 comment(basic$dem_dob_dt) <- "Date of birth, no missing values, fully cleaned, created using date_of_birth_raw"
 comment(basic$dem_race) <- "Race, no missing values, fully cleaned variable, created using race_code_raw"
 comment(basic$dem_marital) <- "Marital status, no missing values, fully cleaned variable, created using marital_status_code_raw"
-comment(basic$dem_edu_grade) <- "Highest level of education completed, 3 NA values, fully cleaned variable, created using grade_complete_raw"
-comment(basic$dem_mhcode) <- "Classification of mental health, 5 NA values, unknown cause fully cleaned variable, created using MHCode_raw" 
-comment(basic$dem_stg_yes) <- "Known gang affiliation = 1, 2162 NA values appears to be missing data, those without a stg are recorded as 0, created using STG_raw"
+comment(basic$dem_edu_grade) <- "Highest level of education completed, 3 (0.06%) missing values, fully cleaned variable, created using grade_complete_raw"
+comment(basic$dem_mhcode) <- "Classification of mental health, 5 (0.1%) missing values, unknown cause fully cleaned variable, created using MHCode_raw" 
+comment(basic$dem_stg_yes) <- "Known gang affiliation = 1, 2162 (45.1%) missing values appears to be missing data, those without a stg are recorded as 0, created using STG_raw"
 # -- Raw Variables ####
 ### add name of cleaned variable verison
 
