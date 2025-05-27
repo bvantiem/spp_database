@@ -204,7 +204,7 @@ basic <- basic %>%
   mutate(dem_stg_yes = as.numeric(dem_stg_yes)) %>%
   # responses are coded as NULL instead of NA
   mutate(dem_mhcode = na_if(dem_mhcode, "NULL")) %>%
-  mutatue(sent_off_asca = na_if(sent_off_asca, "NULL")) %>%
+  mutate(sent_off_asca = na_if(sent_off_asca, "NULL")) %>%
   # change custody level into numeric result (ex L1 to 1)
   mutate(pris_custody_lvl = as.numeric(str_replace(pris_custody_lvl, "^L", ""))) %>%
   left_join(prison_lookup, by = "pris_loc") %>%
@@ -254,13 +254,13 @@ basic <- basic %>%
 # dem_dob_dt
 # date_of_birth_raw
 # -- -- ~mostly~ Static Variables List: ####
-# dem_race       2 ids have changing race categorization
-# race_code_raw  2 ids have changing race categorization
-# race_raw       2 ids have changing race categorization
-# dem_marital                1 id has changing marital status
-# marital_status_code_raw,   1 id has changing marital status
-# marital_status_raw         1 id has changing marital status
-# -- -- df Formation ####
+# dem_race       2 ids (out of 2401) have changing race categorization
+# race_code_raw  2 ids (out of 2401) have changing race categorization
+# race_raw       2 ids (out of 2401) have changing race categorization
+# dem_marital                1 id (out of 2401) has changing marital status
+# marital_status_code_raw,   1 id (out of 2401) has changing marital status
+# marital_status_raw         1 id (out of 2401) has changing marital status
+# -- -- dfFormation ####
 basic_static <- basic %>%
   group_by(research_id) %>%
   slice(1) %>%
