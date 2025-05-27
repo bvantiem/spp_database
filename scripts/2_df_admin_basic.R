@@ -73,9 +73,38 @@ remove_leading_zeros <- function(x) {
 # -- Read in Data ####
 basic <- readRDS("data/processed/processing_layer_2/basic_masked.Rds")
 
+# -- Prison Lookup Table ####
+prison_lookup <- tribble(
+  ~pris_loc,     ~pris_loc_full,
+  "ALB",          "Albion",
+  "BEN",          "Benner Township",
+  "CAM",          "Cambridge Springs",
+  "CHS",          "Chester",
+  "COA",          "Coal Township",
+  "DAL",         "Dallas",
+  "FRA",          "Frackville",
+  "FYT",          "Fayette",
+  "FRS",         "Forest",
+  "GRN",          "Greene",
+  "HOU",          "Houtzdale",
+  "HUN",          "Huntingdon",
+  "LAU",          "Laurel Highlands",
+  "MAH",          "Mahanoy",
+  "MER",          "Mercer",
+  "MUN",          "Muncy",
+  "PHX",          "Phoenix",
+  "PIT",          "Pittsburgh",
+  "QUE",          "Quehanna Boot Camp",
+  "RET",          "Retreat",
+  "ROC",          "Rockview",
+  "SMI",          "Smithfield",
+  "SMR",          "Somerset",
+  "WAM",          "Waymart"
+) 
+
 # ================================================================= ####
 # Clean existing dataset
-# -- Rename raw variables ####
+# Rename raw variables ####
 # Append _raw to all columns except "research_id"
 basic <- basic |>
   rename_with(~ paste0(., "_raw"), .cols = setdiff(names(basic), c("research_id","date_datapull", "control_number_pull", "wave")))
@@ -107,7 +136,7 @@ basic <- basic %>%
          dem_stg_yes = STG_raw) %>%
   relocate(ends_with("_raw"), .after = last_col()) 
 
-# -- Clean variables ####
+# Clean variables ####
 cols_cort <- c("sent_min_cort_yrs",
                "sent_min_cort_mths",
                "sent_min_cort_days",
@@ -212,42 +241,18 @@ basic <- basic %>%
 # Change custody level into numeric result (ex L1 to 1)
 basic <- basic %>%
   mutate(pris_custody_lvl = as.numeric(str_replace(pris_custody_lvl, "^L", "")))
-# -- -- Prison Lookup Table ####
-prison_lookup <- tribble(
-  ~pris_loc,     ~pris_loc_full,
-  "ALB",          "Albion",
-  "BEN",          "Benner Township",
-  "CAM",          "Cambridge Springs",
-  "CHS",          "Chester",
-  "COA",          "Coal Township",
-  "DAL",         "Dallas",
-  "FRA",          "Frackville",
-  "FYT",          "Fayette",
-  "FRS",         "Forest",
-  "GRN",          "Greene",
-  "HOU",          "Houtzdale",
-  "HUN",          "Huntingdon",
-  "LAU",          "Laurel Highlands",
-  "MAH",          "Mahanoy",
-  "MER",          "Mercer",
-  "MUN",          "Muncy",
-  "PHX",          "Phoenix",
-  "PIT",          "Pittsburgh",
-  "QUE",          "Quehanna Boot Camp",
-  "RET",          "Retreat",
-  "ROC",          "Rockview",
-  "SMI",          "Smithfield",
-  "SMR",          "Somerset",
-  "WAM",          "Waymart"
-) 
 
 basic <- basic %>%
   left_join(prison_lookup, by = "pris_loc") %>%
   relocate(ends_with("_raw"), .after = last_col())
-
-# -- Add Notes to Variables ####
+# ================================================================= ####
+# Define new dataframes ####
+# -- Static demographics ####
+# -- Sentence characteristics ####
+# ================================================================= ####
+# Add Notes to Variables ####
   # to view notes added use str() or comment()
-# -- -- Cleaned Variables ####
+# -- Cleaned Variables ####
 comment(basic$sent_class) <- "Description of sentence type, 5 NA values, unknown cause otherwise cleaned variable, created using class_of_sent_raw"
 comment(basic$sent_status) <- "Sentence status, no missing values, fully cleaned variable, created using sentence_status_raw"
 comment(basic$sent_min_cort_yrs) <- "Min number of years sentenced, 318 missing values explained by those serving life, fully cleaned variable, created using min_cort_sent_yrs_raw" # what percent of the pop is 318?
@@ -272,7 +277,7 @@ comment(basic$dem_marital) <- "Marital status, no missing values, fully cleaned 
 comment(basic$dem_edu_grade) <- "Highest level of education completed, 3 NA values, fully cleaned variable, created using grade_complete_raw"
 comment(basic$dem_mhcode) <- "Classification of mental health, 5 NA values, unknown cause fully cleaned variable, created using MHCode_raw" 
 comment(basic$dem_stg_yes) <- "Known gang affiliation = 1, 2162 NA values appears to be missing data, those without a stg are recorded as 0, created using STG_raw"
-# -- -- Raw Variables ####
+# -- Raw Variables ####
 ### add name of cleaned variable verison
 
 comment(basic$location_permanent_raw) <- "raw data, cleaned non raw variable avail as pris_loc"
