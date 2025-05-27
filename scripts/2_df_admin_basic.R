@@ -204,6 +204,7 @@ basic <- basic %>%
   mutate(dem_stg_yes = as.numeric(dem_stg_yes)) %>%
   # responses are coded as NULL instead of NA
   mutate(dem_mhcode = na_if(dem_mhcode, "NULL")) %>%
+  mutatue(sent_off_asca = na_if(sent_off_asca, "NULL")) %>%
   # change custody level into numeric result (ex L1 to 1)
   mutate(pris_custody_lvl = as.numeric(str_replace(pris_custody_lvl, "^L", ""))) %>%
   left_join(prison_lookup, by = "pris_loc") %>%
@@ -244,7 +245,52 @@ basic <- basic %>%
 # ================================================================= ####
 # Define new dataframes ####
 # -- Static demographics ####
-# -- Sentence characteristics ####
+# one row per individuals using the earliest datapull
+# -- -- Static Variables List: ####
+# commit_cnty_raw
+# cnty_name_raw
+# sent_commitment_cnty
+# dem_edu_grade
+# dem_dob_dt
+# date_of_birth_raw
+# -- -- ~mostly~ Static Variables List: ####
+# dem_race       2 ids have changing race categorization
+# race_code_raw  2 ids have changing race categorization
+# race_raw       2 ids have changing race categorization
+# dem_marital                1 id has changing marital status
+# marital_status_code_raw,   1 id has changing marital status
+# marital_status_raw         1 id has changing marital status
+# -- -- df Formation ####
+basic_static <- basic %>%
+  group_by(research_id) %>%
+  slice(1) %>%
+  ungroup() %>%
+  select(control_number_pull, 
+         research_id, 
+         sent_commitment_cnty, 
+         pris_loc,
+         pris_loc_full,
+         dem_race,
+         dem_marital,
+         dem_edu_grade,
+         dem_dob_dt,
+         date_datapull,
+         commit_cnty_raw,
+         cnty_name_raw,
+         race_code_raw,
+         race_raw,
+         marital_status_code_raw,
+         marital_status_raw,
+         date_of_birth_raw
+  )
+# -- Each Individual Sentence/ Charge ####
+# one row per sentence (may be mutliple rows for one id)
+basic_by_sentence <- basic %>%
+  group_by(dem_dob_dt, sent_min_cort_yrs, sent_min_cort_mths, sent_min_cort_days) %>%
+  slice(1) %>%     # One row per unique sentence
+  ungroup() %>%
+  select(-RecmpMax_Dt_raw, -sent_max_expir_recmp_dt, -pris_loc, -pris_loc_full, 
+         -custody_raw, -pris_custody_lvl)
 # ================================================================= ####
 # Add Notes to Variables ####
   # to view notes added use str() or comment()
