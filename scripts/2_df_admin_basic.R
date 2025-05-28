@@ -255,21 +255,23 @@ basic <- basic %>%
 # -- Static demographics ####
 # one row per individuals using the earliest datapull
 # -- -- Static Variables List: ####
-# dem_edu_grade
-# dem_dob_dt
-# date_of_birth_raw
+# -- dem_edu_grade
+# -- dem_dob_dt
+# -- date_of_birth_raw
 # -- -- Mostly Static Variables List: ####
-# dem_race       2 ids (out of 2401) have changing race categorization
-# race_code_raw  2 ids (out of 2401) have changing race categorization
-# race_raw       2 ids (out of 2401) have changing race categorization
-# dem_marital                1 id (out of 2401) has changing marital status
-# marital_status_code_raw,   1 id (out of 2401) has changing marital status
-# marital_status_raw         1 id (out of 2401) has changing marital status
+# -- dem_race       2 ids (out of 2401) have changing race categorization
+# -- race_code_raw  2 ids (out of 2401) have changing race categorization
+# -- race_raw       2 ids (out of 2401) have changing race categorization
+# -- dem_marital                1 id (out of 2401) has changing marital status
+# -- marital_status_code_raw,   1 id (out of 2401) has changing marital status
+# -- marital_status_raw         1 id (out of 2401) has changing marital status
 # -- -- df Formation ####
 basic_static_demographics <- basic %>%
   group_by(research_id) %>%
-  slice(1) %>%
+  # -- take variable info from only the earliest wave participated
+  slice(1) %>% 
   ungroup() %>%
+  # -- drop all variables but these, only static demographic variables
   select(control_number_pull, 
          research_id, 
          dem_race,
@@ -284,23 +286,52 @@ basic_static_demographics <- basic %>%
          date_of_birth_raw
   )
 # -- Each Individual Sentence/ Charge ####
-# one row per sentence (may be mutliple rows for one id)
-# research_id, date_datapull, control_number_pull, sent_class, all sent_min/sent_max except recmp,
-# sent_commitment, asca, chg_off, chg_des, keep dem variables from static df as well,
-# raw versions of all of these as well.
+# -- -- one row per sentence (may be mutliple rows for one id)
 basic_by_sentence <- basic %>%
+  # -- group by these variables which when constant represent one charge
   group_by(dem_dob_dt, 
+  # -- if any of these change than it will be reflected as a second row aka new charge
            sent_min_cort_yrs, 
            sent_min_cort_mths, 
            sent_min_cort_days) %>%
   slice(1) %>%     # One row per unique sentence
   ungroup() %>%
-  select(-RecmpMax_Dt_raw, 
-         -sent_max_expir_recmp_dt, 
-         -pris_loc, 
-         -pris_loc_full, 
-         -custody_raw, 
-         -pris_custody_lvl)
+  # -- include only the following variables in new dataframe
+  select(research_id,
+         date_datapull,
+         control_number_pull,
+         sent_class,
+         sent_min_cort_days,
+         sent_min_cort_mths,
+         sent_min_cort_yrs,
+         sent_max_cort_days,
+         sent_max_cort_mths,
+         sent_max_cort_yrs,
+         sent_commitment_cnty,
+         sent_off_asca,
+         chg_off_code,
+         chg_des,
+         dem_race,
+         dem_marital,
+         dem_edu_grade,
+         dem_dob_dt,
+         sentence_class_raw,
+         min_cort_sent_days_raw,
+         min_cort_sent_mths_raw,
+         min_cort_sent_yrs_raw,
+         max_cort_sent_days_raw,
+         max_cort_sent_mths_raw,
+         max_cort_sent_yrs_raw,
+         commit_cnty_raw,
+         `ASCA Category - Ranked_raw`,
+         offense_code_raw,
+         offense_raw,
+         race_code_raw,
+         race_raw,
+         marital_status_code_raw,
+         marital_status_raw,
+         grade_complete_raw,
+         date_of_birth_raw)
 # ================================================================= ####
 # Add Notes to Variables ####
   # to view notes added use str() or comment()
