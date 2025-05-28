@@ -1,4 +1,4 @@
-`%ni%` = Negate(`%in%`) # unsure what this is
+
 # ======================================================================= ####
 # Notes to Script #### # didn't know what exactly to write in these places
 # -- Objective ####
@@ -11,6 +11,7 @@
 # Set Up ####
 # -- Prepare Environment ####
 # -- Functions #### 
+`%ni%` = Negate(`%in%`) 
 # -- Set Seed ####
 set.seed(1962)
 # -- Read in Data ####
@@ -18,13 +19,14 @@ unit_mapping <- read.csv("data/raw/2_data_keys/unit_mapping.csv")
 pcq_lookup <- read_xlsx("data/raw/5_pcq_survey_questions/230725_pcq_survey_questions_NL_PA.xlsx")
 # ======================================================================= ####
 # Unit Mapping ####
+# -- INF is not included
 unit_mapping <- unit_mapping %>%
   mutate(across(starts_with("unit_type_wave"),
                 ~ case_when(
                   . == "rhu" ~ "1. Restrictive Housing",
                   . == "gp" ~ "2. General Population",
                   . == "gp-tc" ~ "3. Therapeutic Community", # Since they removed this unit does this cause issues with future waves?
-                  . == "rec" ~ "4. Recovery Unit", # is this INF?
+                  . == "rec" ~ "4. Recovery Unit",
                   . == "hons" ~ "5. Honor Block",
                   . == "gp-epu" ~ "5. Enhanced Privilege Unit",
                   . == "gp-senior" ~ "5. Senior Unit",
@@ -97,7 +99,7 @@ service_use_qs <- c("q55","q56","q57","q58","q59","q61","q115","q116","q117","q1
 
 # ======================================================================= ####
 # Wave Dates ####
-# dates each wave occured to ensure standardization
+# dates each wave occurred to ensure standardization
 wave1_date = ymd(20220501)
 wave2_date = ymd(20221115)
 wave3_date = ymd(20230520)
