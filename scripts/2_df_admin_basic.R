@@ -332,6 +332,7 @@ basic_by_sentence <- basic %>%
          marital_status_raw,
          grade_complete_raw,
          date_of_birth_raw)
+
 # ================================================================= ####
 # Add Notes to Variables ####
   # to view notes added use str() or comment()
@@ -348,12 +349,11 @@ comment(basic$sent_min_expir_dt) <- "Earliest date of end of sentence, 322 (6.7%
 comment(basic$sent_max_expir_dt) <- "Latest date of end of sentence, 359 (7.5%) missing values, explore this further, created using max_expir_date_raw" 
 comment(basic$sent_max_expir_recmp_dt) <- "Latest date of recomputed sentence, 4577 (95.4%) missing values, created using RecmpMax_Dt_raw" 
 comment(basic$sent_commitment_cnty) <- "County of commitment, fully cleaned variable, created using commit_cnty_raw"
-comment(basic$pris_custody_lvl) <- "Individual custody level, 161 (3.4%) missing values for unknown reason, explore further, created using custody_raw" 
 comment(basic$sent_off_asca) <- "Type of offense, 4 missing values and 91 NULL (1.9%), fully cleaned variable,  created using ASCA Category - Ranked_raw" # why are there 4 NA and 91 NULL? Should these be combined 
 comment(basic$chg_off_code) <- "Offense code,9 (0.2%) missing values, fully cleaned variable, created using offense_code_raw"
 comment(basic$chg_des) <- "Offense description, 9 (0.2%) missing values, not fully cleaned need to fix capitalization, created using offense_raw"
-comment(basic$pris_loc) <- "Facility abr, no missing values, fully cleaned, created using location_permanent_raw"
-comment(basic$pris_loc_full) <- "Full facility name, no missing values, fully cleaned, created using leftjoin with prison_lookup"
+comment(basic$pris_custody_lvl) <- "Individual custody level, 161 (3.4%) missing values for unknown reason, explore further, created using custody_raw"
+comment(basic$pris_loc) <- "Facility name, no missing values, fully cleaned, created using location_permanent_raw"
 comment(basic$dem_dob_dt) <- "Date of birth, no missing values, fully cleaned, created using date_of_birth_raw"
 comment(basic$dem_race) <- "Race, no missing values, fully cleaned variable, created using race_code_raw"
 comment(basic$dem_marital) <- "Marital status, no missing values, fully cleaned variable, created using marital_status_code_raw"
@@ -402,9 +402,6 @@ basic <- basic %>%
   mutate(dem_edu_high_school = ifelse(dem_edu_grade>=12, 1,0)) %>%
   relocate(dem_edu_high_school, .after = dem_edu_grade) %>%
   mutate(
-    # this variable works!
-    # should we only include the age if they participated in that wave or does 
-    # it not matter?
     dem_age_wave1 = decimal_date(ymd(wave1_date))-decimal_date(dem_dob_dt),
     dem_age_wave2 = decimal_date(ymd(wave2_date))-decimal_date(dem_dob_dt),
     dem_age_wave3 = decimal_date(ymd(wave3_date))-decimal_date(dem_dob_dt),
@@ -412,9 +409,6 @@ basic <- basic %>%
     dem_age_wave5 = decimal_date(ymd(wave5_date))-decimal_date(dem_dob_dt),
     dem_age_wave6 = decimal_date(ymd(wave6_date))-decimal_date(dem_dob_dt)) %>%
   relocate(starts_with("dem_age_wave"), .after = dem_dob_dt) %>%
-  # this variable does not work, sent_min_expir_dt has 4532 missing values and only
-  # values are from 2002, unsure how to build the min_expir_dt using the min_yrs, mnths, and days
-  # variables
   mutate(
     sent_days_to_min_wave1 = sent_min_expir_dt - ymd(wave1_date),
     sent_days_to_min_wave2 = sent_min_expir_dt - ymd(wave2_date),
