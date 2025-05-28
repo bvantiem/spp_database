@@ -1,6 +1,6 @@
 `%ni%` = Negate(`%in%`) # unsure what this is
 # ======================================================================= ####
-# Notes to Script ####
+# Notes to Script #### # didn't know what exactly to write in these places
 # -- Objective ####
 # -- Readme ####
 # -- To do ####
