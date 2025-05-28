@@ -1,11 +1,11 @@
-# ========================================= ####
+# ========================================================================= ####
 # Notes to Script
 # Notes to Script ####
 # -- Objective ####
 # Mask control numberes in administrative dataframes
 # -- Readme ####
 # -- To do ####
-# ========================================= ####
+# ========================================================================= ####
 # Set up
 # Set Up ####
 # -- Prepare environment ####
@@ -20,7 +20,7 @@ for (name in c("basic", "move", "assess", "house", "program", "conduct", "work",
   assign(name, readRDS(paste0("data/processed/processing_layer_1/", name, ".Rds")))
 }
 
-# ========================================= ####
+# ========================================================================= ####
 # Mask IDs ####
 i <- unique(control_nos_inmate_ids$control_number)
 id.link <- mask_control_nos(i) # Generate masked Research IDs
@@ -37,7 +37,7 @@ for (df_name in c("basic", "move", "assess", "house", "program", "conduct", "wor
   assign(new_name, updated_df)
 }
 
-# ========================================= ####
+# ========================================================================= ####
 # Save masked data frames ####
 for (name in c("basic", "move", "assess", "house", "program", "conduct", "work", "visit")) {
   masked_df <- get(paste0(name, "_masked")) %>% as.data.frame()
