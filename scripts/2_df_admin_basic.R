@@ -247,9 +247,6 @@ basic <- basic %>%
 # -- Static demographics ####
 # one row per individuals using the earliest datapull
 # -- -- Static Variables List: ####
-# commit_cnty_raw
-# cnty_name_raw
-# sent_commitment_cnty
 # dem_edu_grade
 # dem_dob_dt
 # date_of_birth_raw
