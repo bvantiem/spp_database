@@ -6,9 +6,14 @@
 # Save the full set of control numbers and associated inmate IDs
 # -- Readme ####
 # Script is up to date until wave 6
-# Each wave pulls a full history. So we have duplicate rows across waves. We delete those duplicate rows, keeping only the first time they showed up. So if someone is in wave 1 and wave 2, we keep only the original rows from wave 1 and add only new (non-duplicate) rows from wave 2.
-# The full set of control numbers and associated inmate IDs should only be accessible by the database team under normal circumstances.
-# The full set of control numbers and associated inmate IDs should never be shared outside of the core research team.
+# Each wave pulls a full history. So we have duplicate rows across waves.
+# We delete those duplicate rows, keeping only the first time they showed up. 
+# So if someone is in wave 1 and wave 2, we keep only the original rows from 
+# wave 1 and add only new (non-duplicate) rows from wave 2.
+# The full set of control numbers and associated inmate IDs should only be 
+# accessible by the database team under normal circumstances.
+# The full set of control numbers and associated inmate IDs should never be 
+# shared outside of the core research team.
 # -- To do ####
 
 # ================================================================= ####
