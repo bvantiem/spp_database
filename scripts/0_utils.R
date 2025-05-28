@@ -81,3 +81,10 @@ experience.key <- list(actsat = c("q55", "q56", "q57", "q58", "q59", "q60", "q61
 
 service_use_qs <- c("q55","q56","q57","q58","q59","q61","q115","q116","q117","q118","q138" ,"q167", "q162", "q163")
 
+
+# Wave Dates ####
+wave1_date = ymd(20220501)
+wave2 = decimal_date(ymd(20221115))-decimal_date(dem_dob_dt)
+dem_age_wave3 = decimal_date(ymd(20230520))-decimal_date(dem_dob_dt)
+dem_age_wave4 = decimal_date(ymd(20231128))-decimal_date(dem_dob_dt)
+dem_age_wave5 = decimal_date(ymd(20240606))-decimal_date(dem_dob_dt)
