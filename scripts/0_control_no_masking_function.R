@@ -1,7 +1,19 @@
-# This script backs up the function to mask IDs. Keep safe!
+# ================================================================= ####
+# Notes to Script ####
+# -- Objective ####
+# Define function to mask and unmask control numbers
+# -- Readme ####
+# This script should be accessible only by those in charge of building the database.
 
-library(dplyr)
-# Generate Reference Key
+# ================================================================= ####
+# Set up ####
+# -- Prepare environment ####
+rm(list=ls())
+source("scripts/00_packages.R")
+source("scripts/0_utils.R")
+
+# -- Functions ####
+# -- -- Generate Reference Key
 df.numbers <- data.frame(
   number_original = seq(0,9,1),
   number1_masked = c(9, 5, 8, 0, 2, 7, 6, 1, 4, 3),
@@ -12,6 +24,7 @@ df.numbers <- data.frame(
   number6_masked = c(1, 3, 5, 7, 9, 0, 2, 4, 6, 8)
   )
 
+# -- -- Define functions ####
 mask_control_nos <- function(true_control_no){
   # Mask IDs by linking each letter/number to their corresponding value in df.letters and df.numbers
   temp <- data.frame(control_number = true_control_no)
@@ -121,6 +134,4 @@ unmask_control_nos <- function(research_id){
   matched_ids <- temp[,c("control_number","research_id")]
   return(matched_ids)
 }
-test <- c("123456")
-mask_control_nos(test)
-unmask_control_nos(c("rid_576392"))
+
