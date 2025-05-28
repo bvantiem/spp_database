@@ -13,7 +13,7 @@ source("scripts/00_packages.R")
 source("scripts/0_utils.R")
 
 # -- Functions ####
-# -- -- Generate Reference Key
+# -- -- Generate Reference Key ####
 df.numbers <- data.frame(
   number_original = seq(0,9,1),
   number1_masked = c(9, 5, 8, 0, 2, 7, 6, 1, 4, 3),
@@ -135,3 +135,5 @@ unmask_control_nos <- function(research_id){
   return(matched_ids)
 }
 
+
+# ================================================================= ####
