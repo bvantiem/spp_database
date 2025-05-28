@@ -260,7 +260,7 @@ basic <- basic %>%
 # dem_marital                1 id (out of 2401) has changing marital status
 # marital_status_code_raw,   1 id (out of 2401) has changing marital status
 # marital_status_raw         1 id (out of 2401) has changing marital status
-# -- -- dfFormation ####
+# -- -- df Formation ####
 basic_static <- basic %>%
   group_by(research_id) %>%
   slice(1) %>%
