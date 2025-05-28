@@ -285,7 +285,7 @@ basic_static_demographics <- basic %>%
          marital_status_raw,
          date_of_birth_raw
   )
-# -- Each Individual Sentence/ Charge ####
+# -- Individual Sentence/ Charge ####
 # -- -- one row per sentence (may be mutliple rows for one id)
 basic_by_sentence <- basic %>%
   # -- group by these variables which when constant represent one charge
