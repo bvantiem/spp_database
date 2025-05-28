@@ -26,13 +26,14 @@ source("scripts/0_control_no_masking_function.R")
 
 # -- Functions ####
 add_wave_data <- function(df, df2, date_datapull, wave_no){
-  # Sometimes the only difference is whitespace - we don't want those rows to be seen as different
+  # -- Sometimes the only difference is whitespace - we don't want those rows to be seen as different
   df2 <- df2 %>% mutate(across(where(is.character), str_trim))
 
-  # Bind the dataframes together, except the wave columns
+  # -- Bind the dataframes together, except the wave columns
   df_combined <- rbind(df[,which(names(df) %ni% c("wave", "date_datapull", "control_number_pull"))], df2)
+                    # ----- should this be %in%
 
-  # Subset to the rows in the new dataframe that are new
+  # -- Subset to the rows in the new dataframe that are new
   df2_new <- df2[!duplicated(df_combined)[(nrow(df) + 1):nrow(df_combined)],]
 
 
@@ -40,6 +41,7 @@ add_wave_data <- function(df, df2, date_datapull, wave_no){
     mutate(wave = wave_no) %>%
     mutate(date_datapull = ymd(date_datapull)) %>%
     mutate(control_number_pull = paste0(control_number, paste0("_", wave_no)))
+   #------- should this be edited since we want the control_number and not control_number_pull?
   df <- rbind(df, df2_new)
   return(df)
 }
@@ -60,7 +62,7 @@ move1 <- move1 %>% distinct()
 
 for (df_name in c("basic1", "move1", "assess1", "house1", "program1", "conduct1", "work1", "visit1")) {
   assign(df_name, get(df_name) %>%
-           mutate(wave = 1) %>%
+           mutate(wave = 1) %>% 
            mutate(date_datapull = ymd(20220625)) %>%
            mutate(control_number_pull = paste0(control_number, "_1a")) %>%
            mutate(across(where(is.character), str_trim)))
@@ -290,12 +292,15 @@ names(move)[which(names(move)=="mov_cur_inmt_num")] <- "inmate_id"
 names(assess)[which(names(assess)=="Inmate_number")] <- "inmate_id"
 
 # -- Control numbers ####
-# Control numbers are unique to inmate_ids within data pulls. For example, control number 136257 belongs to DL8705 in waves 1 and 2, and to QP2490 in waves 3, 4, and 5
-# Some datasets only have control numbers and not inmate numbers - house, program, conduct, work, and visit
+# Control numbers are unique to inmate_ids within data pulls. For example, 
+# control number 136257 belongs to DL8705 in waves 1 and 2, and to QP2490 in waves 3, 4, and 5
+# Some datasets only have control numbers and not inmate numbers - house, program, conduct, 
+# work, and visit
 # Find unique combinations of IDs and control numbers
 control_nos <- unique(basic[,c("inmate_id", "control_number")])
 
-# Sometimes there are two versions of the control number, one with 6 digits and one with 5 digits where the only difference is a leading zero. In those cases only, add a leading zero.
+# Sometimes there are two versions of the control number, one with 6 digits and one 
+# with 5 digits where the only difference is a leading zero. In those cases only, add a leading zero.
 control_nos <- control_nos %>%
   group_by(inmate_id) %>%
   mutate(
