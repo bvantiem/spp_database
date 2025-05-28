@@ -25,9 +25,8 @@ for (name in c("basic", "move", "assess", "house", "program", "conduct", "work",
 i <- unique(control_nos_inmate_ids$control_number)
 id.link <- mask_control_nos(i) # Generate masked Research IDs
 
-# this code is not working, could this be responsible for NAs?
 for (df_name in c("basic", "move", "assess", "house", "program", "conduct", "work", "visit")) {
-  print(df_name)====
+  print(df_name)
   updated_df <- get(df_name) %>%
     left_join(id.link, by = "control_number") %>%
     select(-any_of(c("state_id_num", "inmate_id", "control_number"))) %>%
