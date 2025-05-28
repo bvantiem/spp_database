@@ -31,7 +31,7 @@ add_wave_data <- function(df, df2, date_datapull, wave_no){
 
   # -- Bind the dataframes together, except the wave columns
   df_combined <- rbind(df[,which(names(df) %ni% c("wave", "date_datapull", "control_number_pull"))], df2)
-                    # ----- should this be %in%
+
 
   # -- Subset to the rows in the new dataframe that are new
   df2_new <- df2[!duplicated(df_combined)[(nrow(df) + 1):nrow(df_combined)],]
@@ -78,6 +78,7 @@ work <- work1
 visit <- visit1
 
 # -- -- Wave 1b ####
+# -- This is admin data on individuals who were missing from the Wave 1a data file
 basic1_cor <- xl.read.file("data/raw/1_admin_data/pcq_wave1/PrisonClimateSurveyParticipantsDataCorrectedIDs_20220903.xlsx", xl.sheet=1, password="LS_2022")
 move1_cor <- xl.read.file("data/raw/1_admin_data/pcq_wave1/PrisonClimateSurveyParticipantsDataCorrectedIDs_20220903.xlsx", xl.sheet=2, password="LS_2022")
 assess1_cor <- xl.read.file("data/raw/1_admin_data/pcq_wave1/PrisonClimateSurveyParticipantsDataCorrectedIDs_20220903.xlsx", xl.sheet=3, password="LS_2022")
