@@ -11,8 +11,6 @@
 rm(list=ls())
 source("scripts/00_packages.R")
 source("scripts/0_utils.R")
-
-# -- Functions ####
 # -- -- Generate Reference Key ####
 df.numbers <- data.frame(
   number_original = seq(0,9,1),
@@ -24,7 +22,7 @@ df.numbers <- data.frame(
   number6_masked = c(1, 3, 5, 7, 9, 0, 2, 4, 6, 8)
   )
 
-# -- -- Define functions ####
+# -- -- Define Control Number Masking Function ####
 mask_control_nos <- function(true_control_no){
   # Mask IDs by linking each letter/number to their corresponding value in df.letters and df.numbers
   temp <- data.frame(control_number = true_control_no)
