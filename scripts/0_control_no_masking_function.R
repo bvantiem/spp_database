@@ -36,7 +36,7 @@ mask_control_nos <- function(true_control_no){
   temp$number5_original <- NA
   temp$number6_original <- NA
   temp$number1_masked <- NA
-  temp$number2_masked <- NA
+  temp$number2_masked <- NA 
   temp$number3_masked <- NA
   temp$number4_masked <- NA
   temp$number5_masked <- NA
