@@ -247,7 +247,7 @@ basic <- basic %>%
   left_join(prison_lookup, by = "pris_loc") %>%
   select(-pris_loc) %>%
   rename(pris_loc = pris_loc_full) %>%
-  relocate(pris_loc, .after = pris_custody_lvl)
+  relocate(pris_loc, .after = pris_custody_lvl) %>%
   relocate(ends_with("_raw"), .after = last_col())
 
 # ================================================================= ####
@@ -402,22 +402,32 @@ basic <- basic %>%
   mutate(dem_edu_high_school = ifelse(dem_edu_grade>=12, 1,0)) %>%
   relocate(dem_edu_high_school, .after = dem_edu_grade) %>%
   mutate(
+    # this variable works!
+    # should we only include the age if they participated in that wave or does 
+    # it not matter?
     dem_age_wave1 = decimal_date(ymd(wave1_date))-decimal_date(dem_dob_dt),
-    dem_age_wave2 = decimal_date(ymd(20221115))-decimal_date(dem_dob_dt),
-    dem_age_wave3 = decimal_date(ymd(20230520))-decimal_date(dem_dob_dt),
-    dem_age_wave4 = decimal_date(ymd(20231128))-decimal_date(dem_dob_dt),
-    dem_age_wave5 = decimal_date(ymd(20240606))-decimal_date(dem_dob_dt)) %>%
+    dem_age_wave2 = decimal_date(ymd(wave2_date))-decimal_date(dem_dob_dt),
+    dem_age_wave3 = decimal_date(ymd(wave3_date))-decimal_date(dem_dob_dt),
+    dem_age_wave4 = decimal_date(ymd(wave4_date))-decimal_date(dem_dob_dt),
+    dem_age_wave5 = decimal_date(ymd(wave5_date))-decimal_date(dem_dob_dt),
+    dem_age_wave6 = decimal_date(ymd(wave6_date))-decimal_date(dem_dob_dt)) %>%
   relocate(starts_with("dem_age_wave"), .after = dem_dob_dt) %>%
+  # this variable does not work, sent_min_expir_dt has 4532 missing values and only
+  # values are from 2002, unsure how to build the min_expir_dt using the min_yrs, mnths, and days
+  # variables
   mutate(
-    sent_days_to_min_wave1 = sent_min_expir_dt - ymd(20220501),
-    sent_days_to_min_wave2 = sent_min_expir_dt - ymd(20221115),
-    sent_days_to_min_wave3 = sent_min_expir_dt - ymd(20230520),
-    sent_days_to_min_wave4 = sent_min_expir_dt - ymd(20231128),
-    sent_days_to_min_wave5 = sent_min_expir_dt - ymd(20240606)) %>%
+    sent_days_to_min_wave1 = sent_min_expir_dt - ymd(wave1_date),
+    sent_days_to_min_wave2 = sent_min_expir_dt - ymd(wave2_date),
+    sent_days_to_min_wave3 = sent_min_expir_dt - ymd(wave3_date),
+    sent_days_to_min_wave4 = sent_min_expir_dt - ymd(wave4_date),
+    sent_days_to_min_wave5 = sent_min_expir_dt - ymd(wave5_date),
+    sent_days_to_min_wave6 = sent_min_expir_dt - ymd(wave6_date)) %>%
   relocate(starts_with("sent_days_to_min_wave"), .after = sent_max_expir_recmp_dt) %>%
   mutate(
     sent_min_in_days = (sent_min_cort_yrs*365)+(sent_min_cort_mths*12)+sent_min_cort_days,
-    sent_max_in_days = (sent_max_cort_yrs*365)+(sent_max_cort_mths*12)+sent_max_cort_days)
+    sent_max_in_days = (sent_max_cort_yrs*365)+(sent_max_cort_mths*12)+sent_max_cort_days) %>%
+  relocate(starts_with("sent_min_in_days"), .after = sent_max_cort_days) %>%
+  relocate(starts_with("sent_max_in_days"), .after = sent_min_in_days)
 # ================================================================= ####
 # Save dataframe ####
 saveRDS(basic, file = "data/processed/processing_layer_3/basic_cleaned.Rds")
