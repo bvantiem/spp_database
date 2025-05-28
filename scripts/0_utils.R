@@ -1,18 +1,30 @@
-`%ni%` = Negate(`%in%`)
+`%ni%` = Negate(`%in%`) # unsure what this is
+# ======================================================================= ####
+# Notes to Script ####
+# -- Objective ####
+# -- Readme ####
+# -- To do ####
+# ======================================================================= ####
 
-## Set seed ####
+
+
+# Set Up ####
+# -- Prepare Environment ####
+# -- Functions #### 
+# -- Set Seed ####
 set.seed(1962)
-
-# Unit mapping ####
+# -- Read in Data ####
 unit_mapping <- read.csv("data/raw/2_data_keys/unit_mapping.csv")
-
+pcq_lookup <- read_xlsx("data/raw/5_pcq_survey_questions/230725_pcq_survey_questions_NL_PA.xlsx")
+# ======================================================================= ####
+# Unit Mapping ####
 unit_mapping <- unit_mapping %>%
   mutate(across(starts_with("unit_type_wave"),
                 ~ case_when(
                   . == "rhu" ~ "1. Restrictive Housing",
                   . == "gp" ~ "2. General Population",
-                  . == "gp-tc" ~ "3. Therapeutic Community",
-                  . == "rec" ~ "4. Recovery Unit",
+                  . == "gp-tc" ~ "3. Therapeutic Community", # Since they removed this unit does this cause issues with future waves?
+                  . == "rec" ~ "4. Recovery Unit", # is this INF?
                   . == "hons" ~ "5. Honor Block",
                   . == "gp-epu" ~ "5. Enhanced Privilege Unit",
                   . == "gp-senior" ~ "5. Senior Unit",
@@ -30,8 +42,9 @@ unit_mapping$unit_type_nols <- with(unit_mapping, ifelse(unit %in% c("aa", "ab",
                                                                                      ifelse(unit %in% c("rhu","fa"), "rhu",
                                                                                             ifelse(unit %in% c("inf","ma"), "inf",NA))))))))
 
-# pcq_lookup ####
-pcq_lookup <- read_xlsx("data/raw/5_pcq_survey_questions/230725_pcq_survey_questions_NL_PA.xlsx")
+# ======================================================================= ####
+# Pcq_lookup ####
+
 pcq_lookup <- pcq_lookup %>%
   mutate(question_qno = paste0("q", question_no_pa_2022a), .after = question_no_pa_2022a)
 pcq_lookup <- as.data.frame(pcq_lookup)
@@ -82,9 +95,12 @@ experience.key <- list(actsat = c("q55", "q56", "q57", "q58", "q59", "q60", "q61
 service_use_qs <- c("q55","q56","q57","q58","q59","q61","q115","q116","q117","q118","q138" ,"q167", "q162", "q163")
 
 
+# ======================================================================= ####
 # Wave Dates ####
+# dates each wave occured to ensure standardization
 wave1_date = ymd(20220501)
-wave2 = decimal_date(ymd(20221115))-decimal_date(dem_dob_dt)
-dem_age_wave3 = decimal_date(ymd(20230520))-decimal_date(dem_dob_dt)
-dem_age_wave4 = decimal_date(ymd(20231128))-decimal_date(dem_dob_dt)
-dem_age_wave5 = decimal_date(ymd(20240606))-decimal_date(dem_dob_dt)
+wave2_date = ymd(20221115)
+wave3_date = ymd(20230520)
+wave4_date = ymd(20231128)
+wave5_date = ymd(20240606)
+wave6_date = ymb(20241022)
