@@ -55,7 +55,7 @@ temp <- pcq_lookup[which(pcq_lookup$pc_theory=="prison climate" & pcq_lookup$in_
 pcq_lookup$scale_exploratory <- with(pcq_lookup, ifelse(scale_theory=="visits" & question_no_pa_2022a %in% c(139:144), "visits_infrastructure",
                                                         ifelse(scale_theory=="visits" & question_no_pa_2022a %in% c(145:146),"visits_feelings", scale_theory)))
 
-# For RCT Longitudinal paper
+# -- For RCT Longitudinal paper ####
 scale.key.longitudinal <- list(prisoners = c("q10", "q11", "q12", "q13", "q14") ,
                   staff = c("q15", "q16", "q17", "q18", "q19", "q20", "q21", "q22"), # includes procedure
                   safety = c("q26", "q29", "q30", "q31", "q32"),
