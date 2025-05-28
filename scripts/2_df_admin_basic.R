@@ -261,22 +261,17 @@ basic <- basic %>%
 # marital_status_code_raw,   1 id (out of 2401) has changing marital status
 # marital_status_raw         1 id (out of 2401) has changing marital status
 # -- -- df Formation ####
-basic_static <- basic %>%
+basic_static_demographics <- basic %>%
   group_by(research_id) %>%
   slice(1) %>%
   ungroup() %>%
   select(control_number_pull, 
          research_id, 
-         sent_commitment_cnty, 
-         pris_loc,
-         pris_loc_full,
          dem_race,
          dem_marital,
          dem_edu_grade,
          dem_dob_dt,
          date_datapull,
-         commit_cnty_raw,
-         cnty_name_raw,
          race_code_raw,
          race_raw,
          marital_status_code_raw,
@@ -285,12 +280,22 @@ basic_static <- basic %>%
   )
 # -- Each Individual Sentence/ Charge ####
 # one row per sentence (may be mutliple rows for one id)
+# research_id, date_datapull, control_number_pull, sent_class, all sent_min/sent_max except recmp,
+# sent_commitment, asca, chg_off, chg_des, keep dem variables from static df as well,
+# raw versions of all of these as well.
 basic_by_sentence <- basic %>%
-  group_by(dem_dob_dt, sent_min_cort_yrs, sent_min_cort_mths, sent_min_cort_days) %>%
+  group_by(dem_dob_dt, 
+           sent_min_cort_yrs, 
+           sent_min_cort_mths, 
+           sent_min_cort_days) %>%
   slice(1) %>%     # One row per unique sentence
   ungroup() %>%
-  select(-RecmpMax_Dt_raw, -sent_max_expir_recmp_dt, -pris_loc, -pris_loc_full, 
-         -custody_raw, -pris_custody_lvl)
+  select(-RecmpMax_Dt_raw, 
+         -sent_max_expir_recmp_dt, 
+         -pris_loc, 
+         -pris_loc_full, 
+         -custody_raw, 
+         -pris_custody_lvl)
 # ================================================================= ####
 # Add Notes to Variables ####
   # to view notes added use str() or comment()
@@ -361,7 +366,7 @@ basic <- basic %>%
   mutate(dem_edu_high_school = ifelse(dem_edu_grade>=12, 1,0)) %>%
   relocate(dem_edu_high_school, .after = dem_edu_grade) %>%
   mutate(
-    dem_age_wave1 = decimal_date(ymd(20220501))-decimal_date(dem_dob_dt),
+    dem_age_wave1 = decimal_date(ymd(wave1_date))-decimal_date(dem_dob_dt),
     dem_age_wave2 = decimal_date(ymd(20221115))-decimal_date(dem_dob_dt),
     dem_age_wave3 = decimal_date(ymd(20230520))-decimal_date(dem_dob_dt),
     dem_age_wave4 = decimal_date(ymd(20231128))-decimal_date(dem_dob_dt),
@@ -375,8 +380,8 @@ basic <- basic %>%
     sent_days_to_min_wave5 = sent_min_expir_dt - ymd(20240606)) %>%
   relocate(starts_with("sent_days_to_min_wave"), .after = sent_max_expir_recmp_dt) %>%
   mutate(
-    sent_min_in_days = (sent_min_cort_yrs*365)+(sent_min_cort_mths*31)+sent_min_cort_days,
-    sent_max_in_days = (sent_max_cort_yrs*365)+(sent_max_cort_mths*31)+sent_max_cort_days)
+    sent_min_in_days = (sent_min_cort_yrs*365)+(sent_min_cort_mths*12)+sent_min_cort_days,
+    sent_max_in_days = (sent_max_cort_yrs*365)+(sent_max_cort_mths*12)+sent_max_cort_days)
 # ================================================================= ####
 # Save dataframe ####
 saveRDS(basic, file = "data/processed/processing_layer_3/basic_cleaned.Rds")
