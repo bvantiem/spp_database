@@ -1,11 +1,13 @@
 # ========================================= ####
 # Notes to Script
+# Notes to Script ####
 # -- Objective ####
 # Mask control numberes in administrative dataframes
 # -- Readme ####
 # -- To do ####
 # ========================================= ####
 # Set up
+# Set Up ####
 # -- Prepare environment ####
 rm(list=ls())
 source("scripts/00_packages.R")
