@@ -69,7 +69,28 @@ remove_leading_zeros <- function(x) {
 
   return(cleaned_x)
 }
-
+standardize_uppercase <- function(x) {
+  x <- x %>%
+    str_squish() %>%
+    str_replace_all("\\s*-\\s*", " - ") %>%                         # Normalize dash spacing
+    str_replace_all("\\bMoveable\\b", "Movable") %>%               # Fix spelling
+    str_replace_all("Mdse", "Merchandise") %>%                     # Expand abbreviation
+    str_to_title()
+  
+  # Preserve acronyms (re-insert after title case)
+  for (acro in acronyms) {
+    pattern <- paste0("\\b", str_to_title(acro), "\\b")
+    x <- str_replace_all(x, pattern, acro)
+  }
+  
+  # Custom replacements
+  x <- x %>%
+    str_replace_all("^Murder\\s*-\\s*(1st|2nd|3rd) Degree$", "Murder (\\1 Degree)") %>%
+    str_replace_all("^Person Not To Possess[, ]*Use[, ]*Etc\\.?[, ]*Firearms$", 
+                    "Person Not To Possess, Use, Etc. Firearms")
+  
+  return(x)
+}
 # -- Read in Data ####
 basic <- readRDS("data/processed/processing_layer_2/basic_masked.Rds")
 
@@ -148,6 +169,17 @@ cols_cort <- c("sent_min_cort_yrs",
 cols_expir <- c("sent_min_expir_dt",
                 "sent_max_expir_dt")
 
+# save these acronyms to ensure they stay capitalized
+acronyms <- c("DUI", 
+              "IDSI")
+
+
+# columns that need to be reformatted for the standardization of uppercase letters
+cols_to_standardize <- c("offense_raw",
+                         "sent_status", 
+                         "sent_commitment_cnty", 
+                         "chg_des")
+
 basic <- basic %>%
   # Set any empty strings to NA
   mutate(across(everything(), ~ replace(., grepl("^\\s*$", .), NA))) %>%
@@ -176,8 +208,12 @@ basic <- basic %>%
     sent_off_asca == "PUBORDER" ~ "Public Order",
     sent_off_asca == "9-Not An Arrest" ~ "Not An Arrest",
     TRUE ~ sent_off_asca)) %>%
-  # Remove trailing white space
+  # -- Some responses were coded as NULL change this to NA
+  mutate(sent_off_asca = na_if(sent_off_asca, "NULL")) %>%
+  # -- Remove trailing white space
   mutate(sent_commitment_cnty = gsub("\\s+$", "", sent_commitment_cnty)) %>%
+  # -- Use standardize function to fix uppercase discrepencies
+  mutate(across(all_of(cols_to_standardize), standardize_uppercase)) %>%
   # DEMOGRAPHICS
   mutate(dem_dob_dt = ymd(dem_dob_dt)) %>%
   mutate(dem_race = case_when(
@@ -188,8 +224,8 @@ basic <- basic %>%
     dem_race == "I" ~ "American Indian",
     TRUE ~ dem_race)) %>%
     mutate(dem_marital = case_when(
-      # NA values in marital_status_code_raw are listed as Unknown in marital_status_raw. 
-      # Code ensures that both are recorded as "Unknown".
+      # -- NA values in marital_status_code_raw are listed as Unknown in marital_status_raw. 
+      # -- Code ensures that both are recorded as "Unknown".
       marital_status_code_raw == "UNK" | marital_status_raw == "UNKNOWN" ~ "Unknown",
       marital_status_code_raw == "MAR" ~ "Married",
       marital_status_code_raw == "DIV" ~ "Divorced",
@@ -202,45 +238,17 @@ basic <- basic %>%
   mutate(dem_edu_grade = remove_leading_zeros(dem_edu_grade) |> as.numeric()) %>%
   mutate(dem_mhcode = gsub("\\s+$", "", dem_mhcode)) %>%
   mutate(dem_stg_yes = as.numeric(dem_stg_yes)) %>%
-  # responses are coded as NULL instead of NA
+  # -- Change responses which are coded as NULL instead of NA
   mutate(dem_mhcode = na_if(dem_mhcode, "NULL")) %>%
-  mutate(sent_off_asca = na_if(sent_off_asca, "NULL")) %>%
-  # change custody level into numeric result (ex L1 to 1)
+  # PRISON
+  # -- Change custody level into numeric result (ex L1 to 1)
   mutate(pris_custody_lvl = as.numeric(str_replace(pris_custody_lvl, "^L", ""))) %>%
+  # -- Change the name from facility abrv to full name (ex CHS to Chester)
   left_join(prison_lookup, by = "pris_loc") %>%
+  select(-pris_loc) %>%
+  rename(pris_loc = pris_loc_full) %>%
+  relocate(pris_loc, .after = pris_custody_lvl)
   relocate(ends_with("_raw"), .after = last_col())
-
-# clean offense_raw typos and standardize capitalization of words.
-# save these acronyms to ensure they stay capitalized
-acronyms <- c("DUI", "IDSI")
-standardize_uppercase <- function(x) {
-  x <- x %>%
-    str_squish() %>%
-    str_replace_all("\\s*-\\s*", " - ") %>%                         # Normalize dash spacing
-    str_replace_all("\\bMoveable\\b", "Movable") %>%               # Fix spelling
-    str_replace_all("Mdse", "Merchandise") %>%                     # Expand abbreviation
-    str_to_title()
-  
-  # Preserve acronyms (re-insert after title case)
-  for (acro in acronyms) {
-    pattern <- paste0("\\b", str_to_title(acro), "\\b")
-    x <- str_replace_all(x, pattern, acro)
-  }
-  
-  # Custom replacements
-  x <- x %>%
-    str_replace_all("^Murder\\s*-\\s*(1st|2nd|3rd) Degree$", "Murder (\\1 Degree)") %>%
-    str_replace_all("^Person Not To Possess[, ]*Use[, ]*Etc\\.?[, ]*Firearms$", 
-                    "Person Not To Possess, Use, Etc. Firearms")
-  
-  return(x)
-}
-
-# columns that need to be reformatted for the standardization of uppercase letters
-cols_to_standardize <- c("offense_raw", "sent_status", "sent_commitment_cnty", "chg_des")
-
-basic <- basic %>%
-  mutate(across(all_of(cols_to_standardize), standardize_uppercase))
 
 # ================================================================= ####
 # Define new dataframes ####
