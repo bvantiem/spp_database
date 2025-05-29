@@ -128,7 +128,7 @@ prison_lookup <- tribble(
 # Rename raw variables ####
 # Append _raw to all columns except "research_id"
 basic <- basic |>
-  rename_with(~ paste0(., "_raw"), .cols = setdiff(names(basic), c("research_id","date_datapull", "control_number_pull", "wave")))
+  rename_with(~ paste0(., "_raw"), .cols = setdiff(names(basic), c("research_id","date_datapull", "control_number", "wave")))
 
 # Rename columns and put them in order
 basic <- basic %>%
@@ -272,7 +272,7 @@ basic_static_demographics <- basic %>%
   slice(1) %>% 
   ungroup() %>%
   # -- drop all variables but these, only static demographic variables
-  select(control_number_pull, 
+  select(control_number, 
          research_id, 
          dem_race,
          dem_marital,
@@ -299,7 +299,7 @@ basic_by_sentence <- basic %>%
   # -- include only the following variables in new dataframe
   select(research_id,
          date_datapull,
-         control_number_pull,
+         control_number,
          sent_class,
          sent_min_cort_days,
          sent_min_cort_mths,
