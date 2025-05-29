@@ -1,6 +1,6 @@
-
 # ======================================================================= ####
 # Notes to Script #### # didn't know what exactly to write in these places
+# Notes to Script: ####
 # -- Objective ####
 # -- Readme ####
 # -- To do ####
