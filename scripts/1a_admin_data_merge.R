@@ -323,7 +323,12 @@ control_nos <- control_nos %>%
   ) %>%
   ungroup() %>%
   select(-has_leading_zero) %>%
-  distinct()
+  distinct() %>%
+  mutate(control_number = if_else(
+    nchar(control_number) == 5,
+    paste0("0", control_number),
+    control_number
+  ))
 
 # Some control numbers are associated with multiple IDs (n=54 as of wave 6)
 # Associate each control number with the accompanying original inmate IDs
