@@ -25,22 +25,31 @@ source("scripts/0_utils.R")
 source("scripts/0_control_no_masking_function.R")
 
 # -- Functions ####
-add_wave_data <- function(df, df2, date_datapull, wave_no){
-  # -- Sometimes the only difference is whitespace - we don't want those rows to be seen as different
+add_wave_data <- function(df, df2, date_datapull, wave_no) {
+  # -- Trim whitespace in character columns
   df2 <- df2 %>% mutate(across(where(is.character), str_trim))
-
-  # -- Bind the dataframes together, except the wave columns
-  df_combined <- rbind(df[,which(names(df) %ni% c("wave", "date_datapull", "control_number"))], df2)
-
-
-  # -- Subset to the rows in the new dataframe that are new
-  df2_new <- df2[!duplicated(df_combined)[(nrow(df) + 1):nrow(df_combined)],]
-
-
+  
+  # -- Remove specific columns from both dataframes for comparison
+  cols_to_remove <- c("wave", "date_datapull", "control_number")
+  df_subset <- df[, setdiff(names(df), cols_to_remove)]
+  df2_subset <- df2[, setdiff(names(df2), cols_to_remove)]
+  
+  # -- Bind the subsetted dataframes to identify new rows
+  df_combined <- rbind(df_subset, df2_subset)
+  
+  # -- Identify new rows in df2
+  df2_new <- df2[!duplicated(df_combined)[(nrow(df) + 1):nrow(df_combined)], ]
+  
+  # -- Add wave info to new rows
   df2_new <- df2_new %>%
-    mutate(wave = wave_no) %>%
-    mutate(date_datapull = ymd(date_datapull)) 
+    mutate(
+      wave = wave_no,
+      date_datapull = ymd(date_datapull)
+    )
+  
+  # -- Bind the new rows to the original df
   df <- rbind(df, df2_new)
+  
   return(df)
 }
 
