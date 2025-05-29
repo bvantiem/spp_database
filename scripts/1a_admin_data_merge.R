@@ -30,7 +30,8 @@ add_wave_data <- function(df, df2, date_datapull, wave_no) {
   df2 <- df2 %>% mutate(across(where(is.character), str_trim))
   
   # -- Remove specific columns from both dataframes for comparison
-  cols_to_remove <- c("wave", "date_datapull", "control_number")
+  cols_to_remove <- c("wave", "date_datapull"#, "control_number"
+                      )
   df_subset <- df[, setdiff(names(df), cols_to_remove)]
   df2_subset <- df2[, setdiff(names(df2), cols_to_remove)]
   
