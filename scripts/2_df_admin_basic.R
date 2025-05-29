@@ -126,7 +126,7 @@ prison_lookup <- tribble(
 # ================================================================= ####
 # Clean existing dataset
 # Rename raw variables ####
-# Append _raw to all columns except "research_id"
+# Append _raw to all columns except specified columns
 basic <- basic |>
   rename_with(~ paste0(., "_raw"), .cols = setdiff(names(basic), c("research_id","date_datapull", "control_number", "wave")))
 
