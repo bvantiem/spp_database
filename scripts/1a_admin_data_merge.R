@@ -30,7 +30,7 @@ add_wave_data <- function(df, df2, date_datapull, wave_no){
   df2 <- df2 %>% mutate(across(where(is.character), str_trim))
 
   # -- Bind the dataframes together, except the wave columns
-  df_combined <- rbind(df[,which(names(df) %ni% c("wave", "date_datapull", "control_number_pull"))], df2)
+  df_combined <- rbind(df[,which(names(df) %ni% c("wave", "date_datapull", "control_number"))], df2)
 
 
   # -- Subset to the rows in the new dataframe that are new
@@ -39,9 +39,7 @@ add_wave_data <- function(df, df2, date_datapull, wave_no){
 
   df2_new <- df2_new %>%
     mutate(wave = wave_no) %>%
-    mutate(date_datapull = ymd(date_datapull)) %>%
-    mutate(control_number_pull = paste0(control_number, paste0("_", wave_no)))
-   #------- should this be edited since we want the control_number and not control_number_pull?
+    mutate(date_datapull = ymd(date_datapull)) 
   df <- rbind(df, df2_new)
   return(df)
 }
@@ -64,7 +62,6 @@ for (df_name in c("basic1", "move1", "assess1", "house1", "program1", "conduct1"
   assign(df_name, get(df_name) %>%
            mutate(wave = 1) %>% 
            mutate(date_datapull = ymd(20220625)) %>%
-           mutate(control_number_pull = paste0(control_number, "_1a")) %>%
            mutate(across(where(is.character), str_trim)))
 }
 
