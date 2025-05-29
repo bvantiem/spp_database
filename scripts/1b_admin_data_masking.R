@@ -28,7 +28,7 @@ for (df_name in c("basic", "move", "assess", "house", "program", "conduct", "wor
   print(df_name)
   updated_df <- get(df_name) %>%
     left_join(id.link, by = "control_number") %>%
-    select(-any_of(c("state_id_num", "inmate_id", "control_number"))) %>%
+    select(-any_of(c("state_id_num", "inmate_id"))) %>%
     relocate(research_id) # moves research id to the front
 
   new_name <- paste0(df_name, "_masked")
