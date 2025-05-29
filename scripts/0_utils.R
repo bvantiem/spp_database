@@ -19,13 +19,13 @@ unit_mapping <- read.csv("data/raw/2_data_keys/unit_mapping.csv")
 pcq_lookup <- read_xlsx("data/raw/5_pcq_survey_questions/230725_pcq_survey_questions_NL_PA.xlsx")
 # ======================================================================= ####
 # Unit Mapping ####
-# -- INF is not included
+# -- INF is not included due to small sample of this unit
 unit_mapping <- unit_mapping %>%
   mutate(across(starts_with("unit_type_wave"),
                 ~ case_when(
                   . == "rhu" ~ "1. Restrictive Housing",
                   . == "gp" ~ "2. General Population",
-                  . == "gp-tc" ~ "3. Therapeutic Community", # Since they removed this unit does this cause issues with future waves?
+                  . == "gp-tc" ~ "3. Therapeutic Community", 
                   . == "rec" ~ "4. Recovery Unit",
                   . == "hons" ~ "5. Honor Block",
                   . == "gp-epu" ~ "5. Enhanced Privilege Unit",
@@ -106,3 +106,4 @@ wave3_date = ymd(20230520)
 wave4_date = ymd(20231128)
 wave5_date = ymd(20240606)
 wave6_date = ymd(20241022)
+# ======================================================================= ####
