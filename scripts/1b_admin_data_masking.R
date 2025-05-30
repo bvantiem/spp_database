@@ -24,23 +24,26 @@ for (name in c("basic", "move", "assess", "house", "program", "conduct", "work",
 i <- unique(control_nos_inmate_ids$control_number)
 id.link <- mask_control_nos(i) # Generate masked Research IDs
 
+# make sure that they are padded and have 6 digits
+id.link <- id.link %>%
+  mutate(control_number = sprintf("%06d", as.integer(control_number)))
+
 for (df_name in c("basic", "move", "assess", "house", "program", "conduct", "work", "visit")) {
   print(df_name)
+  
   updated_df <- get(df_name) %>%
+    mutate(control_number = sprintf("%06d", as.integer(control_number))) %>%  # Pad to 6 digits
     left_join(id.link, by = "control_number") %>%
     select(-any_of(c("state_id_num", "inmate_id"))) %>%
-    relocate(research_id) # moves research id to the front
-
+    relocate(research_id) # Moves research_id to the front
+  
   new_name <- paste0(df_name, "_masked")
   assign(new_name, updated_df)
 }
-
 # ========================================================================= ####
 # Save masked data frames ####
 for (name in c("basic", "move", "assess", "house", "program", "conduct", "work", "visit")) {
   masked_df <- get(paste0(name, "_masked")) %>% as.data.frame()
   saveRDS(masked_df, file = paste0("data/processed/processing_layer_2/", name, "_masked.Rds"))
 }
-
-
 
