@@ -68,34 +68,6 @@ standardize_job_field <- function(x) {
 # -- Read in Data ####
 work <- readRDS("data/processed/processing_layer_2/work_masked.Rds")
 
-# -- Prison Lookup Table ####
-prison_lookup <- tribble(
-  ~pris_loc,     ~pris_loc_full,
-  "ALB",          "Albion",
-  "BEN",          "Benner Township",
-  "CAM",          "Cambridge Springs",
-  "CHS",          "Chester",
-  "COA",          "Coal Township",
-  "DAL",         "Dallas",
-  "FRA",          "Frackville",
-  "FYT",          "Fayette",
-  "FRS",         "Forest",
-  "GRN",          "Greene",
-  "HOU",          "Houtzdale",
-  "HUN",          "Huntingdon",
-  "LAU",          "Laurel Highlands",
-  "MAH",          "Mahanoy",
-  "MER",          "Mercer",
-  "MUN",          "Muncy",
-  "PHX",          "Phoenix",
-  "PIT",          "Pittsburgh",
-  "QUE",          "Quehanna Boot Camp",
-  "RET",          "Retreat",
-  "ROC",          "Rockview",
-  "SMI",          "Smithfield",
-  "SMR",          "Somerset",
-  "WAM",          "Waymart"
-) 
 
 # ================================================================= ####
 # Rename raw variables ####
