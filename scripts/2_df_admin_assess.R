@@ -56,7 +56,7 @@ assess <- readRDS("data/processed/processing_layer_2/assess_masked.Rds")
 # Rename raw variables ####
 assess <- assess |>
   rename_with(~ paste0(., "_raw"), .cols = setdiff(names(assess), c("research_id","date_datapull", "control_number", "wave")))|>
-  mutate(test_desc = Test_Desc_raw,
+  mutate(test_name = Test_Desc_raw,
          test_score = Test_Score_raw,
          test_date = Test_Dt_raw) |>
   relocate(ends_with("_raw"), .after = last_col())
@@ -66,6 +66,14 @@ assess <- assess |>
   mutate(test_time = format(as.POSIXct(test_date), format = "%H:%M:%S"),
   test_date = as.Date(test_date) ) |>
   select(-test_time) |> 
+  mutate(test_name = case_when(
+    test_name == "CSS-M" ~ "Correctional Supervision Scale - Modified",
+    test_name == "ST99" ~ "Substance Test 1999"
+    test_name == "LSI-R" ~ "Level of Service Inventory – Revised"
+    test_name == "TCU" ~ "Texas Christian University Drug Screen"
+    test_name == "HIQ" ~ "unk"
+    test_name == "RST" ~ "unk"
+  )) |>
   relocate(date_datapull, .after = test_date)
 
 # Fully NA rows ####
