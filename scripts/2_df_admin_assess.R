@@ -68,13 +68,46 @@ assess <- assess |>
   select(-test_time) |> 
   mutate(test_name = case_when(
     test_name == "CSS-M" ~ "Correctional Supervision Scale - Modified",
-    test_name == "ST99" ~ "Substance Test 1999"
-    test_name == "LSI-R" ~ "Level of Service Inventory – Revised"
-    test_name == "TCU" ~ "Texas Christian University Drug Screen"
-    test_name == "HIQ" ~ "unk"
-    test_name == "RST" ~ "unk"
+    test_name == "ST99" ~ "Substance Test 1999",
+    test_name == "LSI-R" ~ "Level of Service Inventory - Revised",
+    test_name == "TCU" ~ "Texas Christian University Drug Screen",
+    test_name == "HIQ" ~ "Health Interview Questionnaire",
+    test_name == "RST" ~ "Risk Screening Tool",
+    TRUE ~ test_name 
   )) |>
-  relocate(date_datapull, .after = test_date)
+  relocate(date_datapull, .after = test_date) |>
+  
+  # Create dummy variables
+  # -- test_name
+  mutate(
+    test_name_cssm = if_else(test_name == "Correctional Supervision Scale - Modified", 1, 0),
+    test_name_st99 = if_else(test_name == "Substance Test 1999", 1, 0),
+    test_name_lsir = if_else(test_name == "Level of Service Inventory - Revised", 1, 0),
+    test_name_tcu  = if_else(test_name == "Texas Christian University Drug Screen", 1, 0),
+    test_name_hiq  = if_else(test_name == "Health Interview Questionnaire", 1, 0),
+    test_name_rst  = if_else(test_name == "Risk Screening Tool", 1, 0)) |>
+  relocate(test_name_cssm, .after = date_datapull) |>
+  relocate(test_name_st99, .after = test_name_cssm) |>
+  relocate(test_name_lsir, .after = test_name_st99) |>
+  relocate(test_name_tcu, .after = test_name_lsir) |>
+  relocate(test_name_hiq, .after = test_name_tcu) |>
+  relocate(test_name_rst, .after = test_name_hiq) |>
+  # -- create test_Score variables for each test_name
+  # -- -- if they took the test their score will appear if not then an NA will 
+  mutate(
+    test_score_cssm = if_else(test_name_cssm == 1, test_score, NA_real_),
+    test_score_st99 = if_else(test_name_st99 == 1, test_score, NA_real_),
+    test_score_lsir = if_else(test_name_lsir == 1, test_score, NA_real_),
+    test_score_tcu  = if_else(test_name_tcu == 1,  test_score, NA_real_),
+    test_score_hiq  = if_else(test_name_hiq == 1,  test_score, NA_real_),
+    test_score_rst  = if_else(test_name_rst == 1,  test_score, NA_real_)
+  )|>
+  relocate(test_score_cssm, .after = test_name_rst) |>
+  relocate(test_score_st99, .after = test_score_cssm) |>
+  relocate(test_score_lsir, .after = test_score_st99) |>
+  relocate(test_score_tcu, .after = test_score_lsir) |>
+  relocate(test_score_hiq, .after = test_score_tcu) |>
+  relocate(test_score_rst, .after = test_score_hiq)
 
 # Fully NA rows ####
 NA_rows <- assess %>%
