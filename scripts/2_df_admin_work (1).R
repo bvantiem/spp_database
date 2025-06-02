@@ -155,12 +155,41 @@ work <- work %>%
            job_field == "WF" ~ "CI - WOOD FURNITURE",
            TRUE ~ job_field )) %>%  
   mutate(job_field = standardize_job_field(job_field)) %>%
+  # create higher level categories for job_field
+  mutate(job_field_cat = case_when(
+    job_field %in% c("ARTIST PROGRAM") ~ "Arts Program",
+    job_field %in% c("CI - FAYETTE CI-ADMINISTRATION", "CENTRALIZED SERVICES", "BUSINESS OFFICE") ~ "Administration",
+    job_field %in% c("CI - COMMISSARY BAGGING OPERATIONS", "CI - Commissary for Inmate Employment", "CI - MAHANOY COMMISSARY") ~ "Commissary Services",
+    job_field %in% c("CI GRATERFORD - CARTON", "CI GREENE - GARMENT", "CI - GARMENT", "CI - GARMENTS", "CI PHOENIX GARMENTS", 
+                    "LAUNDRY", "CI PHOENIX LAUNDRY OPERATIONS", "CI - SHOES", "CI PHOENIX SHOES", "CI - UNDERWEAR", 
+                    "CI PHOENIX UNDERWEAR", "STAFF CLOTHING") ~ "Garments/Laundry Services",
+    job_field %in% c("CI - MAHANOY - PRECISION METAL SHOP", "CI MAHANOY - PRECISION METAL SHOP", "CI Forest Plow Restoration and Paint Shop", 
+                    "CI FOREST WHEEL REFINISHING AND PAINT SHOP", "CI - WOOD FURNITURE") ~ "Metal/Wood/Paint Shops",
+    job_field %in% c("CI HUNTINGDON - SOAP  - DETERGENT", "CI - MATTRESS") ~ "Soft Goods Manufacturing",
+    job_field %in% c("CI - LIBRARY OPERATIONS", "LIBRARY SERVICES") ~ "Library Services",
+    job_field %in% c("INMATE ACTIVITIES", "INMATE EMPLOYMENT") ~ "Inmate Engagement",
+    job_field %in% c("COUNSELORS", "PSYCHOLOGICAL SERVICES") ~ "Behavioral Health",
+    job_field %in% c("DRUG AND ALCOHOL TREATMENT", "DRUG AND ALCOHOL MOU", "SUBSTANCE USE DISORDER") ~ "Substance Use Treatment",
+    job_field %in% c("RELIGIOUS SERVICES") ~ "Religious Services",
+    job_field %in% c("FOOD SERVICES") ~ "Food Services",
+    job_field %in% c("EDUCATION SERVICES") ~ "Education",
+    job_field %in% c("FIRE - SAFETY", "FORESTRY CAMP") ~ "Fire Safety/Forestry",
+    job_field %in% c("MAINTENANCE AND CONSTRUCTION", "MAINTENANCE  -  CONSTRUCTION", "CI - TV Repair Shop") ~ "Maintenance/Repair",
+    job_field %in% c("MEDICAL SERVICE STAFF", "OTHER MEDICAL SERVICES") ~ "Medical Services",
+    job_field %in% c("SECURITY") ~ "Security",
+    job_field %in% c("CI - SHIPPING AND RECEIVING") ~ "Shipping and Receiving",
+    job_field %in% c("CI - TECTILES") ~ "Textiles",
+    job_field %in% c("CI - TRANSPORTATION AND FREIGHT") ~ "Transportation",
+    job_field %in% c("COMMUNITY WORK PROGRAMS") ~ "Community Work Programs",
+    TRUE ~ "Other"
+  )) %>%
+  relocate(job_field_cat, .after = mutate(job_field)) %>%
   # there are 1438 unique descriptions, how should I handle this?
 # PRISON LOCATION
   left_join(prison_lookup, by = "pris_loc") %>%
   select(-pris_loc) %>%
   rename(pris_loc = pris_loc_full) %>%
-  relocate(pris_loc, .after = job_field) %>%
+  relocate(pris_loc, .after = pris_loc) %>%
   relocate(ends_with("_raw"), .after = last_col()) %>%
   relocate(date_datapull, .after = pris_loc)
 
