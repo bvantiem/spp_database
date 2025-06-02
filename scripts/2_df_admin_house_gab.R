@@ -58,8 +58,8 @@ house <- house |>
   rename_with(~ paste0(., "_raw"), .cols = setdiff(names(house), c("research_id","date_datapull", "control_number", "wave")))
 
 house <- house |>
-  mutate(date_in = date_in_raw,
-         date_out = date_out_raw) |>
+  mutate(loc_date_in = date_in_raw,
+         loc_date_out = date_out_raw) |>
   mutate(loc_bld = building_raw,
          loc_unit = section_raw,
          loc_cell = cell_raw,
@@ -81,10 +81,10 @@ house <- house %>%
   # DATE
   mutate(
     # -- need a leading zero for month
-    date_in = str_pad(as.character(date_in), width = 8, side = "left", pad = "0"),
-    date_out = str_pad(as.character(date_out), width = 8, side = "left", pad = "0"),
-    date_in = mdy(date_in),
-    date_out = mdy(date_out)
+    date_in = str_pad(as.character(loc_date_in), width = 8, side = "left", pad = "0"),
+    date_out = str_pad(as.character(loc_date_out), width = 8, side = "left", pad = "0"),
+    date_in = mdy(loc_date_in),
+    date_out = mdy(loc_date_out)
   ) %>%
   # DEMOGRAPHICS
   mutate(
@@ -114,8 +114,8 @@ NA_rows <- house %>%
 # Add Notes to Variable ####
 # to view notes added use str() or comment()
 # -- Cleaned Variables ####
-comment(house$date_in) <- "Date in ... facility? unit? system? 5413 missing values, created using date_in_raw"
-comment(house$date_out) <- "Date out ... facility? unit? system? 10852 missing values, created using date_out_raw"
+comment(house$loc_date_in) <- "Date in ... facility? unit? system? 5413 missing values, created using date_in_raw"
+comment(house$loc_date_out) <- "Date out ... facility? unit? system? 10852 missing values, created using date_out_raw"
 comment(house$loc_bld) <- "Description of housing building, 113 NA values unknown why... look into this!, created using building_raw variable"
 comment(house$loc_unit) <- "Housing unit, 113 NA values... same as house_bld missing, created using section_raw"
 comment(house$loc_cell) <- "Cell number individual lives in, 113 NA values, created using cell_raw"
