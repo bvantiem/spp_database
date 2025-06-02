@@ -162,7 +162,8 @@ work <- work %>%
   select(-pris_loc) %>%
   rename(pris_loc = pris_loc_full) %>%
   relocate(pris_loc, .after = job_field) %>%
-  relocate(ends_with("_raw"), .after = last_col())
+  relocate(ends_with("_raw"), .after = last_col()) %>%
+  relocate(date_datapull, .after = pris_loc)
 
 # ================================================================= ####
 # Add Notes to Variables ####
