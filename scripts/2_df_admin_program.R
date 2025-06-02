@@ -91,8 +91,12 @@ program <- program |>
 # -- create higher level program categorization
   mutate(prg_cat = case_when(
     grepl("\\bVP\\b|violence prevention", prg_name, ignore.case = TRUE) ~ "Violence Prevention",   # PRIORITY 1
-    grepl("\\bSDTP\\b|sex offender", prg_name, ignore.case = TRUE) ~ "Sex Offender Program", 
+    grepl("\\bTC\\b|therapeutic community", prg_name, ignore.case = TRUE) ~ "Therapeutic Community",
+    grepl("\\bSDTP\\b|\\bRSO\\b|sex offender", prg_name, ignore.case = TRUE) ~ "Sex Offender Program", 
     grepl("substance|drug|alcohol", prg_name, ignore.case = TRUE) ~ "Substance Abuse Program",
+    grepl("\\bTPV\\b|\\bPV\\b|parole violator", prg_name, ignore.case = TRUE) ~ "Parole Violator Program",
+    grepl("outpatient", prg_name, ignore.case = TRUE) ~ "OutPatient",
+    grepl("parent|dads", prg_name, ignore.case = TRUE) ~ "Parenting Program",
     TRUE ~ "Other"
   )) %>%
   relocate(prg_cat, .after = prg_name)
