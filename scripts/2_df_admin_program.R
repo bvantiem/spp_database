@@ -64,8 +64,8 @@ program <- program |>
          prg_eval = Eval_Des_raw,
          prg_start = Inm_StrDt_raw,
          prg_end = Inm_EndDt_raw) |>
-  mutate(pris_loc = Fac_Cd_raw,) %>%
-  relocate(ends_with("_raw"), .after = last_col())
+  mutate(pris_loc = Fac_Cd_raw,) |>
+  relocate(ends_with("_raw"), .after = last_col()) 
 # Clean Variables ####
 program <- program |> 
   # -- Set any empty strings to NA
@@ -73,9 +73,8 @@ program <- program |>
   # -- Some responses were coded as NULL change this to NA
   mutate(across(where(is.character), ~ na_if(., "NULL"))) |>
   # DATES
-  # -- move time for program end to new column
-  # -- time is NA or 00:00:00 for all cases... information deleted from clean variable
-  mutate(prg_end = as.Date(prg_end) ) |>
+  # --look into time variables
+  # mutate(prg_end = as.Date(prg_end) ) |>
   # PROGRAM
   # -- standardize program names
   mutate(prg_name = case_when(
@@ -88,7 +87,7 @@ program <- program |>
   left_join(prison_lookup, by = "pris_loc") %>%
   select(-pris_loc) %>%
   rename(pris_loc = pris_loc_full) %>%
-  relocate(pris_loc, .after = date_datapull)
+  relocate(date_datapull, .after = prg_end)
 
 
 # =================================================================== ####
