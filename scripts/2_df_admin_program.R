@@ -93,10 +93,14 @@ program <- program |>
     grepl("\\bVP\\b|violence prevention", prg_name, ignore.case = TRUE) ~ "Violence Prevention",   # PRIORITY 1
     grepl("\\bTC\\b|therapeutic community", prg_name, ignore.case = TRUE) ~ "Therapeutic Community",
     grepl("\\bSDTP\\b|\\bRSO\\b|sex offender", prg_name, ignore.case = TRUE) ~ "Sex Offender Program", 
-    grepl("substance|drug|alcohol", prg_name, ignore.case = TRUE) ~ "Substance Abuse Program",
+    grepl("substance|drug|alcohol|12 step|narcotics", prg_name, ignore.case = TRUE) ~ "Substance Abuse Program",
     grepl("\\bTPV\\b|\\bPV\\b|parole violator", prg_name, ignore.case = TRUE) ~ "Parole Violator Program",
     grepl("outpatient", prg_name, ignore.case = TRUE) ~ "OutPatient",
     grepl("parent|dads", prg_name, ignore.case = TRUE) ~ "Parenting Program",
+    grepl("batterers", prg_name, ignore.case = TRUE) ~ "Batterers Program",
+    grepl("thinking|moral reconation|character|anger|changing offender|misconduct|positive work|positive housing|violence", prg_name, ignore.case = TRUE) ~ "Cognitive Behavioral Program",
+    grepl("basic education|english as a second language|business education", prg_name, ignore.case = TRUE) ~ "Education Program",
+    grepl("counseling|seeking safety|relapse prevention|special needs|self -help", prg_name, ignore.case = TRUE) ~ "Mental Health or Counseling",
     TRUE ~ "Other"
   )) %>%
   relocate(prg_cat, .after = prg_name)
