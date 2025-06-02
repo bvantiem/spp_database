@@ -157,7 +157,6 @@ work <- work %>%
   mutate(job_field = standardize_job_field(job_field)) %>%
   # there are 1438 unique descriptions, how should I handle this?
 # PRISON LOCATION
-  # THIS CODE DOESNT WORK 
   left_join(prison_lookup, by = "pris_loc") %>%
   select(-pris_loc) %>%
   rename(pris_loc = pris_loc_full) %>%
