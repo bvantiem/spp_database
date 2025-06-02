@@ -97,7 +97,7 @@ service_use_qs <- c("q55","q56","q57","q58","q59","q61","q115","q116","q117","q1
 
 # ======================================================================= ####
 # Wave Dates ####
-# dates each wave occurred to ensure standardization
+# -- dates each wave occurred to ensure standardization
 wave1_date = lubridate::ymd(20220501)
 wave2_date = lubridate::ymd(20221115)
 wave3_date = lubridate::ymd(20230520)
@@ -105,3 +105,33 @@ wave4_date = lubridate::ymd(20231128)
 wave5_date = lubridate::ymd(20240606)
 wave6_date = lubridate::ymd(20241022)
 # ======================================================================= #### 
+# Prison Lookup Table ####
+# -- table for transforming the abr facility to full facility name. 
+prison_lookup <- tribble(
+  ~pris_loc,     ~pris_loc_full,
+  "ALB",          "Albion",
+  "BEN",          "Benner Township",
+  "CAM",          "Cambridge Springs",
+  "CHS",          "Chester",
+  "COA",          "Coal Township",
+  "DAL",         "Dallas",
+  "FRA",          "Frackville",
+  "FYT",          "Fayette",
+  "FRS",         "Forest",
+  "GRN",          "Greene",
+  "HOU",          "Houtzdale",
+  "HUN",          "Huntingdon",
+  "LAU",          "Laurel Highlands",
+  "MAH",          "Mahanoy",
+  "MER",          "Mercer",
+  "MUN",          "Muncy",
+  "PHX",          "Phoenix",
+  "PIT",          "Pittsburgh",
+  "QUE",          "Quehanna Boot Camp",
+  "RET",          "Retreat",
+  "ROC",          "Rockview",
+  "SMI",          "Smithfield",
+  "SMR",          "Somerset",
+  "WAM",          "Waymart"
+) 
+# ======================================================================= ####
