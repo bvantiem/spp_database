@@ -52,34 +52,6 @@ assess_variable <- function(x) {
 # -- Read in Data ####
 program <- readRDS("data/processed/processing_layer_2/program_masked.Rds")
 
-# -- Prison Lookup Table ####
-prison_lookup <- tribble(
-  ~pris_loc,     ~pris_loc_full,
-  "ALB",          "Albion",
-  "BEN",          "Benner Township",
-  "CAM",          "Cambridge Springs",
-  "CHS",          "Chester",
-  "COA",          "Coal Township",
-  "DAL",         "Dallas",
-  "FRA",          "Frackville",
-  "FYT",          "Fayette",
-  "FRS",         "Forest",
-  "GRN",          "Greene",
-  "HOU",          "Houtzdale",
-  "HUN",          "Huntingdon",
-  "LAU",          "Laurel Highlands",
-  "MAH",          "Mahanoy",
-  "MER",          "Mercer",
-  "MUN",          "Muncy",
-  "PHX",          "Phoenix",
-  "PIT",          "Pittsburgh",
-  "QUE",          "Quehanna Boot Camp",
-  "RET",          "Retreat",
-  "ROC",          "Rockview",
-  "SMI",          "Smithfield",
-  "SMR",          "Somerset",
-  "WAM",          "Waymart"
-) 
 # =================================================================== ####
 # Rename Raw Variables ####
 # Append _raw to all columns except specified columns
