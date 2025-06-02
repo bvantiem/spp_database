@@ -51,7 +51,6 @@ assess_variable <- function(x) {
   return(result)}
 # -- Read in Data ####
 house <- readRDS("data/processed/processing_layer_2/house_masked.Rds")
-# -- Prison Lookup Table ####
 # =================================================================== ####
 # Rename Raw Variables ####
 # Append _raw to all columns except specified columns
@@ -102,7 +101,8 @@ house <- house %>%
   left_join(prison_lookup, by = "pris_loc") %>%
   select(-pris_loc) %>%
   rename(pris_loc = pris_loc_full) %>%
-  relocate(pris_loc, .after = house_bed_stat)
+  relocate(pris_loc, .after = house_bed_stat) %>%
+  relocate(date_datapull, .after = pris_loc)
 
 # Fully NA Rows ####
 NA_rows <- house %>%
