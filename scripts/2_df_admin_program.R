@@ -87,7 +87,15 @@ program <- program |>
   left_join(prison_lookup, by = "pris_loc") %>%
   select(-pris_loc) %>%
   rename(pris_loc = pris_loc_full) %>%
-  relocate(date_datapull, .after = prg_end)
+  relocate(date_datapull, .after = prg_end) %>%
+# -- create higher level program categorization
+  mutate(prg_cat = case_when(
+    grepl("\\bVP\\b|violence prevention", prg_name, ignore.case = TRUE) ~ "Violence Prevention",   # PRIORITY 1
+    grepl("\\bSDTP\\b|sex offender", prg_name, ignore.case = TRUE) ~ "Sex Offender Program", 
+    grepl("substance|drug|alcohol", prg_name, ignore.case = TRUE) ~ "Substance Abuse Program",
+    TRUE ~ "Other"
+  )) %>%
+  relocate(prg_cat, .after = prg_name)
 
 
 # =================================================================== ####
