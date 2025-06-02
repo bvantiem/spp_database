@@ -24,7 +24,8 @@ for (name in c("basic", "move", "assess", "house", "program", "conduct", "work",
 i <- unique(control_nos_inmate_ids$control_number)
 id.link <- mask_control_nos(i) # Generate masked Research IDs
 
-# make sure that they are padded and have 6 digits
+# Some control numbers are identical except for a leading zero
+# make sure we add a leading zero to ensure all control numbers have 6 digits
 id.link <- id.link %>%
   mutate(control_number = sprintf("%06d", as.integer(control_number)))
 
