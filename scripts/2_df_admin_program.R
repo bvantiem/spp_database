@@ -103,7 +103,32 @@ program <- program |>
     grepl("counseling|seeking safety|relapse prevention|special needs|self -help", prg_name, ignore.case = TRUE) ~ "Mental Health or Counseling",
     TRUE ~ "Other"
   )) %>%
-  relocate(prg_cat, .after = prg_name)
+  relocate(prg_cat, .after = prg_name) %>%
+  # DUMMY VARIABLES
+  mutate(
+    prg_cat_vp = ifelse(prg_cat == "Violence Prevention", 1, 0),
+    prg_cat_tc = ifelse(prg_cat == "Therapeutic Community", 1, 0),
+    prg_cat_rso = ifelse(prg_cat == "Sex Offender Program", 1, 0),
+    prg_cat_sub = ifelse(prg_cat == "Substance Abuse Program", 1, 0),
+    prg_cat_pv = ifelse(prg_cat == "Parole Violator Program", 1, 0),
+    prg_cat_op = ifelse(prg_cat == "OutPatient", 1, 0),
+    prg_cat_prnt = ifelse(prg_cat == "Parenting Program", 1, 0),
+    prg_cat_batt = ifelse(prg_cat == "Batterers Program", 1, 0),
+    prg_cat_cb = ifelse(prg_cat == "Cognitive Behavioral Program", 1, 0),
+    prg_cat_edu = ifelse(prg_cat == "Education Program", 1, 0),
+    prg_cat_mnt = ifelse(prg_cat == "Mental Health or Counseling", 1, 0)
+  )  %>%
+  relocate(prg_cat_vp, .after = date_datapull) %>%
+  relocate(prg_cat_tc, .after = prg_cat_vp) %>%
+  relocate(prg_cat_rso, .after = prg_cat_tc) %>%
+  relocate(prg_cat_sub, .after = prg_cat_rso) %>%
+  relocate(prg_cat_pv, .after = prg_cat_sub) %>%
+  relocate(prg_cat_op, .ater = prg_cat_pv) %>%
+  relocate(prg_cat_prnt, .after = prg_cat_op) %>%
+  relocate(prg_cat_batt, .after = prg_cat_prnt) %>%
+  relocate(prg_cat_cb, .after = prg_cat_batt) %>%
+  relocate(prg_cat_edu, .after = prg_cat_cb) %>%
+  relocate(prg_cat_mnt, .after = prg_cat_edu)
 
 
 # =================================================================== ####
