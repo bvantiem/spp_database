@@ -60,14 +60,14 @@ house <- house |>
 house <- house |>
   mutate(date_in = date_in_raw,
          date_out = date_out_raw) |>
-  mutate(house_bld = building_raw,
-         house_unit = section_raw,
-         house_cell = cell_raw,
-         house_bed_num = bed_number_raw,
-         house_bed_type = bed_type_raw,
-         house_sec_lvl = security_level_raw,
-         house_unit_type = housing_status_raw,
-         house_bed_stat = bed_status_raw) |>
+  mutate(loc_bld = building_raw,
+         loc_unit = section_raw,
+         loc_cell = cell_raw,
+         loc_bed_num = bed_number_raw,
+         loc_bed_type = bed_type_raw,
+         loc_sec_lvl = security_level_raw,
+         loc_unit_type = housing_status_raw,
+         loc_bed_stat = bed_status_raw) |>
   mutate(dem_hndcap = handicap_stat_raw) |>
   mutate(pris_loc = facility_raw,) %>%
   relocate(ends_with("_raw"), .after = last_col())
@@ -88,7 +88,7 @@ house <- house %>%
   ) %>%
   # DEMOGRAPHICS
   mutate(
-    dem_hndcap = str_trim(toupper(dem_hndcap)),  # Clean up spacing/casing
+    dem_hndcap = str_trim(toupper(dem_hndcap)),
     dem_hndcap = case_when(
       dem_hndcap == "Y" ~ 1,
       dem_hndcap == "N" ~ 0,
@@ -97,11 +97,11 @@ house <- house %>%
   ) %>%
   # HOUSING CHARACTERISTICS
   # some have a leading zero, drop this for standardization
-  mutate(house_bed_num = sub("^0+", "", house_bed_num)) %>%
+  mutate(loc_bed_num = sub("^0+", "", loc_bed_num)) %>%
   left_join(prison_lookup, by = "pris_loc") %>%
   select(-pris_loc) %>%
   rename(pris_loc = pris_loc_full) %>%
-  relocate(pris_loc, .after = house_bed_stat) %>%
+  relocate(pris_loc, .after = loc_bed_stat) %>%
   relocate(date_datapull, .after = pris_loc)
 
 # Fully NA Rows ####
@@ -116,14 +116,14 @@ NA_rows <- house %>%
 # -- Cleaned Variables ####
 comment(house$date_in) <- "Date in ... facility? unit? system? 5413 missing values, created using date_in_raw"
 comment(house$date_out) <- "Date out ... facility? unit? system? 10852 missing values, created using date_out_raw"
-comment(house$house_bld) <- "Description of housing building, 113 NA values unknown why... look into this!, created using building_raw variable"
-comment(house$house_unit) <- "Housing unit, 113 NA values... same as house_bld missing, created using section_raw"
-comment(house$house_cell) <- "Cell number individual lives in, 113 NA values, created using cell_raw"
-comment(house$house_bed_num) 
-comment(house$house_bed_type)
-comment(house$house_sec_lvl) <- "Security level of housing unit, 113 NA values, created using security_level_raw"
-comment(house$house_unit_type) <- "Description of type of housing unit, 113 NA values, created using housing_status_raw"
-comment(house$house_bed_stat) 
+comment(house$loc_bld) <- "Description of housing building, 113 NA values unknown why... look into this!, created using building_raw variable"
+comment(house$loc_unit) <- "Housing unit, 113 NA values... same as house_bld missing, created using section_raw"
+comment(house$loc_cell) <- "Cell number individual lives in, 113 NA values, created using cell_raw"
+comment(house$loc_bed_num) 
+comment(house$loc_bed_type)
+comment(house$loc_sec_lvl) <- "Security level of housing unit, 113 NA values, created using security_level_raw"
+comment(house$loc_unit_type) <- "Description of type of housing unit, 113 NA values, created using housing_status_raw"
+comment(house$loc_bed_stat) 
 comment(house$pris_loc) <- "Facility description, 13464 NA values, created using facility_raw"
 comment(house$dem_hndcap) <- "Binary variable for handicap status 1=yes 0=no, 139 NA values, created using handicap_stat_raw"
 # -- Raw Variables ####
