@@ -65,7 +65,8 @@ assess <- assess |>
 assess <- assess |>  
   mutate(test_time = format(as.POSIXct(test_date), format = "%H:%M:%S"),
   test_date = as.Date(test_date) ) |>
-  relocate(test_time, .after = test_date)
+  select(-test_time) |> 
+  relocate(date_datapull, .after = test_date)
 
 # Fully NA rows ####
 NA_rows <- assess %>%
