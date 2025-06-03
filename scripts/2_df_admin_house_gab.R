@@ -49,6 +49,16 @@ assess_variable <- function(x) {
   )
   
   return(result)}
+
+remove_leading_zeros <- function(x) {
+  # Remove leading zeros
+  cleaned_x <- sub("^0+", "", x)
+  
+  # If a value contained only zeros (now an empty string), replace with "0"
+  cleaned_x[grepl("^0*$", x)] <- "0"
+  
+  return(cleaned_x)
+}
 # -- Read in Data ####
 house <- readRDS("data/processed/processing_layer_2/house_masked.Rds")
 # =================================================================== ####
@@ -79,13 +89,18 @@ house <- house %>%
   # -- Some responses were coded as NULL change this to NA
   mutate(across(where(is.character), ~ na_if(., "NULL"))) %>%
   # DATE
-  mutate(
-    # -- need a leading zero for month
-    date_in = str_pad(as.character(loc_date_in), width = 8, side = "left", pad = "0"),
-    date_out = str_pad(as.character(loc_date_out), width = 8, side = "left", pad = "0"),
-    date_in = mdy(loc_date_in),
-    date_out = mdy(loc_date_out)
-  ) %>%
+  mutate(loc_bed_num = remove_leading_zeros(loc_bed_num)) %>%
+  # -- Date out is saved as either 00000000 or NA for the last assignment
+  mutate(loc_date_out = ifelse(loc_date_out=="00000000", NA, loc_date_out)) %>%
+  # -- Sometimes dates are saved like 9012016 instead of 09012016
+  mutate(loc_date_in = ifelse(nchar(loc_date_in)==7, paste0("0", loc_date_in), loc_date_in)) %>%
+  mutate(loc_date_out = ifelse(nchar(loc_date_out)==7, paste0("0", loc_date_out), loc_date_out)) %>%
+  # -- Dates are saved in different formats
+  mutate(loc_date_in = parse_date_time(loc_date_in, orders = c("mdy", "ymd"))) %>%
+  mutate(loc_date_out = parse_date_time(loc_date_out, orders = c("mdy", "ymd"))) %>%
+  mutate(loc_date_in = ymd(as_date(loc_date_in))) %>%
+  mutate(loc_date_out = ymd(as_date(loc_date_out))) %>%
+  distinct() %>%
   # DEMOGRAPHICS
   mutate(
     dem_hndcap = str_trim(toupper(dem_hndcap)),
@@ -139,6 +154,68 @@ comment(house$security_level_raw) <- "raw data, non raw available as house_sec_l
 comment(house$handicap_stat_raw) <- "raw data, non raw available as dem_hndcap"
 comment(house$housing_status_raw) <- "raw data, non raw available as house_unit_type"
 comment(house$bed_status_raw) <- "raw data, non raw available as house_bed_stat"
+# =================================================================== ####
+# Deduplicate ####
+# Deduplicate house
+house <- house |>
+  # Create a group key based on all columns EXCEPT the three exceptions
+  group_by(across(-c(wave, date_datapull, control_number_pull))) |>
+  
+  # Keep only the row with the earliest date_datapull in each group
+  slice_min(order_by = date_datapull, with_ties = FALSE) |>
+  
+  ungroup()
+
+# The last assignment within datapulls has a NA date
+# We want to drop it
+house <- house %>%
+  # -- Identify the last date within a datapull
+  group_by(date_datapull) %>%
+  mutate(last_date_within_pull = case_when(
+    date_in == max(date_in, na.rm = TRUE) ~ 1,
+    TRUE ~ 0)) %>%
+  ungroup() %>%
+  group_by(research_id) %>%
+  # -- We want to drop this row except when this is the last datapull an individual was a part of.
+  mutate(drop = case_when(
+    last_date_within_pull == 1 & is.na(date_out) & date_datapull != max(date_datapull) ~ 1,
+    TRUE ~ 0)) %>%
+  ungroup() %>%
+  filter(drop == 0) %>%
+  select(-last_date_within_pull, -drop)
+
+# -- Within data pulls, for the last cell assignment, we observe two rows in the data, with the cell number saved as "2016" and as "061", or as "1014" and "014".
+# -- Delete the second observation
+house <- house %>%
+  group_by(research_id) %>%
+  mutate(drop = case_when(
+    date_datapull == max(date_datapull) & nchar(cell)!=4  ~ 1,
+    TRUE ~ 0)) %>%
+  filter(drop == 0) %>%
+  select(-drop)
+
+# -- We sometimes observe one date_in with multiple date_outs for the same individual. When this happens, we often see someone move in and out of a cell on the same day. We delete those instances.
+house <- house %>%
+  group_by(research_id, date_in) %>%
+  mutate(n_date_ins = n()) %>%
+  ungroup() %>%
+  filter(!(n_date_ins > 1 & date_in == date_out)) |>
+  select(-n_date_ins)
+
+# Identify consecutive moves and create a row for each new sentence
+# For now - assume every gap of more than a day is a new sentence (TO BE REFINED)
+house <- house %>%
+  # -- Sort data so we can detect chronological sequences within each individual
+  arrange(research_id, date_in) %>%
+  group_by(research_id) %>%
+  # -- Identify if current entry continues directly from previous (same day or 1-day gap)
+  mutate(consecutive_within_stay = date_in == lag(date_out)|date_in == lag(date_out)+1,
+         consecutive_within_stay_and_prison = (consecutive_within_stay == TRUE) & (facility == lag(facility))) %>%
+  # -- Create sentence number: increment when not consecutive (or on first row)
+  # -- is.na(consecutive_within_stay) handles the first row per research_id
+  # -- !consecutive_within_stay marks where a new sentence starts.
+  mutate(sentence_no = cumsum(is.na(consecutive_within_stay) | !consecutive_within_stay)) %>%
+  ungroup()
 # =================================================================== ####
 # New Variables ####
 # =================================================================== ####
