@@ -98,7 +98,8 @@ program <- program |>
     grepl("outpatient", prg_name, ignore.case = TRUE) ~ "OutPatient",
     grepl("parent|dads", prg_name, ignore.case = TRUE) ~ "Parenting Program",
     grepl("batterers", prg_name, ignore.case = TRUE) ~ "Batterers Program",
-    grepl("thinking|moral reconation|character|anger|changing offender|misconduct|positive work|positive housing|violence", prg_name, ignore.case = TRUE) ~ "Cognitive Behavioral Program",
+    grepl("thinking|moral reconation|character|anger|changing offender|misconduct|positive work|positive housing", 
+          prg_name, ignore.case = TRUE) ~ "Cognitive Behavioral Program",
     grepl("basic education|english as a second language|business education", prg_name, ignore.case = TRUE) ~ "Education Program",
     grepl("counseling|seeking safety|relapse prevention|special needs|self -help", prg_name, ignore.case = TRUE) ~ "Mental Health or Counseling",
     TRUE ~ "Other"
