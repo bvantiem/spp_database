@@ -80,12 +80,12 @@ assess <- assess |>
   # Create dummy variables
   # -- test_name
   mutate(
-    test_name_cssm = if_else(test_name == "Correctional Supervision Scale - Modified", 1, 0),
-    test_name_st99 = if_else(test_name == "Substance Test 1999", 1, 0),
+    test_name_cssm = if_else(test_name == "Criminal Sentiments Scale - Modified", 1, 0),
+    test_name_st99 = if_else(test_name == "Static 99", 1, 0),
     test_name_lsir = if_else(test_name == "Level of Service Inventory - Revised", 1, 0),
     test_name_tcu  = if_else(test_name == "Texas Christian University Drug Screen", 1, 0),
-    test_name_hiq  = if_else(test_name == "Health Interview Questionnaire", 1, 0),
-    test_name_rst  = if_else(test_name == "Risk Screening Tool", 1, 0)) |>
+    test_name_hiq  = if_else(test_name == "Hostile Interpretations Questionnaire", 1, 0),
+    test_name_rst  = if_else(test_name == "Risk Screen Tool", 1, 0)) |>
   relocate(test_name_cssm, .after = date_datapull) |>
   relocate(test_name_st99, .after = test_name_cssm) |>
   relocate(test_name_lsir, .after = test_name_st99) |>
