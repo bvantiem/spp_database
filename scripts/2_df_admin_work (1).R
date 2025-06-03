@@ -193,10 +193,20 @@ work <- work %>%
     TRUE ~ "Other"
   )) %>%
   relocate(job_field_cat, .after = job_field) %>%
-  # Make only the first letter upercase
-  mutate(job_field = standardize_job_field(job_field)) %>%
-  # there are 1438 unique descriptions, how should I handle this?
-# PRISON LOCATION
+  # -- fix misspelling/standardizations of spacing and capitalizations
+  mutate(job_cat_desc = str_replace_all(job_cat_desc, "\\bOutpatientRecoveryUnit", "Outpatient Recovery Unit")) %>%
+  mutate(job_cat_desc = str_replace_all(job_cat_desc, 
+                                        "\\bEDUCTIOAN FULL TIME STUDENT\\b", 
+                                        "Education Full Time Student")) %>%
+  mutate(job_cat_desc = str_replace_all(job_cat_desc, "\\bPEER ASSIST\\b", "Peer Assist")) %>%
+  mutate(job_cat_desc = str_replace_all(job_cat_desc, "\\bD BLOCK INMATE AIDE\\b", "D Block Inmate Aide")) %>%
+  mutate(job_cat_desc = str_replace_all(job_cat_desc, "\\bTEACHER AIDE\\b", "Teacher Aide")) %>%
+  mutate(job_cat_desc = str_replace_all(job_cat_desc, "\\bFOOD SERVICE MIDNIGHT\\b", "Food Service Midnight")) %>%
+  mutate(job_cat_desc = str_replace_all(job_cat_desc, "\\bAISLES\\b", "Aisles")) %>%
+  mutate(job_cat_desc = str_replace_all(job_cat_desc, "\\bHOLD\\b", "Hold")) %>%
+  mutate(job_cat_desc = str_replace_all(job_cat_desc, "\\bCUSTODIAL MAINTENANCE\\b", "Custodial Maintenance")) %>%
+  mutate(job_cat_desc = str_replace_all(job_cat_desc, "\\bB BLOCK HEAVY DUTY CLEANER\\b", "B Block Heavy Duty Cleaner")) %>%
+ # PRISON LOCATION
   left_join(prison_lookup, by = "pris_loc") %>%
   select(-pris_loc) %>%
   rename(pris_loc = pris_loc_full) %>%
