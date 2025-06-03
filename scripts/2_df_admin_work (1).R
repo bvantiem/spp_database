@@ -183,7 +183,7 @@ work <- work %>%
     job_field %in% c("COMMUNITY WORK PROGRAMS") ~ "Community Work Programs",
     TRUE ~ "Other"
   )) %>%
-  relocate(job_field_cat, .after = mutate(job_field)) %>%
+  relocate(job_field_cat, .after = job_field) %>%
   # there are 1438 unique descriptions, how should I handle this?
 # PRISON LOCATION
   left_join(prison_lookup, by = "pris_loc") %>%
