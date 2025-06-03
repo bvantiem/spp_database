@@ -98,7 +98,7 @@ program <- program |>
     grepl("outpatient", prg_name, ignore.case = TRUE) ~ "OutPatient",
     grepl("parent|dads", prg_name, ignore.case = TRUE) ~ "Parenting Program",
     grepl("batterers", prg_name, ignore.case = TRUE) ~ "Batterers Program",
-    grepl("thinking for a change", prg_name, ignore.case = TRUE) ~ "Thinking for Change",
+    grepl("thinking for a change", prg_name, ignore.case = TRUE) ~ "Thinking for a Change",
     grepl("counseling|seeking safety|relapse prevention|special needs|self -help|therapy", prg_name, ignore.case = TRUE) ~ "Mental Health or Counseling",
     grepl("back on track|parole|re-entry", prg_name, ignore.case = TRUE) ~ "Re-Entry/ Transitional Programs",
     TRUE ~ "Other"
@@ -114,7 +114,7 @@ program <- program |>
     prg_cat_op = ifelse(prg_cat == "OutPatient", 1, 0),
     prg_cat_prnt = ifelse(prg_cat == "Parenting Program", 1, 0),
     prg_cat_batt = ifelse(prg_cat == "Batterers Program", 1, 0),
-    prg_cat_tforc = ifelse(prg_cat == "Cognitive Behavioral Program", 1, 0),
+    prg_cat_tforc = ifelse(prg_cat == "Thinking for a Change", 1, 0),
     prg_cat_mnt = ifelse(prg_cat == "Mental Health or Counseling", 1, 0),
     prg_cat_re = ifelse(prg_cat == "Re-Entry/ Transitional Programs", 1,0),
     prg_cat_oth = ifelse(prg_cat == "Other", 1, 0)
