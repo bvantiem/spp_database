@@ -60,6 +60,8 @@ visit <- visit |>
 
 visit <- visit %>%
   mutate(vst_desc = Rltnshp_Cd_raw,
+         vst_id = Vstr_Num_raw,
+         vst_type = Vstr_TpCd_raw,
          vst_start_date = VstEvnt_DtTm_raw,
          vst_end_date = VstEvnt_TmOut_raw) %>%
   mutate(pris_loc = Fac_Cd_raw) %>%
@@ -97,6 +99,11 @@ visit <- visit |>
     vst_desc == "UNC" ~ "Uncle",
     vst_desc == "WIF" ~ "Wife"
   )) %>%
+  mutate(vst_type = case_when(
+    vst_type == "A" ~ "Attorney or Associate",
+    vst_type == "R" ~ "Regular",
+    vst_type == "S" ~ "Religious Advisor")) %>%
+# PRISON
   left_join(prison_lookup, by = "pris_loc") %>%
   select(-pris_loc) %>%
   rename(pris_loc = pris_loc_full) %>%
@@ -117,6 +124,8 @@ visit <- visit |>
 # -- Cleaned Variables ####
 comment(visit$pris_loc) <- "Facility location, 20120 NA values unknown reason for missing, created using Fac_Cd_raw"
 comment(visit$vst_desc) <- "Visitor description, 1534 NA values unknown reason for missing, created using Rltnshp_Cd_raw, Rltnshp_Des_raw"
+comment(visit$vst_type) 
+comment(visit$vst_id)
 comment(visit$vst_start_date) <- "Start date for visit, 0 NA values, fully cleaned, created using VstEvnt_DtTm_raw"
 comment(visit$vst_start_time)
 comment(visit$vst_end_date)
