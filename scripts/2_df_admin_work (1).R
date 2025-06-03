@@ -65,6 +65,16 @@ standardize_job_field <- function(x) {
   
   return(x_clean)
 }
+
+remove_leading_zeros <- function(x) {
+  # Remove leading zeros
+  cleaned_x <- sub("^0+", "", x)
+  
+  # If a value contained only zeros (now an empty string), replace with "0"
+  cleaned_x[grepl("^0*$", x)] <- "0"
+  
+  return(cleaned_x)
+}
 # -- Read in Data ####
 work <- readRDS("data/processed/processing_layer_2/work_masked.Rds")
 
