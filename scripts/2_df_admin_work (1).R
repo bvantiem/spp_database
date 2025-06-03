@@ -77,7 +77,7 @@ work <- work |>
 
 # Rename columns and put them in order
 work <- work |>
-  mutate(job_type = WrkAsgnmt_Tp_raw,
+  mutate(job_lvl = WrkAsgnmt_Tp_raw,
          job_cat_desc = Catgry_Desc_raw,
          job_hrs_daily = InmDly_Hrs_raw,
          job_sch = InmSchd_Cd_raw,
@@ -90,11 +90,11 @@ work <- work %>%
   # Set any empty strings to NA
   mutate(across(everything(), ~ replace(., grepl("^\\s*$", .), NA))) %>%
   # JOB RELATED VARIABLES
-  mutate(job_type = case_when(
-    job_type == "PRI" ~ "Primary",
-    job_type == "SEC" ~ "Secondary",
-    job_type == "TER" ~ "Tertiary",
-    TRUE ~ job_type)) %>%
+  mutate(job_lvl = case_when(
+    job_lvl == "PRI" ~ "Primary",
+    job_lvl == "SEC" ~ "Secondary",
+    job_lvl == "TER" ~ "Tertiary",
+    TRUE ~ job_lvl)) %>%
   # -- induced these by on table of job_field and 
   mutate(job_field = case_when(
     job_field == "MSC" ~ "MISCELLANEOUS",
@@ -154,7 +154,6 @@ work <- work %>%
            job_field == "UTL" ~ "UTILITIES",
            job_field == "WF" ~ "CI - WOOD FURNITURE",
            TRUE ~ job_field )) %>%  
-  mutate(job_field = standardize_job_field(job_field)) %>%
   # create higher level categories for job_field
   mutate(job_field_cat = case_when(
     job_field %in% c("ARTIST PROGRAM") ~ "Arts Program",
@@ -184,6 +183,8 @@ work <- work %>%
     TRUE ~ "Other"
   )) %>%
   relocate(job_field_cat, .after = job_field) %>%
+  # Make only the first letter upercase
+  mutate(job_field = standardize_job_field(job_field)) %>%
   # there are 1438 unique descriptions, how should I handle this?
 # PRISON LOCATION
   left_join(prison_lookup, by = "pris_loc") %>%
