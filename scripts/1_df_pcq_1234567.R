@@ -10,7 +10,7 @@ library(readxl)
 library(lubridate)
 library(dplyr)
 library(tidyverse)
-library(naniar)
+# library(naniar) # No package called this?
 library(matrixStats)
 library(Amelia) # To impute data
 set.seed(0630231106)
@@ -371,12 +371,64 @@ pcq6 <- rbind(dfa, dfb, dfc, dfd, dfe, dfinf, dfrhu)
 pcq6$survey_wave <- 6
 rm(dfa, dfb, dfc, dfd, dfe, dfinf, dfrhu)
 
+# PCQ Wave 7 ####
+# A Block
+dfaa <- read_xlsx("data/raw/3_surveys/2_survey_responses/pcq_wave7_survey_responses/pcq_wave7_aa_mp.xlsx", skip=2, sheet=1)
+dfab <- read_xlsx("data/raw/3_surveys/2_survey_responses/pcq_wave7_survey_responses/pcq_wave7_ab_mp.xlsx", skip=2, sheet=1)
+dfac <- read_xlsx("data/raw/3_surveys/2_survey_responses/pcq_wave7_survey_responses/pcq_wave7_ac_mh.xlsx", skip=2, sheet=1)
+dfad <- read_xlsx("data/raw/3_surveys/2_survey_responses/pcq_wave7_survey_responses/pcq_wave7_ad_mh.xlsx", skip=2, sheet=1)
+dfa <- rbind(dfaa, dfab, dfac, dfad)
+rm(dfaa, dfab, dfac, dfad)
+dfa$block <- "a"
 
+# B Block
+dfba <- read_xlsx("data/raw/3_surveys/2_survey_responses/pcq_wave7_survey_responses/pcq_wave7_ba_lg.xlsx", skip=2, sheet=1)
+dfbb <- read_xlsx("data/raw/3_surveys/2_survey_responses/pcq_wave7_survey_responses/pcq_wave7_bb_lg.xlsx", skip=2, sheet=1)
+dfbc <- read_xlsx("data/raw/3_surveys/2_survey_responses/pcq_wave7_survey_responses/pcq_wave7_bc_lg.xlsx", skip=2, sheet=1)
+dfbd <- read_xlsx("data/raw/3_surveys/2_survey_responses/pcq_wave7_survey_responses/pcq_wave7_bd_bs.xlsx", skip=2, sheet=1)
+dfb <- rbind(dfba, dfbb, dfbc, dfbd) 
+rm(dfba, dfbb, dfbc, dfbd)
+dfb$block <- "b"
+
+# C Block
+dfca <- read_xlsx("data/raw/3_surveys/2_survey_responses/pcq_wave7_survey_responses/pcq_wave7_ca_jv.xlsx", skip=2, sheet=1)
+dfcb <- read_xlsx("data/raw/3_surveys/2_survey_responses/pcq_wave7_survey_responses/pcq_wave7_cb_bs.xlsx", skip=2, sheet=1)
+dfc <- rbind(dfca, dfcb)
+rm(dfca, dfcb)
+dfc$block <- "c"
+
+# D Block
+dfda <- read_xlsx("data/raw/3_surveys/2_survey_responses/pcq_wave7_survey_responses/pcq_wave7_da_mp.xlsx", skip=2, sheet=1)
+dfdb <- read_xlsx("data/raw/3_surveys/2_survey_responses/pcq_wave7_survey_responses/pcq_wave7_db_es.xlsx", skip=2, sheet=1)
+dfd <- rbind(dfda, dfdb)
+rm(dfda, dfdb)
+dfd$block <- "d"
+
+# E Block
+dfea <- read_xlsx("data/raw/3_surveys/2_survey_responses/pcq_wave7_survey_responses/pcq_wave7_ea_gc.xlsx", skip=2, sheet=1)
+dfeb <- read_xlsx("data/raw/3_surveys/2_survey_responses/pcq_wave7_survey_responses/pcq_wave7_eb_mb.xlsx", skip=2, sheet=1)
+dfe <- rbind(dfea, dfeb)
+rm(dfea, dfeb)
+dfe$block <- "e"
+
+# INF Block
+dfinf <- read_xlsx("data/raw/3_surveys/2_survey_responses/pcq_wave7_survey_responses/pcq_wave7_inf_gc.xlsx", skip=2, sheet=1)
+dfinf$unit <- "inf"
+dfinf$block <- "inf"
+
+# RHU Block
+dfrhu <- read_xlsx("data/raw/3_surveys/2_survey_responses/pcq_wave7_survey_responses/pcq_wave7_rhu_mb.xlsx", skip=2, sheet=1)
+dfrhu$block <- "rhu"
+
+# Bind Blocks together
+pcq7 <- rbind(dfa, dfb, dfc, dfd, dfe, dfinf, dfrhu)
+pcq7$survey_wave <- 7
+rm(dfa, dfb, dfc, dfd, dfe, dfinf, dfrhu)
 
 
 # Bind all waves together to make pcq ####
-pcq <- rbind(pcq1, pcq2, pcq3, pcq4, pcq5, pcq6)
-rm(pcq1, pcq2, pcq3, pcq4, pcq5, pcq6)
+pcq <- rbind(pcq1, pcq2, pcq3, pcq4, pcq5, pcq6, pcq7)
+rm(pcq1, pcq2, pcq3, pcq4, pcq5, pcq6, pcq7)
 
 # Clean PCQ data --------------------------- ####
 pcq$unit <- tolower(pcq$unit)
@@ -423,7 +475,9 @@ pcq$id_num <- ifelse(pcq$id_num=="anon", NA, pcq$id_num)
 # Such that: 999 is set to NA, no opinion = 111, not applicable = 996
 pcq[pcq==0] <- 111
 pcq <- as.data.frame(pcq)
-pcq <- pcq %>% replace_with_na_all(condition = ~.x == 999) # Because this is the true NA
+
+# Replace all 999 values with NA
+pcq[pcq == 999] <- NA
 
 # Recode all prison climate variables to ensure they are positive
 # Prison Climate Variables
@@ -455,7 +509,7 @@ pcq <- pcq %>%
   relocate(block, survey_wave, .after = unit)
 
 # Assign unique IDs to individuals with NA values for their research ID
-pcq[which(is.na(pcq$research_id)), "research_id"] <- paste0("rid_na", c(1:nrow(pcq[which(is.na(pcq$research_id)), "research_id"])))
+pcq[which(is.na(pcq$research_id)), "research_id"] <- paste0("rid_na", c(1:length(pcq[which(is.na(pcq$research_id)), "research_id"])))
 
 # Identify survey number for a particular respondent
 pcq$survey_no <- NA
