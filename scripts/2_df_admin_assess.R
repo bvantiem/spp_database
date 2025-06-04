@@ -68,11 +68,11 @@ assess <- assess |>
   select(-test_time) |> 
   mutate(test_name = case_when(
     test_name == "CSS-M" ~ "Correctional Supervision Scale - Modified",
-    test_name == "ST99" ~ "Substance Test 1999",
+    test_name == "ST99" ~ "Static 1999",
     test_name == "LSI-R" ~ "Level of Service Inventory - Revised",
     test_name == "TCU" ~ "Texas Christian University Drug Screen",
-    test_name == "HIQ" ~ "Health Interview Questionnaire",
-    test_name == "RST" ~ "Risk Screening Tool",
+    test_name == "HIQ" ~ "Hostile Interpretations Questionnaire",
+    test_name == "RST" ~ "Risk Screen Tool",
     TRUE ~ test_name 
   )) |>
   relocate(date_datapull, .after = test_date) |>
@@ -130,6 +130,26 @@ comment(assess$Test_Score) -> "raw data, cleaned variable available as test_scor
 comment(assess$Test_Dt) -> "raw data, cleaned variable available as test_date & test_time"
 # =================================================================== ####
 # New Variables ####
+# =================================================================== ####
+# Temporary Descriptive Statistics ####
+# -- How many tests do people take?
+assess %>%
+  count(research_id) %>%
+  summarise(avg_tests_per_person = mean(n))
+# The average person takes approx 13.15 tests
+# -- some people take a test multiple times, how many unique tests do people take?
+assess %>%
+  distinct(research_id, test_name) %>%   # Keep only unique test-person combos
+  count(research_id) %>%                 # Count unique tests per person
+  summarise(avg_unique_tests = mean(n))  # Compute average
+# The average number of unique tests someone takes is approx 3.69
+# -- Distribution of test scores
+# -- -- CSS-M
+# -- -- HIQ
+# -- -- LSI-R
+# -- -- RST
+# -- -- ST99
+# -- -- TCU
 # =================================================================== ####
 # Save Dataframe ####
 # =================================================================== ####
