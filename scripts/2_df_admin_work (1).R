@@ -193,7 +193,7 @@ work <- work %>%
     TRUE ~ "Other"
   )) %>%
   relocate(job_field_cat, .after = job_field) %>%
-  # -- fix misspelling/standardizations of spacing and capitalizations
+  # -- fix misspelling/standardization of spacing and capitalization
   mutate(job_cat_desc = str_replace_all(job_cat_desc, "\\bOutpatientRecoveryUnit", "Outpatient Recovery Unit")) %>%
   mutate(job_cat_desc = str_replace_all(job_cat_desc, 
                                         "\\bEDUCTIOAN FULL TIME STUDENT\\b", 
@@ -206,6 +206,15 @@ work <- work %>%
   mutate(job_cat_desc = str_replace_all(job_cat_desc, "\\bHOLD\\b", "Hold")) %>%
   mutate(job_cat_desc = str_replace_all(job_cat_desc, "\\bCUSTODIAL MAINTENANCE\\b", "Custodial Maintenance")) %>%
   mutate(job_cat_desc = str_replace_all(job_cat_desc, "\\bB BLOCK HEAVY DUTY CLEANER\\b", "B Block Heavy Duty Cleaner")) %>%
+  mutate(job_cat_desc = str_replace_all(job_cat_desc, "\\bEDUCATION PART-TIME\\b", "Education Part-Time")) %>%
+  mutate(job_cat_desc = str_replace_all(job_cat_desc, "\\bED-CUSTODIAL MAINTENANCE\\b", "ED-Custodial Maintenance")) %>%
+  mutate(job_cat_desc = str_replace_all(job_cat_desc, "\\bED-WAREHOUSE\\b", "ED-Warehouse")) %>%
+  mutate(job_cat_desc = str_replace_all(job_cat_dsec, "\\bED-COMPUTER REPAIR\\b", "ED-Computer Repair")) %>%
+  mutate(job_cat_desc = str_replace_all(job_cat_desc, "\\bQUAD\\b", "Quad")) %>%
+  mutate(job_cat_desc = str_replace_all(job_cat_desc, "\\bWEST\\b", "West")) %>%
+  mutate(job_cat_desc = str_replace_all(job_cat_desc, "\\bEAST\\b", "East")) %>%
+  mutate(job_cat_desc = str_replace_all(job_cat_desc, "\\bDID NOT ACCEPT WORK OFFERED\\b", "Did Not Accept Work Offered")) %>%
+  mutate(job_cat_desc = str_replace_all(job_cat_desc, "\\bANTICIPATED RELEASE\\b", "Anticipated Release")) %>%
  # PRISON LOCATION
   left_join(prison_lookup, by = "pris_loc") %>%
   select(-pris_loc) %>%
