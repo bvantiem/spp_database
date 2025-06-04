@@ -95,7 +95,6 @@ standardize_uppercase <- function(x) {
 basic <- readRDS("data/processed/processing_layer_2/basic_masked.Rds")
 
 # ================================================================= ####
-# Clean existing dataset
 # Rename raw variables ####
 # Append _raw to all columns except specified columns
 basic <- basic |>
