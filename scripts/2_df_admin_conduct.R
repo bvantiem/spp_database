@@ -63,6 +63,22 @@ remove_leading_zeros <- function(x) {
   return(cleaned_x)
 }
 
+# ensure that PA stays capitalized 
+acronyms <- c("PA")
+standardize_uppercase <- function(x) {
+  x <- x %>%
+    str_squish() %>%
+    str_replace_all("\\s*-\\s*", " - ") %>%                         # Normalize dash spacing
+    str_to_title()
+  
+  # Preserve acronyms (re-insert after title case)
+  for (acro in acronyms) {
+    pattern <- paste0("\\b", str_to_title(acro), "\\b")
+    x <- str_replace_all(x, pattern, acro)
+  }
+  
+  return(x)
+}
 # -- Read in Data ####
 conduct <- readRDS("data/processed/processing_layer_2/conduct_masked.Rds")
 
@@ -83,6 +99,10 @@ conduct <- conduct %>%
   mutate(across(everything(), ~ replace(., grepl("^\\s*$", .), NA))) %>%
   # DATES
   mutate(cndct_date = ymd(as_date(cndct_date))) %>%
+  # MISCONDUCT
+  mutate(cndct_chrg_desc = standardize_uppercase(cndct_chrg_desc)) %>%
+  # -- some have 2 leading zeros, drop these for standardization
+  mutate(cndct_guilty = sub("^00", "", cndct_guilty)) %>%
   left_join(prison_lookup, by = "pris_loc") %>%
   select(-pris_loc) %>%
   rename(pris_loc = pris_loc_full) %>%
