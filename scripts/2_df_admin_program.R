@@ -150,18 +150,18 @@ program <- program |>
 # Add Notes to Variables ####
 # to view notes added use str() or comment()
 # -- Cleaned Variables ####
-comment(program$pris_loc) <- "Facility location of programming, 9329 NA values unknown why, created using Fac_Cd_raw"
+comment(program$pris_loc) <- "Facility location of programming, 645/9329 NA values unknown why, created using Fac_Cd_raw"
 comment(program$prg_name) <- "Name of program, no NA values, fully cleaned, created using Prgm_Nm_raw"
-comment(program$prg_status) <- "Status in the program, 939 NA values, created using CompletionDesc_raw"
-comment(program$prg_eval) <- "Evaluation recieved for participant, 2348 NA values, created using Eval_Des_raw"
-comment(program$prg_start) <- "Program start date, no NA values, fully cleaned, created using Inm_StrDt_raw"
-comment(program$prg_end) <- "Program end date, 377 NA values, created using Inm_EndDt_raw"
+comment(program$prg_status) <- "Status in the program, 939/9329 NA values, created using CompletionDesc_raw and ComplOrFail_SW_raw"
+comment(program$prg_eval) <- "Evaluation recieved for participant, 2348/9329 NA values, created using Eval_Des_raw"
+comment(program$prg_start_date) <- "Program start date, no NA values, fully cleaned, created using Inm_StrDt_raw"
+comment(program$prg_end_date) <- "Program end date, 377/9329 NA values, created using Inm_EndDt_raw"
 # -- Raw Variables ####
 comment(program$Prgm_Nm_raw) <- "raw data, non raw available as prg_name"
 comment(program$Fac_Cd_raw) <- "raw data, non raw available as pris_loc"
 comment(program$CompletionDesc_raw) <- "raw data, non raw available as prg_status"
-comment(program$Inm_StrDt_raw) <- "raw data, non raw available as prg_start"
-comment(program$Inm_EndDt_raw) <- "raw data, non raw available as prg_end"
+comment(program$Inm_StrDt_raw) <- "raw data, non raw available as prg_start_date"
+comment(program$Inm_EndDt_raw) <- "raw data, non raw available as prg_end_date"
 comment(program$Eval_Des_raw) <- "raw data, non raw available as prg_eval"
 # =================================================================== ####
 # New Variables ####
