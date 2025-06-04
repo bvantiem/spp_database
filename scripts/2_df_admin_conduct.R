@@ -103,6 +103,7 @@ conduct <- conduct %>%
   mutate(cndct_chrg_desc = standardize_uppercase(cndct_chrg_desc)) %>%
   # -- some have 2 leading zeros, drop these for standardization
   mutate(cndct_guilty = sub("^00", "", cndct_guilty)) %>%
+  # PRISON
   left_join(prison_lookup, by = "pris_loc") %>%
   select(-pris_loc) %>%
   rename(pris_loc = pris_loc_full) %>%
@@ -111,8 +112,20 @@ conduct <- conduct %>%
   relocate(wave, .after = date_datapull)
 # ================================================================= ####
 # Add Notes to Variables ####
+# to view notes added use str() or comment()
 # -- Cleaned Variables ####
+comment(conduct$cndct_num) <- "Misconduct number, 0 NA values, NOT FULLY CLEANED, created using misconduct_number_raw (6/4/25)"
+comment(conduct$cndct_date) <- "Date of misconduct, 0 NA values, fully cleaned, created using misconduct_date_raw (6/4/25)"
+comment(conduct$cndct_chrg_desc) <- "Description of misconduct charge, 0 NA values, fully cleaned, created using chrg_description_raw (6/4/25)"
+comment(conduct$cndct_guilty) <- "Binary of guilt?, 0 NA values, NOT FULLY CLEANED, created using vrdict_guilty_raw (6/4/25)"
+comment(conduct$pris_loc) <- "Facility of misconduct, 695 NA values, NOT FULLY CLEANED, created using institution_raw (6/4/25)"
 # -- Raw Variables ####
+comment(conduct$misconduct_number_raw) <- "raw data, not fully cleaned variable available as cndct_num (6/4/25)"
+comment(conduct$institution_raw) <- "raw data, not fully cleaned varaible available as pris_loc (6/4/25)"
+comment(conduct$misconduct_date_raw) <- "raw data, cleaned variable available as cndct_date (6/4/25)"
+comment(conduct$vrdict_guilty_raw) <-  "raw data, not fully cleaned variable available as condct_guilty (6/4/25)"
+comment(conduct$category_charge1_raw) <- "raw data, no cleaned variable available (6/4/25)"
+comment(conduct$chrg_description_raw) <- "raw data, cleaned variable available as cndct_chrg_desc (6/4/25)"
 # ================================================================= ####
 # New Variables ####
 # ================================================================= ####
