@@ -116,7 +116,8 @@ visit <- visit |>
          vst_end_date = as.Date(vst_end_date)) %>%
   relocate(vst_start_time, .after = vst_start_date) %>%
   relocate(vst_end_time, .after = vst_end_date) %>%
-  relocate(date_datapull, .after = vst_end_time)
+  relocate(date_datapull, .after = vst_end_time) %>%
+  relocate(wave, .after = date_datapull)
   
 # =================================================================== ####
 # Add Notes to Variables ####
