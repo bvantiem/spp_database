@@ -132,6 +132,12 @@ prison_lookup <- tribble(
   "ROC",          "Rockview",
   "SMI",          "Smithfield",
   "SMR",          "Somerset",
-  "WAM",          "Waymart"
+  "WAM",          "Waymart",
+  "GRA",          "Graterford",
+  "CRE",          "Cresson",
+  "102",          "Philadelphia CCC Center #2",
+  "104",          "Philadelphia CCC Center #4",
+  "201",          "Scranton Center",
+  "319",          "Riverside Center"
 ) 
 # ======================================================================= ####
