@@ -143,13 +143,14 @@ assess %>%
   count(research_id) %>%                 # Count unique tests per person
   summarise(avg_unique_tests = mean(n))  # Compute average
 # The average number of unique tests someone takes is approx 3.69
-# -- Distribution of test scores
-# -- -- CSS-M
-# -- -- HIQ
-# -- -- LSI-R
-# -- -- RST
-# -- -- ST99
-# -- -- TCU
+# -- Distribution of test scores for each different test
+assess %>%
+  group_by(test_name) %>%
+  summarise(
+    avg_score = mean(test_score, na.rm = TRUE),
+    n = n()
+  ) %>%
+  arrange(desc(avg_score))
 # =================================================================== ####
 # Save Dataframe ####
 # =================================================================== ####
