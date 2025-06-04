@@ -218,7 +218,9 @@ basic <- basic %>%
   select(-pris_loc) %>%
   rename(pris_loc = pris_loc_full) %>%
   relocate(pris_loc, .after = pris_custody_lvl) %>%
-  relocate(ends_with("_raw"), .after = last_col())
+  relocate(ends_with("_raw"), .after = last_col()) %>%
+  relocate(date_datapull, .after = dem_stg_yes) %>%
+  relocate(wave, .after = date_datapull)
 
 # ================================================================= ####
 # Define new dataframes ####
