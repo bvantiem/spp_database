@@ -134,6 +134,7 @@ prison_lookup <- tribble(
   "SMR",          "Somerset",
   "WAM",          "Waymart",
   "GRA",          "Graterford",
+  "GRE",          "Greensburg",
   "CRE",          "Cresson",
   "102",          "Philadelphia CCC Center #2",
   "104",          "Philadelphia CCC Center #4",
