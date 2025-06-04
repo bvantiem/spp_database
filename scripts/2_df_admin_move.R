@@ -62,12 +62,25 @@ remove_leading_zeros <- function(x) {
   
   return(cleaned_x)
 }
-
+ 
 # -- Read in Data ####
 move <- readRDS("data/processed/processing_layer_2/move_masked.Rds")
 # ================================================================= ####
 # Rename Raw Variables ####
+move <- move |>
+  rename_with(~ paste0(., "_raw"), .cols = setdiff(names(move), c("research_id","date_datapull", "control_number", "wave")))
+
+move <- move %>%
+  mutate(mve_date = mov_move_date_raw,
+         mve_desc = mov_move_code_raw) %>%
+  relocate(ends_with("_raw"), .after = last_col()) 
+
 # Clean Variables ####
+move <- move |> 
+  # -- Set any empty strings to NA
+  mutate(across(everything(), ~ replace(., grepl("^\\s*$", .), NA))) |>
+  # -- Some responses were coded as NULL change this to NA
+  mutate(across(where(is.character), ~ na_if(., "NULL")))
 # ================================================================= ####
 # Add Notes to Variables ####
 # -- Cleaned Variables ####
