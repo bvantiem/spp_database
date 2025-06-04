@@ -76,6 +76,7 @@ assess <- assess |>
     TRUE ~ test_name 
   )) |>
   relocate(date_datapull, .after = test_date) |>
+  relocate(wave, .after = date_datapull) |>
   
   # Create dummy variables
   # -- test_name
@@ -86,7 +87,7 @@ assess <- assess |>
     test_name_tcu  = if_else(test_name == "Texas Christian University Drug Screen", 1, 0),
     test_name_hiq  = if_else(test_name == "Hostile Interpretations Questionnaire", 1, 0),
     test_name_rst  = if_else(test_name == "Risk Screen Tool", 1, 0)) |>
-  relocate(test_name_cssm, .after = date_datapull) |>
+  relocate(test_name_cssm, .after = test_name) |>
   relocate(test_name_st99, .after = test_name_cssm) |>
   relocate(test_name_lsir, .after = test_name_st99) |>
   relocate(test_name_tcu, .after = test_name_lsir) |>
