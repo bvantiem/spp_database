@@ -80,7 +80,35 @@ move <- move |>
   # -- Set any empty strings to NA
   mutate(across(everything(), ~ replace(., grepl("^\\s*$", .), NA))) |>
   # -- Some responses were coded as NULL change this to NA
-  mutate(across(where(is.character), ~ na_if(., "NULL")))
+  mutate(across(where(is.character), ~ na_if(., "NULL"))) |>
+  mutate(mve_desc = case_when(
+    # RTN (return?), DTT, ATT do not exist in movedescription_raw
+    mve_desc == "AB" ~ "Add - Bail",
+    mve_desc == "RTN" ~ "",
+    mve_desc == "ASH" ~ "Add - State Hospital",
+    mve_desc == "ACT" ~ "Add - County Transfer",
+    mve_desc == "APD" ~ "Add - Parole Detainee",
+    mve_desc == "DTT" ~ "",
+    mve_desc == "AOPV" ~ "Add - Out-of-State Probation/Parole Violator",
+    mve_desc == "DIT" ~ "Delete - In Transit",
+    mve_desc == "ATT" ~ "",
+    mve_desc == "AIT" ~ "Add - In Transit",
+    mve_desc == "AE" ~ "Add - Escape",
+    mve_desc == "PLC" ~ "Change - Permanent Location Change",
+    mve_desc == "ADET" ~ "Add - Detetioner",
+    mve_desc == "AA" ~ "Add - Administrative",
+    mve_desc == "DA" ~ "Delete - Administrative",
+    mve_desc == "TFM" ~ "Change - From Medical Facility",
+    mve_desc == "TTM" ~ "Change - To Medical Facility",
+    mve_desc == "AOTH" ~ "Add - Other - Use Sparingly",
+    mve_desc == "RTT" ~ "Change - Return Temporary Transfer",
+    mve_desc == "STT" ~ "Change - Send Temporary Transfer",
+    mve_desc == "APV" ~ "Add - Parole Violator",
+    mve_desc == "D" ~ "Delete - Discharge/Delete",
+    mve_desc == "AC" ~ "Add - Court Commitment",
+    mve_desc == "XPT" ~ "Change - Transfer Point",
+    mve_desc == "TRN" ~ "Change - To Other Institution Or CCC",
+    mve_desc == "SC" ~ "Change - Status Change"))
 # ================================================================= ####
 # Add Notes to Variables ####
 # -- Cleaned Variables ####
