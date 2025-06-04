@@ -116,8 +116,9 @@ house <- house %>%
   left_join(prison_lookup, by = "pris_loc") %>%
   select(-pris_loc) %>%
   rename(pris_loc = pris_loc_full) %>%
-  relocate(pris_loc, .after = loc_bed_stat) %>%
-  relocate(date_datapull, .after = pris_loc)
+  relocate(pris_loc, .after = dem_hndcap) %>%
+  relocate(date_datapull, .after = pris_loc) %>%
+  relocate(wave, .after = date_datapull)
 
 # Fully NA Rows ####
 NA_rows <- house %>%
