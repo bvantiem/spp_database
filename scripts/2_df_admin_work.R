@@ -3,7 +3,15 @@
 # -- Objective ####
 # Clean work data 
 # -- Readme ####
+# We've done initial work to clean and standardize these fields. 
+# This df contains work assignments, courses, and status'. The df is missing 
+# start and end dates. We know these exist as we received them in earlier
+# datapulls. We need to request start and end dates as well as talk to PADOC
+# about what is contained in this df before continuing with data cleaning.
 # -- To do ####
+# 1. Request start and end dates 
+# 2. Talk to PADOC about what is contained in this df.
+# 3. Finish cleaning script after 1 and 2 are done
 # ================================================================= ####
 # Set up ####
 # -- Prepare environment ####
@@ -176,14 +184,14 @@ work <- work %>%
                     "CI FOREST WHEEL REFINISHING AND PAINT SHOP", "CI - WOOD FURNITURE") ~ "Metal/Wood/Paint Shops",
     job_field %in% c("CI HUNTINGDON - SOAP  - DETERGENT", "CI - MATTRESS") ~ "Soft Goods Manufacturing",
     job_field %in% c("CI - LIBRARY OPERATIONS", "LIBRARY SERVICES") ~ "Library Services",
-    job_field %in% c("INMATE ACTIVITIES", "INMATE EMPLOYMENT") ~ "Inmate Engagement",
+    job_field %in% c("INMATE EMPLOYMENT") ~ "Inmate Employment",
     job_field %in% c("COUNSELORS", "PSYCHOLOGICAL SERVICES") ~ "Behavioral Health",
     job_field %in% c("DRUG AND ALCOHOL TREATMENT", "DRUG AND ALCOHOL MOU", "SUBSTANCE USE DISORDER") ~ "Substance Use Treatment",
     job_field %in% c("RELIGIOUS SERVICES") ~ "Religious Services",
     job_field %in% c("FOOD SERVICES") ~ "Food Services",
     job_field %in% c("EDUCATION SERVICES") ~ "Education",
     job_field %in% c("FIRE - SAFETY", "FORESTRY CAMP") ~ "Fire Safety/Forestry",
-    job_field %in% c("MAINTENANCE AND CONSTRUCTION", "MAINTENANCE  -  CONSTRUCTION", "CI - TV Repair Shop") ~ "Maintenance/Repair",
+    job_field %in% c("MAINTENANCE AND CONSTRUCTION", "MAINTENANCE  -  CONSTRUCTION") ~ "Maintenance/Repair",
     job_field %in% c("MEDICAL SERVICE STAFF", "OTHER MEDICAL SERVICES") ~ "Medical Services",
     job_field %in% c("SECURITY") ~ "Security",
     job_field %in% c("CI - SHIPPING AND RECEIVING") ~ "Shipping and Receiving",
@@ -209,7 +217,7 @@ work <- work %>%
   mutate(job_cat_desc = str_replace_all(job_cat_desc, "\\bEDUCATION PART-TIME\\b", "Education Part-Time")) %>%
   mutate(job_cat_desc = str_replace_all(job_cat_desc, "\\bED-CUSTODIAL MAINTENANCE\\b", "ED-Custodial Maintenance")) %>%
   mutate(job_cat_desc = str_replace_all(job_cat_desc, "\\bED-WAREHOUSE\\b", "ED-Warehouse")) %>%
-  mutate(job_cat_desc = str_replace_all(job_cat_dsec, "\\bED-COMPUTER REPAIR\\b", "ED-Computer Repair")) %>%
+  mutate(job_cat_desc = str_replace_all(job_cat_desc, "\\bED-COMPUTER REPAIR\\b", "ED-Computer Repair")) %>%
   mutate(job_cat_desc = str_replace_all(job_cat_desc, "\\bQUAD\\b", "Quad")) %>%
   mutate(job_cat_desc = str_replace_all(job_cat_desc, "\\bWEST\\b", "West")) %>%
   mutate(job_cat_desc = str_replace_all(job_cat_desc, "\\bEAST\\b", "East")) %>%
