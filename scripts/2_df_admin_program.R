@@ -62,8 +62,8 @@ program <- program |>
   mutate(prg_name = Prgm_Nm_raw,
          prg_status = CompletionDesc_raw,
          prg_eval = Eval_Des_raw,
-         prg_start = Inm_StrDt_raw,
-         prg_end = Inm_EndDt_raw) |>
+         prg_start_date = Inm_StrDt_raw,
+         prg_end_date = Inm_EndDt_raw) |>
   mutate(pris_loc = Fac_Cd_raw,) |>
   relocate(ends_with("_raw"), .after = last_col()) 
 # Clean Variables ####
@@ -73,22 +73,28 @@ program <- program |>
   # -- Some responses were coded as NULL change this to NA
   mutate(across(where(is.character), ~ na_if(., "NULL"))) |>
   # DATES
-  # --look into time variables
-  # mutate(prg_end = as.Date(prg_end) ) |>
+  # -- move time for program end to new column
+  mutate(prg_start_time = format(as.POSIXct(prg_start_date), format = "%H:%M:%S"),
+         prg_start_date = as.Date(prg_start_date)) %>%
+  mutate(prg_end_time = format(as.POSIXct(prg_end_date), format = "%H:%M:%S"),
+         prg_end_date = as.Date(prg_end_date)) %>%
   # PROGRAM
   # -- standardize program names
   mutate(prg_name = case_when(
-    prg_name == "Violence Prevention - High 12"        ~ "Violence Prevention High Intensity 629",
-    prg_name == "Violence Prevention - Moderate 29"     ~ "Violence Prevention Moderate Intensity 1518",
+    prg_name == "Violence Prevention - High 12"        ~ "Violence Prevention High Intensity",
+    prg_name == "Violence Prevention - Moderate 29"     ~ "Violence Prevention Moderate Intensity",
     prg_name == "Long Term Offender"                    ~ "Long Term Offenders",
     prg_name == "Sex Offender Program - Evaluation"     ~ "Sex Offender Program Evaluation",
     TRUE                                               ~ prg_name
   )) %>%
-  left_join(prison_lookup, by = "pris_loc") %>%
-  select(-pris_loc) %>%
-  rename(pris_loc = pris_loc_full) %>%
-  relocate(date_datapull, .after = prg_end) %>%
-# -- create higher level program categorization
+  # -- standardize prg_status 
+  mutate(prg_status = case_when(
+    prg_status == "Discharge prior to completion" ~ "Discharged Prior to Completion",
+    prg_status == "Discharged prior to completion" ~ "Discharged Prior to Completion",
+    prg_status == "Fail" ~ "Fail",
+    prg_status == "Success" ~ "Success"
+  )) %>%
+  # -- create higher level program categorization
   mutate(prg_cat = case_when(
     grepl("\\bVP\\b|violence prevention", prg_name, ignore.case = TRUE) ~ "Violence Prevention",   # PRIORITY 1
     grepl("\\bTC\\b|therapeutic community", prg_name, ignore.case = TRUE) ~ "Therapeutic Community",
@@ -130,7 +136,14 @@ program <- program |>
   relocate(prg_cat_tforc, .after = prg_cat_batt) %>%
   relocate(prg_cat_mnt, .after = prg_cat_tforc) %>%
   relocate(prg_cat_re, .after = prg_cat_mnt) %>%
-  relocate(prg_cat_oth, .after = prg_cat_re)
+  relocate(prg_cat_oth, .after = prg_cat_re) %>%
+# PRISON
+  left_join(prison_lookup, by = "pris_loc") %>%
+  select(-pris_loc) %>%
+  rename(pris_loc = pris_loc_full) %>%
+  relocate(pris_loc, .after = prg_end_date) %>%
+  relocate(date_datapull, .after = pris_loc) %>%
+  relocate(wave, .after = date_datapull)
 
 
 # =================================================================== ####
