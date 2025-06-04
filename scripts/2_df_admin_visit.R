@@ -143,5 +143,16 @@ comment(visit$VstEvnt_TmOut_raw)
 # =================================================================== ####
 # New Variables ####
 # =================================================================== ####
+# Temporary Descriptive Statistics ####
+# -- How many visits do people get on average? 
+visit %>%
+  count(research_id) %>%                     # Count visits per person
+  summarise(avg_visits = mean(n))            # Calculate the average
+# -- How many unique visitors do people get on average?
+visit %>%
+  distinct(research_id, vst_id) %>%   # Drop duplicates of same visitor visiting same person
+  count(research_id) %>%                  # Count unique visitors per person
+  summarise(avg_unique_visitors = mean(n))
+# =================================================================== ####
 # Save Dataframe ####
 # =================================================================== ####
