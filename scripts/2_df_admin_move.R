@@ -82,7 +82,7 @@ move <- move |>
   # -- Some responses were coded as NULL change this to NA
   mutate(across(where(is.character), ~ na_if(., "NULL"))) |>
   mutate(mve_desc = case_when(
-    # RTN (return?), DTT, ATT do not exist in movedescription_raw
+    # RTN (return?), DTT, ATT do not exist in movedescription_raw (33 entries for these)
     mve_desc == "AB" ~ "Add - Bail",
     mve_desc == "RTN" ~ "",
     mve_desc == "ASH" ~ "Add - State Hospital",
@@ -108,11 +108,23 @@ move <- move |>
     mve_desc == "AC" ~ "Add - Court Commitment",
     mve_desc == "XPT" ~ "Change - Transfer Point",
     mve_desc == "TRN" ~ "Change - To Other Institution Or CCC",
-    mve_desc == "SC" ~ "Change - Status Change"))
+    mve_desc == "SC" ~ "Change - Status Change")) %>%
+  # DATES
+  # -- put in ymd formate
+  mutate(mve_date = ymd(as_date(mve_date))) %>%
+  relocate(date_datapull, .after = mve_desc) %>%
+  relocate(wave, .after = date_datapull)
 # ================================================================= ####
 # Add Notes to Variables ####
+# to view notes added use str() or comment()
 # -- Cleaned Variables ####
+comment(move$mve_date) <- "Date of move, 0 NA values, fully cleaned, created using mov_move_date_raw (created 6/4/25)"
+comment(move$mve_desc) <- "Description of move, 0 NA values, not fully cleaned, created using mov_move_code_raw and MoveDescription_raw (created 6/4/25)"
 # -- Raw Variables ####
+comment(move$mov_move_date_raw) <- "raw data, available in cleaned form as mve_date"
+comment(move$mov_move_code_raw) <- "raw data, available in cleaned form as mve_desc"
+comment(move$MoveDescription_raw) <- "raw data, available in cleaned form as mve_desc"
+comment(move$mov_rec_del_flag_raw) <- "raw data, cleaned verison not available"
 # ================================================================= ####
 # New Variables ####
 # ================================================================= ####
