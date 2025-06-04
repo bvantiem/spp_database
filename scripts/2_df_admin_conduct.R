@@ -68,7 +68,27 @@ conduct <- readRDS("data/processed/processing_layer_2/conduct_masked.Rds")
 
 # ================================================================= ####
 # Rename Raw Variables ####
+# Append _raw to all columns except specified columns
+conduct <- conduct |>
+  rename_with(~ paste0(., "_raw"), .cols = setdiff(names(conduct), c("research_id","date_datapull", "control_number", "wave"))) %>%
+  mutate(cndct_num = misconduct_number_raw,
+         cndct_date = misconduct_date_raw,
+         cndct_chrg_desc = chrg_description_raw,
+         cndct_guilty = vrdict_guilty_raw) %>%
+  mutate(pris_loc = institution_raw) %>%
+  relocate(ends_with("_raw"), .after = last_col())
 # Clean Variables ####
+conduct <- conduct %>%
+  # -- Set any empty strings to NA
+  mutate(across(everything(), ~ replace(., grepl("^\\s*$", .), NA))) %>%
+  # DATES
+  mutate(cndct_date = ymd(as_date(cndct_date))) %>%
+  left_join(prison_lookup, by = "pris_loc") %>%
+  select(-pris_loc) %>%
+  rename(pris_loc = pris_loc_full) %>%
+  relocate(pris_loc, .after = cndct_guilty) %>%
+  relocate(date_datapull, .after = pris_loc) %>%
+  relocate(wave, .after = date_datapull)
 # ================================================================= ####
 # Add Notes to Variables ####
 # -- Cleaned Variables ####
