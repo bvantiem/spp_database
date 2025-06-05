@@ -118,7 +118,7 @@ conduct <- conduct %>%
 # Add Notes to Variables ####
 # to view notes added use str() or comment()
 # -- Cleaned Variables ####
-comment(conduct$cndct_num) <- "Misconduct number, 0 NA values, NOT FULLY CLEANED, created using misconduct_number_raw (6/4/25)"
+comment(conduct$cndct_num) <- "Incident number, 0 NA values, NOT FULLY CLEANED, created using misconduct_number_raw (6/4/25)"
 comment(conduct$cndct_date) <- "Date of misconduct, 0 NA values, fully cleaned, created using misconduct_date_raw (6/4/25)"
 comment(conduct$cndct_chrg_desc) <- "Description of misconduct charge, 0 NA values, fully cleaned, created using chrg_description_raw (6/4/25)"
 comment(conduct$cndct_guilty) <- "Binary of guilt?, 0 NA values, NOT FULLY CLEANED, created using vrdict_guilty_raw (6/4/25)"
