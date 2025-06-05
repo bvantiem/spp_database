@@ -4,6 +4,8 @@
 # Clean move data 
 # -- Readme ####
 # -- To do ####
+# -- -- in mve_desc figure out what RTN, DTT, ATT refer to: minor issue bcs rare codes
+# only 33 instances total
 # ================================================================= ####
 # Set up ####
 # -- Prepare environment ####
@@ -84,14 +86,14 @@ move <- move |>
   mutate(mve_desc = case_when(
     # RTN (return?), DTT, ATT do not exist in movedescription_raw (33 entries for these)
     mve_desc == "AB" ~ "Add - Bail",
-    mve_desc == "RTN" ~ "",
+    mve_desc == "RTN" ~ "RTN - No Description Available",
     mve_desc == "ASH" ~ "Add - State Hospital",
     mve_desc == "ACT" ~ "Add - County Transfer",
     mve_desc == "APD" ~ "Add - Parole Detainee",
-    mve_desc == "DTT" ~ "",
+    mve_desc == "DTT" ~ "DTT - No Description Available",
     mve_desc == "AOPV" ~ "Add - Out-of-State Probation/Parole Violator",
     mve_desc == "DIT" ~ "Delete - In Transit",
-    mve_desc == "ATT" ~ "",
+    mve_desc == "ATT" ~ "ATT - No Description Available",
     mve_desc == "AIT" ~ "Add - In Transit",
     mve_desc == "AE" ~ "Add - Escape",
     mve_desc == "PLC" ~ "Change - Permanent Location Change",
