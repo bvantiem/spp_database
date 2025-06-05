@@ -4,6 +4,10 @@
 # Clean conduct data 
 # -- Readme ####
 # -- To do ####
+# -- -- Follow up with PADOC on cat_chrge1 & vrdict_guilty meaning
+# Referencing the excel sheet cat_chrge1 looks to be levels of seriousness of offense
+# but want to confirm with PADOC
+# clarify PNG institution location - very common in this dataset haven't observed it in others
 # ================================================================= ####
 # Set up ####
 # -- Prepare environment ####
