@@ -144,8 +144,12 @@ program <- program |>
   relocate(pris_loc, .after = prg_end_date) %>%
   relocate(date_datapull, .after = pris_loc) %>%
   relocate(wave, .after = date_datapull)
-
-
+# =================================================================== ####
+# Temporary Notes to Show Britte
+# -- end date issues
+program %>% filter(prg_end_date == "2100-01-01")
+program %>% filter(prg_end_date == "2030-03-25")
+program %>% filter(prg_end_date == "2025-07-24")
 # =================================================================== ####
 # Add Notes to Variables ####
 # to view notes added use str() or comment()
