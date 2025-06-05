@@ -126,7 +126,7 @@ comment(move$mve_desc) <- "Description of move, 0 NA values, not fully cleaned, 
 comment(move$mov_move_date_raw) <- "raw data, available in cleaned form as mve_date"
 comment(move$mov_move_code_raw) <- "raw data, available in cleaned form as mve_desc"
 comment(move$MoveDescription_raw) <- "raw data, available in cleaned form as mve_desc"
-comment(move$mov_rec_del_flag_raw) <- "raw data, cleaned verison not available"
+comment(move$mov_rec_del_flag_raw) <- "raw data, uniform `N` across all rows, cleaned verison not available"
 # ================================================================= ####
 # New Variables ####
 # ================================================================= ####
