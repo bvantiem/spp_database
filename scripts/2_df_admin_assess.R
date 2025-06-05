@@ -148,6 +148,8 @@ assess %>%
   group_by(test_name) %>%
   summarise(
     avg_score = mean(test_score, na.rm = TRUE),
+    min_score = min(test_score, na.rm = TRUE),
+    max_score = max(test_score, na.rm = TRUE),
     n = n()
   ) %>%
   arrange(desc(avg_score))
