@@ -130,9 +130,12 @@ prison_lookup <- tribble(
   "GRA",          "Graterford",
   "GRE",          "Greensburg",
   "CRE",          "Cresson",
+  "PNG",          "Pine Grove",
   "102",          "Philadelphia CCC Center #2",
   "104",          "Philadelphia CCC Center #4",
   "201",          "Scranton Center",
-  "319",          "Riverside Center"
+  "319",          "Riverside Center",
+  "VA1",          "Virginia 1",
+  "MI1",          "Michigan 1"
 ) 
 # ======================================================================= ####
