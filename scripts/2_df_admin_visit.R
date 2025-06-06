@@ -82,7 +82,8 @@ visit <- visit |>
     vst_desc == "GDA" ~ "GrandDaughter",
     vst_desc == "GFA" ~ "GrandFather",
     vst_desc == "GMO" ~ "GrandMother",
-    vst_desc == "HUS" ~ "GrandSon",
+    vst_desc == "GSO" ~ "GrandSon",
+    vst_desc == "HUS" ~ "Husband",
     vst_desc == "MOT" ~ "Mother",
     vst_desc == "OTR" ~ "Other Relationship",
     vst_desc == "SAU" ~ "Step-Aunt",
@@ -123,23 +124,23 @@ visit <- visit |>
 # Add Notes to Variables ####
 # to view notes added use str() or comment()
 # -- Cleaned Variables ####
-comment(visit$pris_loc) <- "Facility location, 20120 NA values unknown reason for missing, created using Fac_Cd_raw"
-comment(visit$vst_desc) <- "Visitor description, 1534 NA values unknown reason for missing, created using Rltnshp_Cd_raw, Rltnshp_Des_raw"
-comment(visit$vst_type) 
-comment(visit$vst_id)
-comment(visit$vst_start_date) <- "Start date for visit, 0 NA values, fully cleaned, created using VstEvnt_DtTm_raw"
-comment(visit$vst_start_time)
-comment(visit$vst_end_date)
-comment(visit$vst_end_time)
+comment(visit$pris_loc) <- "Facility location, 1301 NA values explained by PNG - unknown what this location is, created using Fac_Cd_raw (6/6/25)"
+comment(visit$vst_desc) <- "Visitor description, 0 NA values, fully cleaned created using Rltnshp_Cd_raw, Rltnshp_Des_raw (6/6/25)"
+comment(visit$vst_type) <- "Type of visitor, 0 NA values, fully cleaned created using Vstr_TpCd_raw and Vstr_TpDes_raw (6/6/25)"
+comment(visit$vst_id) <- "ID number assigned to visitor, 0 NA values, fully cleaned created using Vstr_Num_raw (6/6/25)"
+comment(visit$vst_start_date) <- "Start date for visit, 0 NA values, fully cleaned, created using VstEvnt_DtTm_raw (6/6/25)"
+comment(visit$vst_start_time) <- "Start time of visit, 0 NA values, fully cleaned, created using VstEvnt_DtTm_raw (6/6/25)"
+comment(visit$vst_end_date) <- "End date for visit, 96 NA values, unknown reason for this, created using VstEvnt_TmOut_raw (6/6/25)"
+comment(visit$vst_end_time) <- "End time of visit, 96 NA values, unknown reason for this, created using VstEvnt_TmOut_raw (6/6/25)"
 # -- Raw Variables ####
-comment(visit$Fac_Cd_raw)
-comment(visit$Vstr_Num_raw)
-comment(visit$Rltnshp_Cd_raw)
-comment(visit$Vstr_TpCd_raw)
-comment(visit$Rltnshp_Des_raw)
-comment(visit$Vstr_TpDes_raw)
-comment(visit$VstEvnt_DtTm_raw)
-comment(visit$VstEvnt_TmOut_raw)
+comment(visit$Fac_Cd_raw) <- "raw variable, non raw verison available as pris_loc (6/6/25)"
+comment(visit$Vstr_Num_raw) <- "raw variable, cleaned version available as vst_id (6/6/25)"
+comment(visit$Rltnshp_Cd_raw) <- "raw variable, cleaned verison available as vst_desc (6/6/25)"
+comment(visit$Vstr_TpCd_raw) <- "raw variable, cleaned verison available as vst_type (6/6/25)"
+comment(visit$Rltnshp_Des_raw) <- "raw variable, cleaned verison available as vst_desc (6/6/25)"
+comment(visit$Vstr_TpDes_raw) <- "raw variable, cleaned verison available as vst_type (6/6/25)"
+comment(visit$VstEvnt_DtTm_raw) <- "raw variable, cleaned verison available as vst_start_date and vst_start_time (6/6/25)"
+comment(visit$VstEvnt_TmOut_raw) <- "raw variable, cleaned verison available as vst_end_date and vst_end_time (6/6/25)"
 # =================================================================== ####
 # New Variables ####
 # =================================================================== ####
