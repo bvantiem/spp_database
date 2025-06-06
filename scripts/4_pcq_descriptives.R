@@ -18,4 +18,8 @@ source("scripts/0_utils.R")
 
 
 # -- Read in Data ####
+pcq <- readRDS("data/processed/processing_layer_3/pcq_masked_clean.Rds")
+survey_population <- readRDS("data/processed/processing_layer_2/survey_population_masked.Rds")
+
 # ================================================================= ####
+# Table 

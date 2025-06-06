@@ -14,7 +14,7 @@ rm(list=ls())
 set.seed(1962)
 # -- Read in Data ####
 unit_mapping <- read.csv("data/raw/2_data_keys/unit_mapping.csv")
-pcq_lookup <- read_xlsx("data/raw/5_pcq_survey_questions/230725_pcq_survey_questions_NL_PA.xlsx")
+pcq_lookup <- read_xlsx("data/raw/5_pcq_survey_questions/250605_pcq_survey_questions_PA.xlsx")
 # ======================================================================= ####
 # Unit Mapping ####
 # -- INF is not included due to small sample of this unit
@@ -46,14 +46,8 @@ unit_mapping$unit_type_nols <- with(unit_mapping, ifelse(unit %in% c("aa", "ab",
 # Pcq_lookup ####
 
 pcq_lookup <- pcq_lookup %>%
-  mutate(question_qno = paste0("q", question_no_pa_2022a), .after = question_no_pa_2022a)
+  mutate(question_qno = paste0("q", question_no), .after = question_no)
 pcq_lookup <- as.data.frame(pcq_lookup)
-pcq_lookup$factor_no_bosma <- as.numeric(pcq_lookup$factor_no_bosma)
-
-temp <- pcq_lookup[which(pcq_lookup$pc_theory=="prison climate" & pcq_lookup$in_which_survey=="NL & PA"),c("question_pa_2022a", "factor_loading_bosma")]
-
-pcq_lookup$scale_exploratory <- with(pcq_lookup, ifelse(scale_theory=="visits" & question_no_pa_2022a %in% c(139:144), "visits_infrastructure",
-                                                        ifelse(scale_theory=="visits" & question_no_pa_2022a %in% c(145:146),"visits_feelings", scale_theory)))
 
 # -- For RCT Longitudinal paper ####
 scale.key.longitudinal <- list(prisoners = c("q10", "q11", "q12", "q13", "q14") ,
