@@ -124,7 +124,7 @@ visit <- visit |>
 # Add Notes to Variables ####
 # to view notes added use str() or comment()
 # -- Cleaned Variables ####
-comment(visit$pris_loc) <- "Facility location, 1301 NA values explained by PNG - unknown what this location is, created using Fac_Cd_raw (6/6/25)"
+comment(visit$pris_loc) <- "Facility location, 0 NA values, fully cleaned, created using Fac_Cd_raw (6/6/25)"
 comment(visit$vst_desc) <- "Visitor description, 0 NA values, fully cleaned created using Rltnshp_Cd_raw, Rltnshp_Des_raw (6/6/25)"
 comment(visit$vst_type) <- "Type of visitor, 0 NA values, fully cleaned created using Vstr_TpCd_raw and Vstr_TpDes_raw (6/6/25)"
 comment(visit$vst_id) <- "ID number assigned to visitor, 0 NA values, fully cleaned created using Vstr_Num_raw (6/6/25)"
