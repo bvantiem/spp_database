@@ -438,6 +438,10 @@ rm(dfa, dfb, dfc, dfd, dfe, dfinf, dfrhu)
 # Merge waves ####
 pcq <- rbind(pcq1, pcq2, pcq3, pcq4, pcq5, pcq6, pcq7)
 # ================================================================= ####
+# Rename raw variables ####
+# Append _raw to all columns except specified columns
+pcq <- pcq |>
+  rename_with(~ paste0(., "_raw"), .cols = setdiff(names(pcq), c("research_id","date_datapull", "control_number", "wave")))
 # Change variable order ####
 pcq <- pcq %>%
   relocate(block, .after = unit) %>%
@@ -486,6 +490,13 @@ pcq <- pcq |>
   left_join(control_long, by = "inmate_id") %>%
   relocate(control_number)
 
+# Clean dates ####
+# date format
+pcq$date <- pcq$date_raw
+pcq$date[which(pcq$date_raw %in% c("999", "9092099"))] <- NA # 9092099, Wave 3, in unidentified stack
+pcq$date <- parse_date_time(pcq$date_raw, c("ymd", "mdy")) # wave 1 stored as ymd, wave 2 stored dates as mdy
+pcq$date <- as.Date(pcq$date)
+pcq <- pcq[,-which(names(pcq)=="date_raw")]
 # ================================================================= ####
 # Save pcq_unmasked with control numbers #####
 saveRDS(pcq, file = paste0("data/processed/processing_layer_2/pcq_unmasked.Rds"))
