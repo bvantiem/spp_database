@@ -73,11 +73,13 @@ program <- program |>
   # -- Some responses were coded as NULL change this to NA
   mutate(across(where(is.character), ~ na_if(., "NULL"))) |>
   # DATES
-  # -- move time for program end to new column
+  # -- move time for program to new column and drop
   mutate(prg_start_time = format(as.POSIXct(prg_start_date), format = "%H:%M:%S"),
          prg_start_date = as.Date(prg_start_date)) %>%
+  select(-prg_start_time) %>%
   mutate(prg_end_time = format(as.POSIXct(prg_end_date), format = "%H:%M:%S"),
          prg_end_date = as.Date(prg_end_date)) %>%
+  select(-prg_end_time) %>%
   # PROGRAM
   # -- standardize program names
   mutate(prg_name = case_when(
