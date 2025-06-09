@@ -149,7 +149,10 @@ program <- program |>
 # -- end date issues
 program %>% filter(prg_end_date == "2100-01-01")
 program %>% filter(prg_end_date == "2030-03-25")
-program %>% filter(prg_end_date == "2025-07-24")
+
+# -- some prg_end_dates are in the future building in this stop so that we can correct these
+# for future waves
+stopifnot(program$date_datapull < program$prg_end_date )
 # =================================================================== ####
 # Add Notes to Variables ####
 # to view notes added use str() or comment()
