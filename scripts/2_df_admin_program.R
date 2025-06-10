@@ -186,4 +186,5 @@ program <- program %>%
   relocate(prg_length_days, .after = prg_end)
 # =================================================================== ####
 # Save dataframe ####
+saveRDS(program, file = "data/processed/2_program_cleaned.Rds")
 # =================================================================== ####
