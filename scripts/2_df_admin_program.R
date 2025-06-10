@@ -179,11 +179,11 @@ comment(program$Eval_Des_raw) <- "raw data, non raw available as prg_eval (6/6/2
 # length of program participation
 program <- program %>%
   mutate(
-    prg_start = as.Date(prg_start),
-    prg_end = as.Date(prg_end),
-    prg_length_days = as.numeric(prg_end - prg_start)
+    prg_start_date = as.Date(prg_start_date),
+    prg_end_date = as.Date(prg_end_date),
+    prg_length_days = as.numeric(prg_end_date - prg_start_date)
   ) %>%
-  relocate(prg_length_days, .after = prg_end)
+  relocate(prg_length_days, .after = prg_end_date)
 # =================================================================== ####
 # Save dataframe ####
 saveRDS(program, file = "data/processed/2_program_cleaned.Rds")
