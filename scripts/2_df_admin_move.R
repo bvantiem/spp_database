@@ -133,4 +133,5 @@ comment(move$mov_rec_del_flag_raw) <- "raw data, uniform `N` across all rows, cl
 # Temporary Descriptive Stats ####
 # ================================================================= ####
 # Save Dataframe ####
+saveRDS(move, file = "data/processed/2_move_cleaned.Rds")
 # ================================================================= ####
