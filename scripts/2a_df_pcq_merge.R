@@ -273,51 +273,51 @@ rm(dfa, dfb, dfc, dfd, dfe, dfinf, dfrhu, dfunid)
 
 # -- -- -- Wave 5 ####
 # A Block
-dfaa <- read_xlsx("data/raw/3_surveys/2_survey_responses/pcq_wave5_survey_responses/pcq_wave5_aa_bs.xlsx", skip=2, sheet=1)
-dfab <- read_xlsx("data/raw/3_surveys/2_survey_responses/pcq_wave5_survey_responses/pcq_wave5_ab_bs.xlsx", skip=2, sheet=1)
-dfac <- read_xlsx("data/raw/3_surveys/2_survey_responses/pcq_wave5_survey_responses/pcq_wave5_ac_bs.xlsx", skip=2, sheet=1)
-dfad <- read_xlsx("data/raw/3_surveys/2_survey_responses/pcq_wave5_survey_responses/pcq_wave5_ad_bs.xlsx", skip=2, sheet=1)
+dfaa <- read_xlsx("data/raw/3_surveys/2_survey_responses/pcq_wave5_survey_responses/pcq_wave5_aa_bs.xlsx", skip=2, sheet=1, col_types = c("text"))
+dfab <- read_xlsx("data/raw/3_surveys/2_survey_responses/pcq_wave5_survey_responses/pcq_wave5_ab_bs.xlsx", skip=2, sheet=1, col_types = c("text"))
+dfac <- read_xlsx("data/raw/3_surveys/2_survey_responses/pcq_wave5_survey_responses/pcq_wave5_ac_bs.xlsx", skip=2, sheet=1, col_types = c("text"))
+dfad <- read_xlsx("data/raw/3_surveys/2_survey_responses/pcq_wave5_survey_responses/pcq_wave5_ad_bs.xlsx", skip=2, sheet=1, col_types = c("text"))
 dfa <- rbind(dfaa, dfab, dfac, dfad)
 rm(dfaa, dfab, dfac, dfad)
 dfa$block <- "a"
 
 # B Block
-dfba <- read_xlsx("data/raw/3_surveys/2_survey_responses/pcq_wave5_survey_responses/pcq_wave5_ba_gc.xlsx", skip=2, sheet=1)
-dfbb <- read_xlsx("data/raw/3_surveys/2_survey_responses/pcq_wave5_survey_responses/pcq_wave5_bb_bs.xlsx", skip=2, sheet=1)
-dfbc <- read_xlsx("data/raw/3_surveys/2_survey_responses/pcq_wave5_survey_responses/pcq_wave5_bc_gc.xlsx", skip=2, sheet=1)
-dfbd <- read_xlsx("data/raw/3_surveys/2_survey_responses/pcq_wave5_survey_responses/pcq_wave5_bd_gc.xlsx", skip=2, sheet=1)
+dfba <- read_xlsx("data/raw/3_surveys/2_survey_responses/pcq_wave5_survey_responses/pcq_wave5_ba_gc.xlsx", skip=2, sheet=1, col_types = c("text"))
+dfbb <- read_xlsx("data/raw/3_surveys/2_survey_responses/pcq_wave5_survey_responses/pcq_wave5_bb_bs.xlsx", skip=2, sheet=1, col_types = c("text"))
+dfbc <- read_xlsx("data/raw/3_surveys/2_survey_responses/pcq_wave5_survey_responses/pcq_wave5_bc_gc.xlsx", skip=2, sheet=1, col_types = c("text"))
+dfbd <- read_xlsx("data/raw/3_surveys/2_survey_responses/pcq_wave5_survey_responses/pcq_wave5_bd_gc.xlsx", skip=2, sheet=1, col_types = c("text"))
 dfb <- rbind(dfba, dfbb, dfbc, dfbd)
 rm(dfba, dfbb, dfbc, dfbd)
 dfb$block <- "b"
 
 # C Block
-dfca <- read_xlsx("data/raw/3_surveys/2_survey_responses/pcq_wave5_survey_responses/pcq_wave5_ca_bs.xlsx", skip=2, sheet=1)
-dfcb <- read_xlsx("data/raw/3_surveys/2_survey_responses/pcq_wave5_survey_responses/pcq_wave5_cb_gc.xlsx", skip=2, sheet=1)
+dfca <- read_xlsx("data/raw/3_surveys/2_survey_responses/pcq_wave5_survey_responses/pcq_wave5_ca_bs.xlsx", skip=2, sheet=1, col_types = c("text"))
+dfcb <- read_xlsx("data/raw/3_surveys/2_survey_responses/pcq_wave5_survey_responses/pcq_wave5_cb_gc.xlsx", skip=2, sheet=1, col_types = c("text"))
 dfc <- rbind(dfca, dfcb)
 rm(dfca, dfcb)
 dfc$block <- "c"
 
 # D Block
-dfda <- read_xlsx("data/raw/3_surveys/2_survey_responses/pcq_wave5_survey_responses/pcq_wave5_da_kw.xlsx", skip=2, sheet=1)
-dfdb <- read_xlsx("data/raw/3_surveys/2_survey_responses/pcq_wave5_survey_responses/pcq_wave5_db_kw.xlsx", skip=2, sheet=1)
+dfda <- read_xlsx("data/raw/3_surveys/2_survey_responses/pcq_wave5_survey_responses/pcq_wave5_da_kw.xlsx", skip=2, sheet=1, col_types = c("text"))
+dfdb <- read_xlsx("data/raw/3_surveys/2_survey_responses/pcq_wave5_survey_responses/pcq_wave5_db_kw.xlsx", skip=2, sheet=1, col_types = c("text"))
 dfd <- rbind(dfda, dfdb)
 rm(dfda, dfdb)
 dfd$block <- "d"
 
 # E Block
-dfea <- read_xlsx("data/raw/3_surveys/2_survey_responses/pcq_wave5_survey_responses/pcq_wave5_ea_gc.xlsx", skip=2, sheet=1)
-dfeb <- read_xlsx("data/raw/3_surveys/2_survey_responses/pcq_wave5_survey_responses/pcq_wave5_eb_gc.xlsx", skip=2, sheet=1)
+dfea <- read_xlsx("data/raw/3_surveys/2_survey_responses/pcq_wave5_survey_responses/pcq_wave5_ea_gc.xlsx", skip=2, sheet=1, col_types = c("text"))
+dfeb <- read_xlsx("data/raw/3_surveys/2_survey_responses/pcq_wave5_survey_responses/pcq_wave5_eb_gc.xlsx", skip=2, sheet=1, col_types = c("text"))
 dfe <- rbind(dfea, dfeb)
 rm(dfea, dfeb)
 dfe$block <- "e"
 
 # INF Block
-dfinf <- read_xlsx("data/raw/3_surveys/2_survey_responses/pcq_wave5_survey_responses/pcq_wave5_inf_kw.xlsx", skip=2, sheet=1)
+dfinf <- read_xlsx("data/raw/3_surveys/2_survey_responses/pcq_wave5_survey_responses/pcq_wave5_inf_kw.xlsx", skip=2, sheet=1, col_types = c("text"))
 dfinf$unit <- "inf"
 dfinf$block <- "inf"
 
 # RHU Block
-dfrhu <- read_xlsx("data/raw/3_surveys/2_survey_responses/pcq_wave5_survey_responses/pcq_wave5_rhu_kw.xlsx", skip=2, sheet=1)
+dfrhu <- read_xlsx("data/raw/3_surveys/2_survey_responses/pcq_wave5_survey_responses/pcq_wave5_rhu_kw.xlsx", skip=2, sheet=1, col_types = c("text"))
 dfrhu$block <- "rhu"
 
 
@@ -382,51 +382,51 @@ rm(dfa, dfb, dfc, dfd, dfe, dfinf, dfrhu)
 
 # -- -- -- Wave 7 ####
 # A Block
-dfaa <- read_xlsx("data/raw/3_surveys/2_survey_responses/pcq_wave7_survey_responses/pcq_wave7_aa_mp.xlsx", skip=2, sheet=1)
-dfab <- read_xlsx("data/raw/3_surveys/2_survey_responses/pcq_wave7_survey_responses/pcq_wave7_ab_mp.xlsx", skip=2, sheet=1)
-dfac <- read_xlsx("data/raw/3_surveys/2_survey_responses/pcq_wave7_survey_responses/pcq_wave7_ac_mh.xlsx", skip=2, sheet=1)
-dfad <- read_xlsx("data/raw/3_surveys/2_survey_responses/pcq_wave7_survey_responses/pcq_wave7_ad_mh.xlsx", skip=2, sheet=1)
+dfaa <- read_xlsx("data/raw/3_surveys/2_survey_responses/pcq_wave7_survey_responses/pcq_wave7_aa_mp.xlsx", skip=2, sheet=1, col_types = c("text"))
+dfab <- read_xlsx("data/raw/3_surveys/2_survey_responses/pcq_wave7_survey_responses/pcq_wave7_ab_mp.xlsx", skip=2, sheet=1, col_types = c("text"))
+dfac <- read_xlsx("data/raw/3_surveys/2_survey_responses/pcq_wave7_survey_responses/pcq_wave7_ac_mh.xlsx", skip=2, sheet=1, col_types = c("text"))
+dfad <- read_xlsx("data/raw/3_surveys/2_survey_responses/pcq_wave7_survey_responses/pcq_wave7_ad_mh.xlsx", skip=2, sheet=1, col_types = c("text"))
 dfa <- rbind(dfaa, dfab, dfac, dfad)
 rm(dfaa, dfab, dfac, dfad)
 dfa$block <- "a"
 
 # B Block
-dfba <- read_xlsx("data/raw/3_surveys/2_survey_responses/pcq_wave7_survey_responses/pcq_wave7_ba_lg.xlsx", skip=2, sheet=1)
-dfbb <- read_xlsx("data/raw/3_surveys/2_survey_responses/pcq_wave7_survey_responses/pcq_wave7_bb_lg.xlsx", skip=2, sheet=1)
-dfbc <- read_xlsx("data/raw/3_surveys/2_survey_responses/pcq_wave7_survey_responses/pcq_wave7_bc_lg.xlsx", skip=2, sheet=1)
-dfbd <- read_xlsx("data/raw/3_surveys/2_survey_responses/pcq_wave7_survey_responses/pcq_wave7_bd_bs.xlsx", skip=2, sheet=1)
+dfba <- read_xlsx("data/raw/3_surveys/2_survey_responses/pcq_wave7_survey_responses/pcq_wave7_ba_lg.xlsx", skip=2, sheet=1, col_types = c("text"))
+dfbb <- read_xlsx("data/raw/3_surveys/2_survey_responses/pcq_wave7_survey_responses/pcq_wave7_bb_lg.xlsx", skip=2, sheet=1, col_types = c("text"))
+dfbc <- read_xlsx("data/raw/3_surveys/2_survey_responses/pcq_wave7_survey_responses/pcq_wave7_bc_lg.xlsx", skip=2, sheet=1, col_types = c("text"))
+dfbd <- read_xlsx("data/raw/3_surveys/2_survey_responses/pcq_wave7_survey_responses/pcq_wave7_bd_bs.xlsx", skip=2, sheet=1, col_types = c("text"))
 dfb <- rbind(dfba, dfbb, dfbc, dfbd) 
 rm(dfba, dfbb, dfbc, dfbd)
 dfb$block <- "b"
 
 # C Block
-dfca <- read_xlsx("data/raw/3_surveys/2_survey_responses/pcq_wave7_survey_responses/pcq_wave7_ca_jv.xlsx", skip=2, sheet=1)
-dfcb <- read_xlsx("data/raw/3_surveys/2_survey_responses/pcq_wave7_survey_responses/pcq_wave7_cb_bs.xlsx", skip=2, sheet=1)
+dfca <- read_xlsx("data/raw/3_surveys/2_survey_responses/pcq_wave7_survey_responses/pcq_wave7_ca_jv.xlsx", skip=2, sheet=1, col_types = c("text"))
+dfcb <- read_xlsx("data/raw/3_surveys/2_survey_responses/pcq_wave7_survey_responses/pcq_wave7_cb_bs.xlsx", skip=2, sheet=1, col_types = c("text"))
 dfc <- rbind(dfca, dfcb)
 rm(dfca, dfcb)
 dfc$block <- "c"
 
 # D Block
-dfda <- read_xlsx("data/raw/3_surveys/2_survey_responses/pcq_wave7_survey_responses/pcq_wave7_da_mp.xlsx", skip=2, sheet=1)
-dfdb <- read_xlsx("data/raw/3_surveys/2_survey_responses/pcq_wave7_survey_responses/pcq_wave7_db_es.xlsx", skip=2, sheet=1)
+dfda <- read_xlsx("data/raw/3_surveys/2_survey_responses/pcq_wave7_survey_responses/pcq_wave7_da_mp.xlsx", skip=2, sheet=1, col_types = c("text"))
+dfdb <- read_xlsx("data/raw/3_surveys/2_survey_responses/pcq_wave7_survey_responses/pcq_wave7_db_es.xlsx", skip=2, sheet=1, col_types = c("text"))
 dfd <- rbind(dfda, dfdb)
 rm(dfda, dfdb)
 dfd$block <- "d"
 
 # E Block
-dfea <- read_xlsx("data/raw/3_surveys/2_survey_responses/pcq_wave7_survey_responses/pcq_wave7_ea_gc.xlsx", skip=2, sheet=1)
-dfeb <- read_xlsx("data/raw/3_surveys/2_survey_responses/pcq_wave7_survey_responses/pcq_wave7_eb_mb.xlsx", skip=2, sheet=1)
+dfea <- read_xlsx("data/raw/3_surveys/2_survey_responses/pcq_wave7_survey_responses/pcq_wave7_ea_gc.xlsx", skip=2, sheet=1, col_types = c("text"))
+dfeb <- read_xlsx("data/raw/3_surveys/2_survey_responses/pcq_wave7_survey_responses/pcq_wave7_eb_mb.xlsx", skip=2, sheet=1, col_types = c("text"))
 dfe <- rbind(dfea, dfeb)
 rm(dfea, dfeb)
 dfe$block <- "e"
 
 # INF Block
-dfinf <- read_xlsx("data/raw/3_surveys/2_survey_responses/pcq_wave7_survey_responses/pcq_wave7_inf_gc.xlsx", skip=2, sheet=1)
+dfinf <- read_xlsx("data/raw/3_surveys/2_survey_responses/pcq_wave7_survey_responses/pcq_wave7_inf_gc.xlsx", skip=2, sheet=1, col_types = c("text"))
 dfinf$unit <- "inf"
 dfinf$block <- "inf"
 
 # RHU Block
-dfrhu <- read_xlsx("data/raw/3_surveys/2_survey_responses/pcq_wave7_survey_responses/pcq_wave7_rhu_mb.xlsx", skip=2, sheet=1)
+dfrhu <- read_xlsx("data/raw/3_surveys/2_survey_responses/pcq_wave7_survey_responses/pcq_wave7_rhu_mb.xlsx", skip=2, sheet=1, col_types = c("text"))
 dfrhu$block <- "rhu"
 
 # Bind Blocks together
@@ -445,18 +445,20 @@ pcq <- pcq |>
   rename_with(~ paste0(., "_raw"), .cols = setdiff(names(pcq), c("research_id","date_datapull", "control_number", "wave")))
 # Change variable order ####
 pcq <- pcq %>%
-  relocate(block, .after = unit) %>%
-  relocate(survey_wave, .after = block) 
+  rename(wave_raw = survey_wave_raw) %>%
+  relocate(block_raw, .after = unit_raw) %>%
+  relocate(wave_raw, .after = block_raw) 
 
+# ================================================================= ####
 # Create clean inmate_id using id_num and id_num_2 #### 
 # -- Clean id_num column2 
-pcq$id_num <- tolower(pcq$id_num)
-pcq$id_num_2 <- tolower(pcq$id_num_2)
+pcq$id_num <- tolower(pcq$id_num_raw)
+pcq$id_num_2 <- tolower(pcq$id_num_2_raw)
 pcq$inmate_id <- pcq$id_num
 pcq <- pcq %>%
   relocate(inmate_id) %>%
-  relocate(id_num, .after = notes) %>%
-  relocate(id_num_2, .after = id_num)
+  relocate(id_num_raw, .after = notes_raw) %>%
+  relocate(id_num_2_raw, .after = id_num_raw)
 
 # -- Set anon ids to NA 
 pcq[which(pcq$id_num=="anon"), "inmate_id"] <- NA
@@ -492,28 +494,43 @@ pcq <- pcq |>
   relocate(control_number)
 
 # Clean dates ####
-# When dates are NA, assign most common date in that wave and unit
-temp <- pcq %>% filter(!is.na(date)) %>% group_by(survey_wave, unit) %>% dplyr::count(date)
-temp$most.common.date <- NA
-temp <- as.data.frame(temp)
-for(i in unique(temp[!is.na(temp$unit),]$unit)){
-  for(k in unique(temp$survey_wave)){
-    index <- which(temp$unit==i & temp$survey_wave==k)
-    temp[index,"most.common.date"] <- temp[index,"n"][which.max(temp[index,"n"])]
-  }
-}
-temp <- temp[which(temp$n==temp$most.common.date), c("survey_wave", "unit", "date")]
-names(temp)[which(names(temp)=="date")] <- "most_common_date"
-pcq <- left_join(pcq, temp)
-pcq[is.na(pcq$date), "date"] <- pcq[is.na(pcq$date), "most_common_date"]
-pcq <- pcq[,-which(names(pcq)=="most_common_date")]
-# date format
+# standardize date format
 pcq$date <- pcq$date_raw
 pcq <- pcq %>% relocate(date, .after = date_raw)
 pcq$date[which(pcq$date_raw %in% c("999", "9092099"))] <- NA # 9092099, Wave 3, in unidentified stack
 pcq$date <- parse_date_time(pcq$date_raw, c("ymd", "mdy")) # wave 1 stored as ymd, wave 2 stored dates as mdy
 pcq$date <- as.Date(pcq$date)
-pcq <- pcq[,-which(names(pcq)=="date_raw")]
+
+# When dates are NA, assign most common date in that wave and unit
+# -- filter and count dates by unit and wave
+temp1 <- pcq %>%
+  filter(!is.na(date)) %>%
+  group_by(wave_raw, unit_raw) %>%
+  count(date) %>%
+  slice_max(n, with_ties = FALSE) %>%
+  ungroup() %>%
+  rename(most_common_date = date)
+# -- some are unidenfied unit, get common date by only wave for these cases
+temp2 <- pcq %>%
+  filter(!is.na(date)) %>%
+  group_by(wave_raw) %>%
+  count(date) %>%
+  slice_max(n, with_ties = FALSE) %>%
+  ungroup() %>%
+  rename(most_common_date_wave_only = date)
+# -- Join both: first by unit + wave, then fallback by wave only
+pcq <- pcq %>%
+  left_join(temp1, by = c("wave_raw", "unit_raw")) %>%
+  left_join(temp2, by = "wave_raw")
+
+# -- fill in any missing dates using unit+wave fallback or wave-only fallback
+pcq <- pcq %>%
+  mutate(
+    most_common_date_combined = coalesce(most_common_date, most_common_date_wave_only),
+    date = coalesce(date, most_common_date_combined)
+  ) %>% 
+  select(-most_common_date, -most_common_date_wave_only, -most_common_date_combined)
+
 # ================================================================= ####
 # Save pcq_unmasked with control numbers #####
 saveRDS(pcq, file = paste0("data/processed/processing_layer_2/pcq_unmasked.Rds"))
