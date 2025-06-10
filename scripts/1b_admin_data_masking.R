@@ -32,14 +32,15 @@ id.link <- id.link %>%
 for (df_name in c("basic", "move", "assess", "house", "program", "conduct", "work", "visit")) {
   print(df_name)
   
-  updated_df <- get(df_name) %>%
+  df <- get(df_name) %>%
+    # there was 1 NULL control_number in house from wave 7
+    filter(grepl("^\\d+$", control_number)) %>%  # Keep only all-digit control_numbers
     mutate(control_number = sprintf("%06d", as.integer(control_number))) %>%  # Pad to 6 digits
     left_join(id.link, by = "control_number") %>%
     select(-any_of(c("state_id_num", "inmate_id"))) %>%
-    relocate(research_id) # Moves research_id to the front
+    relocate(research_id)
   
-  new_name <- paste0(df_name, "_masked")
-  assign(new_name, updated_df)
+  assign(paste0(df_name, "_masked"), df)
 }
 # ========================================================================= ####
 # Save masked data frames ####
