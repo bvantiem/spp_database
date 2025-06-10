@@ -51,8 +51,9 @@ house <- house %>%
   mutate(across(where(is.character), ~ na_if(., "NULL"))) %>%
   # DATE
   mutate(loc_bed_num = remove_leading_zeros(loc_bed_num)) %>%
-  # -- Date out is saved as either 00000000 or NA for the last assignment
+  # -- not useful date out saved as 0, 00000000, or NA 
   mutate(loc_date_out = ifelse(loc_date_out=="00000000", NA, loc_date_out)) %>%
+  mutate(loc_date_out = ifelse(loc_date_out=="0", NA, loc_date_out)) %>%
   # -- Sometimes dates are saved like 9012016 instead of 09012016
   mutate(loc_date_in = ifelse(nchar(loc_date_in)==7, paste0("0", loc_date_in), loc_date_in)) %>%
   mutate(loc_date_out = ifelse(nchar(loc_date_out)==7, paste0("0", loc_date_out), loc_date_out)) %>%
