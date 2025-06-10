@@ -96,4 +96,5 @@ comment(conduct$chrg_description_raw) <- "raw data, cleaned variable available a
 # Temporary Descriptive Stats ####
 # ================================================================= ####
 # Save Dataframe ####
+saveRDS(conduct, file = "data/processed/2_conduct_cleaned.Rds")
 # ================================================================= ####
