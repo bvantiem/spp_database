@@ -213,7 +213,6 @@ comment(work$Job_Cd_raw)
 comment(work$Job_Nm_raw)
 comment(work$Fac_Cd)
 # ================================================================= ####
-
 # New Variables ####
 # number of jobs for one research_id
 work_summary <- work %>%
@@ -226,4 +225,5 @@ work <- work %>%
   relocate(num_unique_jobs, .after = "job_cat_desc")
 # ================================================================= ####
 # Save Dataframe ####
+saveRDS(work, file = "data/processed/2_work_cleaned.Rds")
 # ================================================================= #### 
