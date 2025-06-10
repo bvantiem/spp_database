@@ -196,7 +196,7 @@ work <- work %>%
 # Add Notes to Variables ####
 # to view notes added use str() or comment()
 # -- Cleaned Variables ####
-comment(work$job_type) <- "Description of the type of job, no missing values, fully cleaned, created using Wrk_Asgnmt_Tp_raw and Wrk_Asgnmt_Nm_raw"
+comment(work$job_lvl) <- "Description of job level, no missing values, fully cleaned, created using Wrk_Asgnmt_Tp_raw and Wrk_Asgnmt_Nm_raw (6/10/25)"
 comment(work$job_cat_desc) <- "Description of job and title, no missing values, NOT FULLY CLEANED, created using Catgry_Desc_raw"
 comment(work$job_hrs_daily) <- "Number of hours worked in a shift, 505 missing values and 382 NULL (887 missing), WHY?, NOT FULLY CLEANED, created using InmDly_Hrs_raw"
 comment(work$job_sch) <- "Days scheduled for work, 516 missing values and 370 NULL, WHY? (886 missing) NOT FULLY CLEANED, created using InmSchd_Cd_raw"
@@ -219,7 +219,8 @@ work_summary <- work %>%
   filter(!is.na(job_cat_desc), job_cat_desc != "Unassigned") %>%  # Exclude missing or unassigned
   distinct(research_id, job_cat_desc) %>%                         # Keep only unique roles per person
   count(research_id, name = "num_unique_jobs") %>%                 # Count roles per person
-  mutate(research_id = as.character(research_id))                    
+  mutate(research_id = as.character(research_id))   
+# what is work_summary?
 work <- work %>%
   left_join(work_summary, by = "research_id") %>%
   relocate(num_unique_jobs, .after = "job_cat_desc")
