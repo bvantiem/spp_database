@@ -118,4 +118,5 @@ visit %>%
   summarise(avg_unique_visitors = mean(n))
 # =================================================================== ####
 # Save Dataframe ####
+saveRDS(visit, file = "data/processed/2_visit_cleaned.Rds")
 # =================================================================== ####
