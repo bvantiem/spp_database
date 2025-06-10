@@ -292,6 +292,48 @@ work <- add_wave_data(work[,which(names(work) %ni% c("WrkAsgnmtStrt_Dt", "WrkAsg
                       date_datapull, wave_no)
 visit <- add_wave_data(visit, visit6, date_datapull, wave_no)
 
+# -- -- Wave 7 ####
+basic7 <-xl.read.file("data/raw/1_admin_data/pcq_wave7/PrisonClimateSurveyParticipantsData_20250514.xlsx", xl.sheet=1)
+move7 <-xl.read.file("data/raw/1_admin_data/pcq_wave7/PrisonClimateSurveyParticipantsData_20250514.xlsx", xl.sheet=2)
+assess7 <-xl.read.file("data/raw/1_admin_data/pcq_wave7/PrisonClimateSurveyParticipantsData_20250514.xlsx", xl.sheet=3)
+house7 <-xl.read.file("data/raw/1_admin_data/pcq_wave7/PrisonClimateSurveyParticipantsData_20250514.xlsx", xl.sheet=4)
+program7 <-xl.read.file("data/raw/1_admin_data/pcq_wave7/PrisonClimateSurveyParticipantsData_20250514.xlsx", xl.sheet=5)
+conduct7 <-xl.read.file("data/raw/1_admin_data/pcq_wave7/PrisonClimateSurveyParticipantsData_20250514.xlsx", xl.sheet=6)
+work7 <-xl.read.file("data/raw/1_admin_data/pcq_wave7/PrisonClimateSurveyParticipantsData_20250514.xlsx", xl.sheet=7)
+visit7 <-xl.read.file("data/raw/1_admin_data/pcq_wave7/PrisonClimateSurveyParticipantsData_20250514.xlsx", xl.sheet=8) #TO FIX: this includes just 1 row
+
+# -- Ensure Compatibility
+names(assess7)[which(names(assess7)=="Control_Number")] <- "control_number"
+names(program7)[which(names(program7)=="completion_description")] <- "CompletionDesc"
+
+basic7 <- basic7 %>%
+  rename(STG = stg,
+         `ASCA Category - Ranked` = Ranking,
+         MHCode = mh_code) %>%
+  mutate(min_expir_date = as.character(ifelse(min_expir_date==0,
+                                              00000000, min_expir_date)),
+         max_expir_date = as.character(ifelse(max_expir_date==0,
+                                              00000000, max_expir_date)),
+         date_of_birth = as.character(date_of_birth),
+         delete_date = as.character(delete_date),
+         RecmpMax_Dt = NA)
+
+basic7 <- as.data.frame(basic7)
+
+# -- Merge in
+date_datapull <- 20250514
+wave_no <- 7
+
+basic <- add_wave_data(basic, basic7, date_datapull, wave_no)
+move <- add_wave_data(move, move7, date_datapull, wave_no)
+assess <- add_wave_data(assess, assess7, date_datapull, wave_no)
+house <- add_wave_data(house, house7, date_datapull, wave_no)
+program <- add_wave_data(program, program7, date_datapull, wave_no)
+conduct <- add_wave_data(conduct, conduct7, date_datapull, wave_no)
+work <- add_wave_data(work[,which(names(work) %ni% c("WrkAsgnmtStrt_Dt", "WrkAsgnmtEnd_Dt"))],
+                      work7[,which(names(work7) %ni% c("WrkAsgnmtStrt_Dt", "WrkAsgnmtEnd_Dt"))],
+                      date_datapull, wave_no)
+visit <- add_wave_data(visit, visit7, date_datapull, wave_no)
 # ================================================================= ####
 # Data Manipulation  ####
 # -- Standardize Inmate ID column name ####
