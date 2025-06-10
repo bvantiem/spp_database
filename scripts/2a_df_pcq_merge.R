@@ -492,8 +492,24 @@ pcq <- pcq |>
   relocate(control_number)
 
 # Clean dates ####
+# When dates are NA, assign most common date in that wave and unit
+temp <- pcq %>% filter(!is.na(date)) %>% group_by(survey_wave, unit) %>% dplyr::count(date)
+temp$most.common.date <- NA
+temp <- as.data.frame(temp)
+for(i in unique(temp[!is.na(temp$unit),]$unit)){
+  for(k in unique(temp$survey_wave)){
+    index <- which(temp$unit==i & temp$survey_wave==k)
+    temp[index,"most.common.date"] <- temp[index,"n"][which.max(temp[index,"n"])]
+  }
+}
+temp <- temp[which(temp$n==temp$most.common.date), c("survey_wave", "unit", "date")]
+names(temp)[which(names(temp)=="date")] <- "most_common_date"
+pcq <- left_join(pcq, temp)
+pcq[is.na(pcq$date), "date"] <- pcq[is.na(pcq$date), "most_common_date"]
+pcq <- pcq[,-which(names(pcq)=="most_common_date")]
 # date format
 pcq$date <- pcq$date_raw
+pcq <- pcq %>% relocate(date, .after = date_raw)
 pcq$date[which(pcq$date_raw %in% c("999", "9092099"))] <- NA # 9092099, Wave 3, in unidentified stack
 pcq$date <- parse_date_time(pcq$date_raw, c("ymd", "mdy")) # wave 1 stored as ymd, wave 2 stored dates as mdy
 pcq$date <- as.Date(pcq$date)
