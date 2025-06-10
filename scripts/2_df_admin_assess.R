@@ -117,4 +117,5 @@ assess %>%
   arrange(desc(avg_score))
 # =================================================================== ####
 # Save Dataframe ####
+saveRDS(assess, file = "data/processed/2_assess_cleaned.Rds")
 # =================================================================== ####
