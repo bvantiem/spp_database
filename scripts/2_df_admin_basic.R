@@ -396,7 +396,7 @@ basic <- basic %>%
   relocate(starts_with("sent_max_in_days"), .after = sent_min_in_days)
 # ================================================================= ####
 # Save dataframe ####
-saveRDS(basic, file = "data/processed/processing_layer_3/basic_cleaned.Rds")
+saveRDS(basic, file = "data/processed/2_basic_cleaned.Rds")
         
 # ================================================================= ####
 # RELEVANT OLD CODE TO INTEGRATE LATER, INCL TIME SERVED ####
@@ -449,5 +449,4 @@ basic$est_admit_date[i] <- NA
 basic$est_days_served_on_20220501 <- ymd(20220501)-basic$est_admit_date # Update with every wave
 basic$est_days_served_on_20220501 <- as.numeric(gsub(" days", "", basic$est_days_served_on_20220501))
 
-# Unresolved Issues
-# delete date not in unambiguous format. Most are 9999999. All dates that are not 9999999 miss one number (e.g. 2022167)
+
