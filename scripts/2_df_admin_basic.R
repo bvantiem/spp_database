@@ -404,6 +404,36 @@ basic <- basic %>%
   relocate(starts_with("sent_min_in_days"), .after = sent_max_cort_days) %>%
   relocate(starts_with("sent_max_in_days"), .after = sent_min_in_days)
 # ================================================================= ####
+# Temporary Descriptive Stats ####
+
+# -- summary stats for min/max time sentenced
+basic %>%
+  select(sent_min_cort_yrs, sent_min_cort_mths, sent_min_cort_days,
+         sent_max_cort_yrs, sent_max_cort_mths, sent_max_cort_days) %>%
+  summary()
+# -- Frequencies for Categorical Variabless
+# sentence class
+basic %>% count(sent_class, sort = TRUE)
+
+# Demographics
+basic %>% count(dem_race, sort = TRUE)
+basic %>% count(dem_sex, sort = TRUE)
+basic %>% count(dem_marital, sort = TRUE)
+basic %>% count(dem_edu_grade, sort = TRUE)
+
+# Mental health / STG
+basic %>% count(dem_mhcode, sort = TRUE)
+basic %>% count(dem_stg_yes, sort = TRUE)
+
+# Custody level
+basic %>% count(pris_custody_lvl, sort = TRUE)
+# -- Analysis of county of commitment by race
+basic %>% count(sent_commitment_cnty, sort = TRUE) 
+basic %>%
+  group_by(sent_commitment_cnty, dem_race) %>%
+  tally() %>%
+  arrange(desc(n))
+# ================================================================= ####
 # Save dataframe ####
 saveRDS(basic, file = "data/processed/2_basic_cleaned.Rds")
         
