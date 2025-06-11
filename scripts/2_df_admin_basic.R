@@ -9,7 +9,6 @@
 # Some individuals have multiple asca codes - meaning this reflects multiple admissions
 # -- To do ####
 # To do: ASCA classification is sometimes NULL while the offense code is the same as that of other variables, e.g "STRANGULATION: APPLYING PRESSURE TO THROAT OR NECK" is sometimes classified as violent and sometimes as NULL. Manually recategorize.
-# To do: Look into 55 NAs for research_id
 # To do: Explore sent_min_expir_dt, sent_max_expir_dt, sent_off_asca, sent_max_expir_recmp_dt variables
 # ================================================================= ####
 # Set up ####
@@ -139,16 +138,16 @@ cols_cort <- c("sent_min_cort_yrs",
 cols_expir <- c("sent_min_expir_dt",
                 "sent_max_expir_dt")
 
-# save these acronyms to ensure they stay capitalized
-acronyms <- c("DUI", 
-              "IDSI")
-
 
 # columns that need to be reformatted for the standardization of uppercase letters
 cols_to_standardize <- c("offense_raw",
                          "sent_status", 
                          "sent_commitment_cnty", 
                          "chg_des")
+
+# save these acronyms to ensure they stay capitalized
+acronyms <- c("DUI", 
+              "IDSI")
 
 basic <- basic %>%
   # Set any empty strings to NA
@@ -160,6 +159,8 @@ basic <- basic %>%
   mutate(across(all_of(c(cols_cort, cols_expir)), ~ ifelse(sent_class == "LF", NA, .))) %>%
   mutate(across(all_of(cols_expir), ymd)) %>%
   mutate(sent_max_expir_recmp_dt = ymd(as_date(sent_max_expir_recmp_dt))) %>%
+  # SENTENCING INFO
+  # -- mutate abrv into long form sent_class
   mutate(sent_class = case_when(
     sent_class == "CL" ~ "Commuted Life",
     sent_class == "DF" ~ "Definite",
@@ -167,6 +168,7 @@ basic <- basic %>%
     sent_class == "IN" ~ "Indeterminate",
     sent_class == "LF" ~ "Life",
     TRUE ~ sent_class)) %>%
+  # -- standardize ASCA codes
   mutate(sent_off_asca = case_when(
     sent_off_asca == "1-Violent" ~ "Violent",
     sent_off_asca == "VIOLENT" ~ "Violent",
@@ -182,10 +184,11 @@ basic <- basic %>%
   mutate(sent_off_asca = na_if(sent_off_asca, "NULL")) %>%
   # -- Remove trailing white space
   mutate(sent_commitment_cnty = gsub("\\s+$", "", sent_commitment_cnty)) %>%
-  # -- Use standardize function to fix uppercase discrepencies
+  # -- Use standardize function to fix uppercase discrepancies
   mutate(across(all_of(cols_to_standardize), standardize_uppercase)) %>%
   # DEMOGRAPHICS
   mutate(dem_dob_dt = ymd(dem_dob_dt)) %>%
+  # -- mutate race abrv into long form race 
   mutate(dem_race = case_when(
     dem_race == "A" ~ "Asian",
     dem_race == "B" ~ "Black",
@@ -194,9 +197,10 @@ basic <- basic %>%
     dem_race == "I" ~ "American Indian",
     TRUE ~ dem_race)) %>%
     mutate(dem_marital = case_when(
-      # -- NA values in marital_status_code_raw are listed as Unknown in marital_status_raw. 
-      # -- Code ensures that both are recorded as "Unknown".
+  # -- NA values in marital_status_code_raw are listed as Unknown in marital_status_raw. 
+  # -- Code ensures that both are recorded as "Unknown".
       marital_status_code_raw == "UNK" | marital_status_raw == "UNKNOWN" ~ "Unknown",
+  # -- mutate other marital status into long form title
       marital_status_code_raw == "MAR" ~ "Married",
       marital_status_code_raw == "DIV" ~ "Divorced",
       marital_status_code_raw == "SIN" ~ "Single",
@@ -205,7 +209,9 @@ basic <- basic %>%
       is.na(marital_status_code_raw) & !is.na(marital_status_raw) ~ marital_status_raw,
       TRUE ~ NA_character_
     )) %>%
+  # -- some entries from dem_edu_grade have leading zeros, remove these
   mutate(dem_edu_grade = remove_leading_zeros(dem_edu_grade) |> as.numeric()) %>%
+  # -- remove trailing whitespaces from dem_mhcode
   mutate(dem_mhcode = gsub("\\s+$", "", dem_mhcode)) %>%
   mutate(dem_stg_yes = as.numeric(dem_stg_yes)) %>%
   # -- Change responses which are coded as NULL instead of NA
@@ -304,34 +310,37 @@ basic_by_sentence <- basic %>%
          marital_status_raw,
          grade_complete_raw,
          date_of_birth_raw)
-
+# ================================================================= ####
+# Temporary Notes to Show Britte ####
+# -- almost fully NA rows but we have research_ids is it worth seeking out these missing details?
+a <- basic %>% filter(is.na(sent_class))
 # ================================================================= ####
 # Add Notes to Variables ####
   # to view notes added use str() or comment()
 # -- Cleaned Variables ####
-comment(basic$sent_class) <- "Description of sentence type, 5 NA values, unknown cause otherwise cleaned variable, created using class_of_sent_raw"
-comment(basic$sent_status) <- "Sentence status, no missing values, fully cleaned variable, created using sentence_status_raw"
-comment(basic$sent_min_cort_yrs) <- "Min number of years sentenced, 318 (6.6%) missing values explained by those serving life, fully cleaned variable, created using min_cort_sent_yrs_raw" # what percent of the pop is 318?
-comment(basic$sent_min_cort_mths) <- "Min number of months in sentence, 318 (6.6%) missing values explained by those serving life, fully cleaned variable, created using min_cort_sent_mnths_raw"
-comment(basic$sent_min_cort_days) <- "Min number of days in sentence, 318 (6.6%) missing values explained by those serving life, fully cleaned variable, created using min_cort_sent_days_raw"
-comment(basic$sent_max_cort_yrs) <- "Max number of years sentenced, 318 (6.6%) missing values explained by those serving life, fully cleaned variable, created using max_cort_sent_yrs_raw"
-comment(basic$sent_max_cort_mths) <- "Max number of months in sentence, 318 (6.6%) missing values explained by those serving life, fully cleaned variable, created using max_cort_sent_mnths_raw"
-comment(basic$sent_max_cort_days) <- "Max number of days in sentece, 318 (6.6%) missing values explained by those serving life, fully cleaned variable, created using max_cort_sent_days_raw"
-comment(basic$sent_min_expir_dt) <- "Earliest date of end of sentence, 322 (6.7%) missing values, explore this further, created using min_expir_date_raw" 
-comment(basic$sent_max_expir_dt) <- "Latest date of end of sentence, 359 (7.5%) missing values, explore this further, created using max_expir_date_raw" 
-comment(basic$sent_max_expir_recmp_dt) <- "Latest date of recomputed sentence, 4577 (95.4%) missing values, created using RecmpMax_Dt_raw" 
-comment(basic$sent_commitment_cnty) <- "County of commitment, fully cleaned variable, created using commit_cnty_raw"
-comment(basic$sent_off_asca) <- "Type of offense, 4 missing values and 91 NULL (1.9%), fully cleaned variable,  created using ASCA Category - Ranked_raw" # why are there 4 NA and 91 NULL? Should these be combined 
-comment(basic$chg_off_code) <- "Offense code,9 (0.2%) missing values, fully cleaned variable, created using offense_code_raw"
-comment(basic$chg_des) <- "Offense description, 9 (0.2%) missing values, not fully cleaned need to fix capitalization, created using offense_raw"
-comment(basic$pris_custody_lvl) <- "Individual custody level, 161 (3.4%) missing values for unknown reason, explore further, created using custody_raw"
-comment(basic$pris_loc) <- "Facility name, no missing values, fully cleaned, created using location_permanent_raw"
-comment(basic$dem_dob_dt) <- "Date of birth, no missing values, fully cleaned, created using date_of_birth_raw"
-comment(basic$dem_race) <- "Race, no missing values, fully cleaned variable, created using race_code_raw"
-comment(basic$dem_marital) <- "Marital status, no missing values, fully cleaned variable, created using marital_status_code_raw"
-comment(basic$dem_edu_grade) <- "Highest level of education completed, 3 (0.06%) missing values, fully cleaned variable, created using grade_complete_raw"
-comment(basic$dem_mhcode) <- "Classification of mental health, 5 (0.1%) missing values, unknown cause fully cleaned variable, created using MHCode_raw" 
-comment(basic$dem_stg_yes) <- "Known gang affiliation = 1, 2162 (45.1%) missing values appears to be missing data, those without a stg are recorded as 0, created using STG_raw"
+comment(basic$sent_class) <- "Description of sentence type, 5/5490 NA values, unknown cause otherwise cleaned variable, created using class_of_sent_raw (6/11/25)"
+comment(basic$sent_status) <- "Active sentence status, no missing values, fully cleaned variable, created using sentence_status_raw (6/11/25)"
+comment(basic$sent_min_cort_yrs) <- "Min number of years sentenced, 358/5490 missing values explained by those serving life, fully cleaned variable, created using min_cort_sent_yrs_raw (6/11/25)"
+comment(basic$sent_min_cort_mths) <- "Min number of months in sentence, 358/5490 missing values explained by those serving life, fully cleaned variable, created using min_cort_sent_mnths_raw (6/11/25)"
+comment(basic$sent_min_cort_days) <- "Min number of days in sentence, 358/5490 missing values explained by those serving life, fully cleaned variable, created using min_cort_sent_days_raw (6/11/25)"
+comment(basic$sent_max_cort_yrs) <- "Max number of years sentenced, 358/5490 missing values explained by those serving life, fully cleaned variable, created using max_cort_sent_yrs_raw (6/11/25)"
+comment(basic$sent_max_cort_mths) <- "Max number of months in sentence, 358/5490 missing values explained by those serving life, fully cleaned variable, created using max_cort_sent_mnths_raw (6/11/25)"
+comment(basic$sent_max_cort_days) <- "Max number of days in sentece, 358/5490 missing values explained by those serving life, fully cleaned variable, created using max_cort_sent_days_raw (6/11/25)"
+comment(basic$sent_min_expir_dt) <- "Earliest date of end of sentence, 365/5490 missing values, explore this further, created using min_expir_date_raw (6/11/25)" 
+comment(basic$sent_max_expir_dt) <- "Latest date of end of sentence, 409/5490 missing values, explore this further, created using max_expir_date_raw (6/11/25)" 
+comment(basic$sent_max_expir_recmp_dt) <- "Latest date of recomputed sentence, 5270/5490 missing values, created using RecmpMax_Dt_raw (6/11/25)" 
+comment(basic$sent_commitment_cnty) <- "County of commitment, fully cleaned variable, created using commit_cnty_raw (6/11/25)"
+comment(basic$sent_off_asca) <- "Type of offense, 98/5490 NA values, fully cleaned variable,  created using ASCA Category - Ranked_raw (6/11/25)"
+comment(basic$chg_off_code) <- "Offense code, 12/5490 NA values, fully cleaned variable, created using offense_code_raw (6/11/25)"
+comment(basic$chg_des) <- "Offense description, 12/5490 NA values, fully cleaned variable, created using offense_raw (6/11/25)"
+comment(basic$pris_custody_lvl) <- "Individual custody level, 297/5490 missing values for unknown reason, explore further, created using custody_raw (6/11/25)"
+comment(basic$pris_loc) <- "Facility name, no missing values, fully cleaned, created using location_permanent_raw (6/11/25)"
+comment(basic$dem_dob_dt) <- "Date of birth, no missing values, fully cleaned, created using date_of_birth_raw (6/11/25)"
+comment(basic$dem_race) <- "Race, no missing values, fully cleaned variable, created using race_code_raw (6/11/25)"
+comment(basic$dem_marital) <- "Marital status, no missing values, fully cleaned variable, created using marital_status_code_raw (6/11/25)"
+comment(basic$dem_edu_grade) <- "Highest level of education completed, 6/5490 missing values, fully cleaned variable, created using grade_complete_raw (6/11/25)"
+comment(basic$dem_mhcode) <- "Classification of mental health, 41/5490 missing values, unknown cause fully cleaned variable, created using MHCode_raw (6/11/25)" 
+comment(basic$dem_stg_yes) <- "Known gang affiliation = 1, 2855/5490 missing values appears to be missing data, those without a stg are recorded as 0, created using STG_raw (6/11/25)"
 # -- Raw Variables ####
 ### add name of cleaned variable verison
 
