@@ -21,13 +21,17 @@ assess <- assess |>
   mutate(test_name = Test_Desc_raw,
          test_score = Test_Score_raw,
          test_date = Test_Dt_raw) |>
+  # -- relocate variables appended with raw to the end of the dataframe
   relocate(ends_with("_raw"), .after = last_col())
 
 # Clean variables ####
 assess <- assess |>  
+  # -- pull time out of test_date variable to separate into new column
   mutate(test_time = format(as.POSIXct(test_date), format = "%H:%M:%S"),
   test_date = as.Date(test_date) ) |>
+  # -- drop new test_time variable, not a useful variable in cleaned dataset
   select(-test_time) |> 
+  # -- change abrv test name into full title -> full title checked with PADOC data dictionary
   mutate(test_name = case_when(
     test_name == "CSS-M" ~ "Correctional Supervision Scale - Modified",
     test_name == "ST99" ~ "Static 1999",
@@ -37,11 +41,11 @@ assess <- assess |>
     test_name == "RST" ~ "Risk Screen Tool",
     TRUE ~ test_name 
   )) |>
+  # -- relocate date_datapull and wave to after cleaned variables and before raw variables
   relocate(date_datapull, .after = test_date) |>
   relocate(wave, .after = date_datapull) |>
-  
   # Create dummy variables
-  # -- test_name
+  # -- test_name dummy
   mutate(
     test_name_cssm = if_else(test_name == "Criminal Sentiments Scale - Modified", 1, 0),
     test_name_st99 = if_else(test_name == "Static 99", 1, 0),
@@ -49,14 +53,15 @@ assess <- assess |>
     test_name_tcu  = if_else(test_name == "Texas Christian University Drug Screen", 1, 0),
     test_name_hiq  = if_else(test_name == "Hostile Interpretations Questionnaire", 1, 0),
     test_name_rst  = if_else(test_name == "Risk Screen Tool", 1, 0)) |>
+  # -- relocate test name dummies after test_name variable
   relocate(test_name_cssm, .after = test_name) |>
   relocate(test_name_st99, .after = test_name_cssm) |>
   relocate(test_name_lsir, .after = test_name_st99) |>
   relocate(test_name_tcu, .after = test_name_lsir) |>
   relocate(test_name_hiq, .after = test_name_tcu) |>
   relocate(test_name_rst, .after = test_name_hiq) |>
-  # -- create test_Score variables for each test_name
-  # -- -- if they took the test their score will appear if not then an NA will 
+  # create test_Score variables for each test_name
+  # -- if they took the test their score list under test_score will appear if not then an NA will 
   mutate(
     test_score_cssm = if_else(test_name_cssm == 1, test_score, NA_real_),
     test_score_st99 = if_else(test_name_st99 == 1, test_score, NA_real_),
@@ -65,6 +70,7 @@ assess <- assess |>
     test_score_hiq  = if_else(test_name_hiq == 1,  test_score, NA_real_),
     test_score_rst  = if_else(test_name_rst == 1,  test_score, NA_real_)
   )|>
+  # -- relocate new variables after test_name dummies
   relocate(test_score_cssm, .after = test_name_rst) |>
   relocate(test_score_st99, .after = test_score_cssm) |>
   relocate(test_score_lsir, .after = test_score_st99) |>
@@ -82,10 +88,9 @@ NA_rows <- assess %>%
 # Add Notes to Variable ####
 # to view notes added use str() or comment()
 # -- Cleaned Variables ####
-comment(assess$test_desc) -> "Test taken, 59 fully NA rows, created using Test_Desc_raw"
-comment(assess$test_score) -> "Score on test, 59 fully NA rows, created using Test_Score_raw"
-comment(assess$test_date) -> "Date test taken, 59 fully NA rows, created using Test_Dt_raw"
-comment(assess$test_time) -> "Time test taken, 59 fully NA rows, created using Test_Dt_raw"
+comment(assess$test_name) -> "Test taken, 59 fully NA rows, created using Test_Desc_raw (6/11/25)"
+comment(assess$test_score) -> "Score recieved on test, 59 fully NA rows, created using Test_Score_raw (6/11/25)"
+comment(assess$test_date) -> "Date test taken, 59 fully NA rows, created using Test_Dt_raw (6/11/25)"
 # -- Raw Variables ####
 comment(assess$Test_Desc_raw) -> "raw data, cleaned variable available as test_desc"
 comment(assess$Test_Score) -> "raw data, cleaned variable available as test_score"
