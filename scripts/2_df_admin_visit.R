@@ -118,6 +118,12 @@ visit %>%
   distinct(research_id, vst_id) %>%   # Drop duplicates of same visitor visiting same person
   count(research_id) %>%                  # Count unique visitors per person
   summarise(avg_unique_visitors = mean(n))
+# -- most common visit types
+visit %>%
+  count(vst_type, sort = TRUE)
+
+visit %>%
+  count(vst_desc, sort = TRUE)
 # =================================================================== ####
 # Save Dataframe ####
 saveRDS(visit, file = "data/processed/2_visit_cleaned.Rds")
