@@ -83,6 +83,7 @@ house <- house %>%
   relocate(wave, .after = date_datapull)
 
 # Fully NA Rows ####
+# -- 139 rows are fully NA except for research_id, control_number, wave, research_id
 NA_rows <- house %>%
       filter(if_all(
              .cols = -c(research_id, date_datapull, wave, control_number),
@@ -92,31 +93,31 @@ NA_rows <- house %>%
 # Add Notes to Variable ####
 # to view notes added use str() or comment()
 # -- Cleaned Variables ####
-comment(house$loc_date_in) <- "Date in ... facility? unit? system? 5413 missing values, created using date_in_raw"
-comment(house$loc_date_out) <- "Date out ... facility? unit? system? 10852 missing values, created using date_out_raw"
-comment(house$loc_bld) <- "Description of housing building, 113 NA values unknown why... look into this!, created using building_raw variable"
-comment(house$loc_unit) <- "Housing unit, 113 NA values... same as house_bld missing, created using section_raw"
-comment(house$loc_cell) <- "Cell number individual lives in, 113 NA values, created using cell_raw"
-comment(house$loc_bed_num) 
-comment(house$loc_bed_type)
-comment(house$loc_sec_lvl) <- "Security level of housing unit, 113 NA values, created using security_level_raw"
-comment(house$loc_unit_type) <- "Description of type of housing unit, 113 NA values, created using housing_status_raw"
-comment(house$loc_bed_stat) 
-comment(house$pris_loc) <- "Facility description, 13464 NA values, created using facility_raw"
-comment(house$dem_hndcap) <- "Binary variable for handicap status 1=yes 0=no, 139 NA values, created using handicap_stat_raw"
+comment(house$loc_date_in) <- "Date in housing bed/unit/facility, 139/162819 NA values in fully NA rows, created using date_in_raw (6/11/25)"
+comment(house$loc_date_out) <- "Date out housing bed/unit/facility, 12805/162819 NA values, created using date_out_raw (6/11/25)"
+comment(house$loc_bld) <- "Description of housing building, 139 NA values in fully NA rows, created using building_raw variable (6/11/25)"
+comment(house$loc_unit) <- "Housing unit, 139 NA values in fully NA rows, created using section_raw (6/11/25)"
+comment(house$loc_cell) <- "Cell number individual lives in, 139 NA values in fully NA rows, created using cell_raw (6/11/25)"
+comment(house$loc_bed_num) <- "Bed number, 139 NA values in fully NA rows, created using bed_number_raw (6/11/25)"
+comment(house$loc_bed_type) <- "Bed type, all entries are 1 unsure meaning, 139 NA values in fully NA rows, created using bed_type_raw (6/11/25)"
+comment(house$loc_sec_lvl) <- "Security level of housing unit, 139 NA values in fully NA rows, created using security_level_raw (6/11/25)"
+comment(house$loc_unit_type) <- "Description of type of housing unit, 139 NA values in fully NA rows, created using housing_status_raw (6/11/25)"
+comment(house$loc_bed_stat) <- "Bed status, most entries are 9 some are Z, 139 NA values in fully NA rows, created using housing_status_raw (6/11/25)"
+comment(house$pris_loc) <- "Facility location, 139 NA values in fully NA rows, created using facility_raw (6/11/25)"
+comment(house$dem_hndcap) <- "Binary variable for handicap status 1=yes 0=no, 139 NA values in fully NA rows, created using handicap_stat_raw (6/11/25)"
 # -- Raw Variables ####
 comment(house$date_in_raw) <- "raw data, non raw available as date_in"
 comment(house$date_out_raw) <- "raw data, non raw available as date_out"
 comment(house$facility_raw) <- "raw data, cleaned non raw available as pris_loc"
-comment(house$building_raw) <- "raw data, non raw available as house_bld"
-comment(house$section_raw) <- "raw data, non raw available as house_unit"
-comment(house$cell_raw) <- "raw data, non raw available as house_cell"
-comment(house$bed_number_raw) <- "raw data, non raw available as house_bed_num"
-comment(house$bed_type_raw) <- "raw data, non raw available as house_bed_type"
-comment(house$security_level_raw) <- "raw data, non raw available as house_sec_lvl"
+comment(house$building_raw) <- "raw data, non raw available as loc_bld"
+comment(house$section_raw) <- "raw data, non raw available as loc_unit"
+comment(house$cell_raw) <- "raw data, non raw available as loc_cell"
+comment(house$bed_number_raw) <- "raw data, non raw available as loc_bed_num"
+comment(house$bed_type_raw) <- "raw data, non raw available as loc_bed_type"
+comment(house$security_level_raw) <- "raw data, non raw available as loc_sec_lvl"
 comment(house$handicap_stat_raw) <- "raw data, non raw available as dem_hndcap"
-comment(house$housing_status_raw) <- "raw data, non raw available as house_unit_type"
-comment(house$bed_status_raw) <- "raw data, non raw available as house_bed_stat"
+comment(house$housing_status_raw) <- "raw data, non raw available as loc_unit_type"
+comment(house$bed_status_raw) <- "raw data, non raw available as loc_bed_stat"
 # =================================================================== ####
 # Britte's Old Deduplication Code (to be reviewed) ####
 # Deduplicate house
