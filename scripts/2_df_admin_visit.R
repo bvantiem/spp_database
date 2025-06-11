@@ -34,6 +34,7 @@ visit <- visit |>
   mutate(across(everything(), ~ replace(., grepl("^\\s*$", .), NA))) |>
   # -- Some responses were coded as NULL change this to NA
   mutate(across(where(is.character), ~ na_if(., "NULL"))) |>
+  # -- recode abrv visitor descriptions into full form descriptions
   mutate(vst_desc = case_when(
     vst_desc == "ATT" ~ "Attorney/Magistrate/Paralegal",
     vst_desc == "AUN" ~ "Aunt",
@@ -62,6 +63,7 @@ visit <- visit |>
     vst_desc == "UNC" ~ "Uncle",
     vst_desc == "WIF" ~ "Wife"
   )) %>%
+  # -- recode abrv for type of visitor into full form description
   mutate(vst_type = case_when(
     vst_type == "A" ~ "Attorney or Associate",
     vst_type == "R" ~ "Regular",
