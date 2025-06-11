@@ -191,7 +191,7 @@ house <- house %>%
     days_in_unit = as.numeric(loc_date_out - loc_date_in)
   )
 # =================================================================== ####
-# Temporary Descriptive Stats
+# Temporary Descriptive Stats ####
 # -- number of housing placements per person
 a <- house %>%
   group_by(control_number) %>%
