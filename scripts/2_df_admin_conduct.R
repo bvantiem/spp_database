@@ -94,6 +94,23 @@ comment(conduct$chrg_description_raw) <- "raw data, cleaned variable available a
 # New Variables ####
 # ================================================================= ####
 # Temporary Descriptive Stats ####
+# -- number of misconducts per unique control number
+# -- -- NOTE: individuals are only in this dataset if they have committed atleast
+#             one misconduct, does not include anyone with 0 misconducts
+misconducts_per_person <- conduct %>%
+  group_by(control_number) %>%
+  summarize(n_misconducts = n())
+summary(misconducts_per_person$n_misconducts)
+
+# -- likelihood of each verdict result
+conduct %>%
+  count(cndct_guilty) %>%
+  mutate(percent = n / sum(n) * 100)
+
+# -- most common misconduct charges
+conduct %>%
+  count(cndct_chrg_desc, sort = TRUE) %>%
+  slice_head(n = 10)  # top 10
 # ================================================================= ####
 # Save Dataframe ####
 saveRDS(conduct, file = "data/processed/2_conduct_cleaned.Rds")
