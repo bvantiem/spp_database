@@ -182,6 +182,26 @@ house2 <- house2 %>%
   ungroup()
 # =================================================================== ####
 # New Variables ####
+# -- length of stay per placement in days
+house <- house %>%
+  mutate(
+    loc_date_out = na_if(as.character(loc_date_out), "00000000"),  # ensure it's character first
+    loc_date_in = ymd(loc_date_in),
+    loc_date_out = ymd(loc_date_out),
+    days_in_unit = as.numeric(loc_date_out - loc_date_in)
+  )
+# =================================================================== ####
+# Temporary Descriptive Stats
+# -- number of housing placements per person
+a <- house %>%
+  group_by(control_number) %>%
+  summarize(n_placements = n())
+summary(a$n_placements)
+
+# -- percent of residents given handicap status
+house %>%
+  count(dem_hndcap, sort = TRUE) %>%
+  mutate(percent = n / sum(n) * 100)
 # =================================================================== ####
 # Save Dataframe ####
 saveRDS(house, file = "data/processed/2_house_cleaned.Rds")
