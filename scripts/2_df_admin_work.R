@@ -75,6 +75,11 @@ work <- work %>%
     job_lvl == "SEC" ~ "Secondary",
     job_lvl == "TER" ~ "Tertiary",
     TRUE ~ job_lvl)) %>%
+  # -- convert NULL responses into NA, reformat into numeric
+  mutate(
+    job_hrs_daily = na_if(job_hrs_daily, "NULL"),
+    job_hrs_daily = as.numeric(job_hrs_daily)
+  ) %>%
   # -- mutate abrv job_field description into full form description
   # -- -- induced using table of job_code_raw and job_nm_raw 
   mutate(job_field = case_when(
@@ -224,6 +229,33 @@ work_summary <- work %>%
 work <- work %>%
   left_join(work_summary, by = "research_id") %>%
   relocate(num_unique_jobs, .after = "job_cat_desc")
+# ================================================================= ####
+# Temporary Descriptive Stats
+# -- number of jobs per unique control_number
+jobs_per_person <- work %>%
+  group_by(control_number) %>%
+  summarize(n_jobs = n())
+summary(jobs_per_person$n_jobs)
+
+# -- summary of daily hours worked
+work %>%
+  summarize(
+    mean_hours = mean(job_hrs_daily, na.rm = TRUE),
+    median_hours = median(job_hrs_daily, na.rm = TRUE),
+    max_hours = max(job_hrs_daily, na.rm = TRUE)
+  )
+# -- avg daily hours worked by job category descriptions
+work %>%
+  group_by(job_cat_desc) %>%
+  summarize(
+    avg_hours = mean(job_hrs_daily, na.rm = TRUE),
+    n = n()
+  ) %>%
+  arrange(desc(avg_hours))
+
+# frequency of each job category description
+work %>%
+  count(job_cat_desc, sort = TRUE)
 # ================================================================= ####
 # Save Dataframe ####
 saveRDS(work, file = "data/processed/2_work_cleaned.Rds")
