@@ -187,6 +187,28 @@ program <- program %>%
   ) %>%
   relocate(prg_length_days, .after = prg_end_date)
 # =================================================================== ####
+# Temporary Descriptive Stats ####
+# -- length of program participation
+summary(program$prg_length_days)
+
+# -- number of programs per person
+programs_per_person <- program %>%
+  group_by(control_number) %>%
+  summarize(n_programs = n())
+
+summary(programs_per_person$n_programs)
+
+# -- frequency of each program category
+program %>%
+  summarize(across(starts_with("prg_cat_"), ~ sum(. == 1, na.rm = TRUE))) %>%
+  pivot_longer(everything(), names_to = "category", values_to = "count") %>%
+  arrange(desc(count))
+
+# -- program participation by facility (all individuals have been housed at 
+#    Chester -> majority of programs were done there)
+program %>%
+  count(pris_loc, sort = TRUE)
+# =================================================================== ####
 # Save dataframe ####
 saveRDS(program, file = "data/processed/2_program_cleaned.Rds")
 # =================================================================== ####
