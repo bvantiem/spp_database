@@ -113,6 +113,7 @@ program <- program |>
   )) %>%
   relocate(prg_cat, .after = prg_name) %>%
   # DUMMY VARIABLES
+  # -- create dummy variables for higher level program categories
   mutate(
     prg_cat_vp = ifelse(prg_cat == "Violence Prevention", 1, 0),
     prg_cat_tc = ifelse(prg_cat == "Therapeutic Community", 1, 0),
@@ -127,6 +128,7 @@ program <- program |>
     prg_cat_re = ifelse(prg_cat == "Re-Entry/ Transitional Programs", 1,0),
     prg_cat_oth = ifelse(prg_cat == "Other", 1, 0)
   )  %>%
+  # -- relocate dummy variables after prg_cat variable created
   relocate(prg_cat_vp, .after = prg_cat) %>%
   relocate(prg_cat_tc, .after = prg_cat_vp) %>%
   relocate(prg_cat_so, .after = prg_cat_tc) %>%
