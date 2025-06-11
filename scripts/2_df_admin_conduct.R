@@ -65,7 +65,7 @@ conduct <- conduct %>%
   mutate(cndct_date = ymd(as_date(cndct_date))) %>%
   # MISCONDUCT
   mutate(cndct_chrg_desc = standardize_uppercase(cndct_chrg_desc)) %>%
-  # -- some have 2 leading zeros, drop these for standardization
+  # -- some entries for cndct_guilty have 2 leading zeros, drop these for standardization
   mutate(cndct_guilty = sub("^00", "", cndct_guilty)) %>%
   # PRISON
   left_join(prison_lookup, by = "pris_loc") %>%
