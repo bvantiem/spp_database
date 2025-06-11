@@ -230,7 +230,7 @@ work <- work %>%
   left_join(work_summary, by = "research_id") %>%
   relocate(num_unique_jobs, .after = "job_cat_desc")
 # ================================================================= ####
-# Temporary Descriptive Stats
+# Temporary Descriptive Stats ####
 # -- number of jobs per unique control_number
 jobs_per_person <- work %>%
   group_by(control_number) %>%
