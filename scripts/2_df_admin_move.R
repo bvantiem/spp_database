@@ -132,6 +132,16 @@ comment(move$mov_rec_del_flag_raw) <- "raw data, uniform `N` across all rows, cl
 # New Variables ####
 # ================================================================= ####
 # Temporary Descriptive Stats ####
+# -- total number of admin moves per person
+moves_per_person <- move %>%
+  group_by(control_number) %>%
+  summarize(n_moves = n())
+summary(moves_per_person$n_moves)
+
+# -- most common move types
+move %>%
+  count(mve_desc, sort = TRUE) %>%
+  slice_head(n = 10)
 # ================================================================= ####
 # Save Dataframe ####
 saveRDS(move, file = "data/processed/2_move_cleaned.Rds")
