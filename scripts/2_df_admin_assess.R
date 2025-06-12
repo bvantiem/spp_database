@@ -13,7 +13,7 @@ source("scripts/0_utils.R")
 # -- Functions ####
 
 # -- Read in Data ####
-assess <- readRDS("data/processed/processing_layer_2/assess_masked.Rds")
+assess <- readRDS("data/processed/1b_assess_masked.Rds")
 # =================================================================== ####
 # Rename raw variables ####
 assess <- assess |>
