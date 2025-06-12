@@ -387,12 +387,12 @@ control_nos_inmate_ids <- control_nos %>%
 # ================================================================= ####
 # Save dataframes ####
 # -- Save original control numbers and associated inmate ids ####
-saveRDS(control_nos_inmate_ids, file="data/processed/processing_layer_1/control_nos_inmate_ids.Rds")
+saveRDS(control_nos_inmate_ids, file="data/processed/1a_control_nos_inmate_ids.Rds")
 
 # -- Save unmasked dataframes with corrected control numbers #####
 for (name in c("basic", "move", "assess", "house", "program", "conduct", "work", "visit")) {
   merged_df <- get(name) %>% as.data.frame()
-  saveRDS(merged_df, file = paste0("data/processed/processing_layer_1/", name, ".Rds"))
+  saveRDS(merged_df, file = paste0("data/processed/1a_", name, ".Rds"))
 }
 
 
