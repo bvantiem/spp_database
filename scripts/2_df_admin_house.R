@@ -21,7 +21,7 @@ remove_leading_zeros <- function(x) {
   return(cleaned_x)
 }
 # -- Read in Data ####
-house <- readRDS("data/processed/processing_layer_2/house_masked.Rds")
+house <- readRDS("data/processed/1b_house_masked.Rds")
 # =================================================================== ####
 # Rename Raw Variables ####
 # Append _raw to all columns except specified columns
