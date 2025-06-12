@@ -44,7 +44,7 @@ standardize_uppercase <- function(x) {
   return(x)
 }
 # -- Read in Data ####
-conduct <- readRDS("data/processed/processing_layer_2/conduct_masked.Rds")
+conduct <- readRDS("data/processed/1b_conduct_masked.Rds")
 
 # ================================================================= ####
 # Rename Raw Variables ####
