@@ -50,7 +50,7 @@ assess_variable <- function(x) {
   
   return(result)}
 # -- Read in Data ####
-program <- readRDS("data/processed/processing_layer_2/program_masked.Rds")
+program <- readRDS("data/processed/1b_program_masked.Rds")
 
 # =================================================================== ####
 # Rename Raw Variables ####
