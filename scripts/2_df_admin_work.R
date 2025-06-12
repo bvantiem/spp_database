@@ -45,7 +45,7 @@ remove_leading_zeros <- function(x) {
   return(cleaned_x)
 }
 # -- Read in Data ####
-work <- readRDS("data/processed/processing_layer_2/work_masked.Rds")
+work <- readRDS("data/processed/1b_work_masked.Rds")
 
 
 # ================================================================= ####
