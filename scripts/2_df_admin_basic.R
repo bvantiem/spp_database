@@ -51,7 +51,7 @@ standardize_uppercase <- function(x) {
   return(x)
 }
 # -- Read in Data ####
-basic <- readRDS("data/processed/processing_layer_2/basic_masked.Rds")
+basic <- readRDS("data/processed/1b_basic_masked.Rds")
 
 # ================================================================= ####
 # Rename raw variables ####
@@ -393,6 +393,7 @@ basic %>%
 # Save dataframes ####
 saveRDS(basic, file = "data/processed/2_basic_cleaned.Rds")
 saveRDS(basic, file = "data/processed/2_basic_by_sentence_cleaned.Rds")
+saveRDS(basic, file = "data/processed/2_basic_static_demographics_cleaned.Rds")
 # ================================================================= ####
 # Known Issues #### 
 # To Do ####
