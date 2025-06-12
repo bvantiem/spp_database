@@ -24,7 +24,7 @@ source("scripts/0_utils.R")
 
 
 # -- -- Control Number - Inmate ID Lookup Table ####
-control_lookup <- readRDS("data/processed/processing_layer_1/control_nos_inmate_ids.Rds")
+control_lookup <- readRDS("data/processed/1a_control_nos_inmate_ids.Rds")
 # -- -- PCQ Surveys ####
 # -- -- -- Wave 1 ------
 # A Block
@@ -442,12 +442,192 @@ pcq <- rbind(pcq1, pcq2, pcq3, pcq4, pcq5, pcq6, pcq7)
 # Rename raw variables ####
 # Append _raw to all columns except specified columns
 pcq <- pcq |>
-  rename_with(~ paste0(., "_raw"), .cols = setdiff(names(pcq), c("research_id","date_datapull", "control_number", "wave")))
+  rename_with(~ paste0(., "_raw"), .cols = setdiff(names(pcq), c("id_num","date_datapull", "unit", "wave")))
 # Change variable order ####
 pcq <- pcq %>%
-  rename(wave_raw = survey_wave_raw) %>%
-  relocate(block_raw, .after = unit_raw) %>%
-  relocate(wave_raw, .after = block_raw) 
+  rename(wave = survey_wave_raw) %>%
+  relocate(unit, .after = id_num) %>%
+  relocate(block_raw, .after = unit) %>%
+  relocate(wave, .after = block_raw) %>%
+  # survey questions
+  mutate(date = date_raw,
+         q1 = q1_raw,
+         q2 = q2_raw,
+         q3 = q3_raw,
+         q4 = q4_raw,
+         q5 = q5_raw,
+         q6 = q6_raw,
+         q7 = q7_raw,
+         q8 = q8_raw,
+         q9 = q9_raw,
+         q10 = q10_raw,
+         q11 = q11_raw,
+         q12 = q12_raw,
+         q13 = q13_raw,
+         q14 = q14_raw,
+         q15 = q15_raw,
+         q16 = q16_raw,
+         q17 = q17_raw,
+         q18 = q18_raw,
+         q19 = q19_raw,
+         q20 = q20_raw,
+         q21 = q21_raw,
+         q22 = q22_raw,
+         q23 = q23_raw,
+         q24 = q24_raw,
+         q25 = q25_raw,
+         q26 = q26_raw,
+         q27 = q27_raw,
+         q28 = q28_raw,
+         q29 = q29_raw,
+         q30 = q30_raw,
+         q31 = q31_raw,
+         q32 = q32_raw,
+         q33 = q33_raw,
+         q34 = q34_raw,
+         q35 = q35_raw,
+         q36 = q36_raw,
+         q37 = q37_raw,
+         q38 = q38_raw,
+         q39 = q39_raw,
+         q40 = q40_raw,
+         q41 = q41_raw,
+         q42 = q42_raw,
+         q43 = q43_raw,
+         q44 = q44_raw,
+         q45 = q45_raw,
+         q46 = q46_raw,
+         q47 = q47_raw,
+         q48 = q48_raw,
+         q49 = q49_raw,
+         q50 = q50_raw,
+         q51 = q51_raw,
+         q52 = q52_raw,
+         q53 = q53_raw,
+         q54 = q54_raw,
+         q55 = q55_raw,
+         q56 = q56_raw,
+         q57 = q57_raw,
+         q58 = q58_raw,
+         q59 = q59_raw,
+         q60 = q60_raw,
+         q61 = q61_raw,
+         q62 = q62_raw,
+         q63 = q63_raw,
+         q64 = q64_raw,
+         q65 = q65_raw,
+         q66 = q66_raw,
+         q67 = q67_raw,
+         q68 = q68_raw,
+         q69 = q69_raw,
+         q70 = q70_raw,
+         q71 = q71_raw,
+         q72 = q72_raw,
+         q73 = q73_raw,
+         q74 = q74_raw,
+         q75 = q75_raw,
+         q76 = q76_raw,
+         q77 = q77_raw,
+         q78 = q78_raw,
+         q79 = q79_raw,
+         q80 = q80_raw,
+         q81 = q81_raw,
+         q82 = q82_raw,
+         q83 = q83_raw,
+         q84 = q84_raw,
+         q85 = q85_raw,
+         q86 = q86_raw,
+         q87 = q87_raw,
+         q88 = q88_raw,
+         q89 = q89_raw,
+         q90 = q90_raw,
+         q91 = q91_raw,
+         q92 = q92_raw,
+         q93 = q93_raw,
+         q94 = q94_raw,
+         q95 = q95_raw,
+         q96 = q96_raw,
+         q97 = q97_raw,
+         q98 = q98_raw,
+         q99 = q99_raw,
+         q100 = q100_raw,
+         q101 = q101_raw,
+         q102 = q102_raw,
+         q103 = q103_raw,
+         q104 = q104_raw,
+         q105 = q105_raw,
+         q106 = q106_raw,
+         q107 = q107_raw,
+         q108 = q108_raw,
+         q109 = q109_raw,
+         q110 = q110_raw,
+         q111 = q111_raw,
+         q112 = q112_raw,
+         q113 = q113_raw,
+         q114 = q114_raw,
+         q115 = q115_raw,
+         q116 = q116_raw,
+         q117 = q117_raw,
+         q118 = q118_raw,
+         q119 = q119_raw,
+         q120 = q120_raw,
+         q121 = q121_raw,
+         q122 = q122_raw,
+         q123 = q123_raw,
+         q124 = q124_raw,
+         q125 = q125_raw,
+         q126 = q126_raw,
+         q127 = q127_raw,
+         q128 = q128_raw,
+         q129 = q129_raw,
+         q130 = q130_raw,
+         q131 = q131_raw,
+         q132 = q132_raw,
+         q133 = q133_raw,
+         q134 = q134_raw,
+         q135 = q135_raw,
+         q136 = q136_raw,
+         q137 = q137_raw,
+         q138 = q138_raw,
+         q139 = q139_raw,
+         q140 = q140_raw,
+         q141 = q141_raw,
+         q142 = q142_raw,
+         q143 = q143_raw,
+         q144 = q144_raw,
+         q145 = q145_raw,
+         q146 = q146_raw,
+         q147 = q147_raw,
+         q148 = q148_raw,
+         q149 = q149_raw,
+         q150 = q150_raw,
+         q151 = q151_raw,
+         q152 = q152_raw,
+         q153 = q153_raw,
+         q154 = q154_raw,
+         q155 = q155_raw,
+         q156 = q156_raw,
+         q157 = q157_raw,
+         q158 = q158_raw,
+         q159 = q159_raw,
+         q160 = q160_raw,
+         q161 = q161_raw,
+         q162 = q162_raw,
+         q163 = q163_raw,
+         q164 = q164_raw,
+         q165 = q165_raw,
+         q166 = q166_raw,
+         q167 = q167_raw,
+         q168 = q168_raw,
+         q169 = q169_raw,
+         q170 = q170_raw,
+         q171 = q171_raw,
+         q172 = q172_raw,
+         q173 = q173_raw,
+         your_comments = your_comments_raw,
+         text_answer = text_answer_raw,
+         notes = notes_raw) %>%
+  relocate(ends_with("_raw"), .after = last_col()) 
 
 # ================================================================= ####
 # Create clean inmate_id using id_num and id_num_2 #### 
@@ -495,8 +675,6 @@ pcq <- pcq |>
 
 # Clean dates ####
 # standardize date format
-pcq$date <- pcq$date_raw
-pcq <- pcq %>% relocate(date, .after = date_raw)
 pcq$date[which(pcq$date_raw %in% c("999", "9092099"))] <- NA # 9092099, Wave 3, in unidentified stack
 pcq$date <- parse_date_time(pcq$date_raw, c("ymd", "mdy")) # wave 1 stored as ymd, wave 2 stored dates as mdy
 pcq$date <- as.Date(pcq$date)
@@ -505,7 +683,7 @@ pcq$date <- as.Date(pcq$date)
 # -- filter and count dates by unit and wave
 temp1 <- pcq %>%
   filter(!is.na(date)) %>%
-  group_by(wave_raw, unit_raw) %>%
+  group_by(wave, unit) %>%
   count(date) %>%
   slice_max(n, with_ties = FALSE) %>%
   ungroup() %>%
@@ -513,15 +691,15 @@ temp1 <- pcq %>%
 # -- some are unidenfied unit, get common date by only wave for these cases
 temp2 <- pcq %>%
   filter(!is.na(date)) %>%
-  group_by(wave_raw) %>%
+  group_by(wave) %>%
   count(date) %>%
   slice_max(n, with_ties = FALSE) %>%
   ungroup() %>%
   rename(most_common_date_wave_only = date)
 # -- Join both: first by unit + wave, then fallback by wave only
 pcq <- pcq %>%
-  left_join(temp1, by = c("wave_raw", "unit_raw")) %>%
-  left_join(temp2, by = "wave_raw")
+  left_join(temp1, by = c("wave", "unit")) %>%
+  left_join(temp2, by = "wave")
 
 # -- fill in any missing dates using unit+wave fallback or wave-only fallback
 pcq <- pcq %>%
@@ -529,7 +707,8 @@ pcq <- pcq %>%
     most_common_date_combined = coalesce(most_common_date, most_common_date_wave_only),
     date = coalesce(date, most_common_date_combined)
   ) %>% 
-  select(-most_common_date, -most_common_date_wave_only, -most_common_date_combined)
+  select(-most_common_date, -most_common_date_wave_only, -most_common_date_combined) %>%
+  relocate(date, .after = unit)
 
 # ================================================================= ####
 # Save pcq_unmasked with control numbers #####
