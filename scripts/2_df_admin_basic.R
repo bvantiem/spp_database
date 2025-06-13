@@ -216,8 +216,7 @@ basic_static_demographics <- basic %>%
   slice(1) %>% 
   ungroup() %>%
   # -- drop all variables but these, only static demographic variables
-  select(control_number, 
-         research_id, 
+  select(research_id, 
          dem_race,
          dem_marital,
          dem_edu_grade,
@@ -243,7 +242,6 @@ basic_by_sentence <- basic %>%
   # -- include only the following variables in new dataframe
   select(research_id,
          date_datapull,
-         control_number,
          sent_class,
          sent_min_cort_days,
          sent_min_cort_mths,
