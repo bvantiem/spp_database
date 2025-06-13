@@ -44,10 +44,9 @@ assess <- assess |>
     test_name == "RST" ~ "Risk Screen Tool",
     TRUE ~ test_name 
   )) |>
-  # -- relocate date_datapull and wave to after cleaned variables and before raw variables
-  relocate(date_datapull, .after = test_date) |>
-  relocate(wave, .after = date_datapull) |>
   # Create dummy variables
+# if i use the make_dummies here it would make the dummy variable test_name_static_99... 
+# do we want that? 
   # -- test_name dummy
   mutate(
     test_name_cssm = if_else(test_name == "Criminal Sentiments Scale - Modified", 1, 0),
@@ -56,13 +55,6 @@ assess <- assess |>
     test_name_tcu  = if_else(test_name == "Texas Christian University Drug Screen", 1, 0),
     test_name_hiq  = if_else(test_name == "Hostile Interpretations Questionnaire", 1, 0),
     test_name_rst  = if_else(test_name == "Risk Screen Tool", 1, 0)) |>
-  # -- relocate test name dummies after test_name variable
-  relocate(test_name_cssm, .after = test_name) |>
-  relocate(test_name_st99, .after = test_name_cssm) |>
-  relocate(test_name_lsir, .after = test_name_st99) |>
-  relocate(test_name_tcu, .after = test_name_lsir) |>
-  relocate(test_name_hiq, .after = test_name_tcu) |>
-  relocate(test_name_rst, .after = test_name_hiq) |>
   # create test_Score variables for each test_name
   # -- if they took the test their score list under test_score will appear if not then an NA will 
   mutate(
@@ -72,14 +64,7 @@ assess <- assess |>
     test_score_tcu  = if_else(test_name_tcu == 1,  test_score, NA_real_),
     test_score_hiq  = if_else(test_name_hiq == 1,  test_score, NA_real_),
     test_score_rst  = if_else(test_name_rst == 1,  test_score, NA_real_)
-  )|>
-  # -- relocate new variables after test_name dummies
-  relocate(test_score_cssm, .after = test_name_rst) |>
-  relocate(test_score_st99, .after = test_score_cssm) |>
-  relocate(test_score_lsir, .after = test_score_st99) |>
-  relocate(test_score_tcu, .after = test_score_lsir) |>
-  relocate(test_score_hiq, .after = test_score_tcu) |>
-  relocate(test_score_rst, .after = test_score_hiq)
+  )
 
 # Fully NA rows ####
 NA_rows <- assess %>%
@@ -125,6 +110,7 @@ assess %>%
   arrange(desc(avg_score))
 # =================================================================== ####
 # Reorganize Variables ####
+assess <- reorder_vars(assess)
 assess <- reorder_vars(assess)
 # =================================================================== ####
 # Save Dataframe ####
