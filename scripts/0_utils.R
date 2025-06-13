@@ -55,10 +55,12 @@ make_dummies <- function(df, var) {
   var <- rlang::ensym(var)  # Handle non-standard evaluation (unquoted variable name)
   var_name <- rlang::as_string(var)
   
-  df <- df %>%
-    # ensure the variable is a character
-    mutate(!!var := as.character(!!var)) %>%
-    mutate(row_id = row_number()) %>% 
+  df_with_id <- df %>%
+    mutate(row_id = row_number()) %>%
+    mutate(!!var := as.character(!!var))
+  
+  dummy_df <- df_with_id %>%
+    select(row_id, !!var) %>%
     tidyr::pivot_wider(
       names_from = !!var,
       values_from = !!var,
@@ -66,10 +68,13 @@ make_dummies <- function(df, var) {
       values_fn = length,
       values_fill = 0
     ) %>%
-    mutate(across(starts_with(paste0(var_name, "_")), ~ ifelse(. > 0, 1, 0))) %>%
+    mutate(across(starts_with(paste0(var_name, "_")), ~ ifelse(. > 0, 1, 0)))
+  
+  df_final <- df_with_id %>%
+    left_join(dummy_df, by = "row_id") %>%
     select(-row_id)
   
-  df <- bind_cols(df, temp)
+  return(df_final)
 }
 # -- Set Seed ####
 set.seed(1962)
