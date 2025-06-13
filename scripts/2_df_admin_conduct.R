@@ -56,13 +56,15 @@ conduct <- conduct |>
   mutate(cndct_num = misconduct_number_raw,
          cndct_date = misconduct_date_raw,
          cndct_chrg_desc = chrg_description_raw,
-         cndct_guilty = vrdict_guilty_raw) %>%
-  mutate(pris_loc = institution_raw) %>%
-  relocate(ends_with("_raw"), .after = last_col())
+         cndct_guilty = vrdict_guilty_raw,
+         cndct_chrg_cat = category_charge1_raw) %>%
+  mutate(pris_loc = institution_raw)
 # Clean Variables ####
 conduct <- conduct %>%
   # -- Set any empty strings to NA
   mutate(across(everything(), ~ replace(., grepl("^\\s*$", .), NA))) %>%
+  # -- standardize wave by removing decimal
+  mutate(wave = floor(as.numeric(wave))) %>%
   # DATES
   mutate(cndct_date = ymd(as_date(cndct_date))) %>%
   # MISCONDUCT
@@ -72,10 +74,7 @@ conduct <- conduct %>%
   # PRISON
   left_join(prison_lookup, by = "pris_loc") %>%
   select(-pris_loc) %>%
-  rename(pris_loc = pris_loc_full) %>%
-  relocate(pris_loc, .after = cndct_guilty) %>%
-  relocate(date_datapull, .after = pris_loc) %>%
-  relocate(wave, .after = date_datapull)
+  rename(pris_loc = pris_loc_full) 
 # ================================================================= ####
 # Add Notes to Variables ####
 # to view notes added use str() or comment()
@@ -100,7 +99,7 @@ comment(conduct$chrg_description_raw) <- "raw data, cleaned variable available a
 # -- -- NOTE: individuals are only in this dataset if they have committed atleast
 #             one misconduct, does not include anyone with 0 misconducts
 misconducts_per_person <- conduct %>%
-  group_by(control_number) %>%
+  group_by(research_id) %>%
   summarize(n_misconducts = n())
 summary(misconducts_per_person$n_misconducts)
 
@@ -113,6 +112,9 @@ conduct %>%
 conduct %>%
   count(cndct_chrg_desc, sort = TRUE) %>%
   slice_head(n = 10)  # top 10
+# ================================================================= ####
+# Reorganize Variables ####
+conduct <- reorder_vars(conduct)
 # ================================================================= ####
 # Save Dataframe ####
 saveRDS(conduct, file = "data/processed/2_conduct_cleaned.Rds")
