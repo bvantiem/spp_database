@@ -193,6 +193,12 @@ visit4 <- visit4 %>%
 
 visit4 <- as.data.frame(visit4)
 
+# -- WrkAsgnmtEnd_Dt and WrkAsgnmtStrt_Dt are stored as character strings that need to be from the origin
+# of excel dates
+date_cols <- c("WrkAsgnmtEnd_Dt", "WrkAsgnmtStrt_Dt")
+work4 <- work4 %>%
+  mutate(across(all_of(date_cols), ~ as.Date(as.numeric(.), origin = "1899-12-30")))
+
 # -- Merge in
 date_datapull <- 20231107 # Confirm this is the date data was pulled; not the date data was sent
 wave_no <- 4
@@ -203,7 +209,7 @@ assess <- add_wave_data(assess, assess4, date_datapull, wave_no)
 house <- add_wave_data(house, house4, date_datapull, wave_no)
 program <- add_wave_data(program, program4, date_datapull, wave_no)
 conduct <- add_wave_data(conduct, conduct4, date_datapull, wave_no)
-work <- add_wave_data(work[,which(names(work) %ni% c("WrkAsgnmtStrt_Dt", "WrkAsgnmtEnd_Dt"))], work4[,which(names(work4) %ni% c("WrkAsgnmtStrt_Dt", "WrkAsgnmtEnd_Dt"))], date_datapull, wave_no)
+work <- add_wave_data(work, work4, date_datapull, wave_no)
 visit <- add_wave_data(visit, visit4, date_datapull, wave_no)
 
 # -- -- Wave 5 ####
@@ -235,6 +241,12 @@ basic5 <- basic5 %>%
 
 basic5 <- as.data.frame(basic5)
 
+# -- WrkAsgnmtEnd_Dt and WrkAsgnmtStrt_Dt are stored as character strings that need to be from the origin
+# of excel dates
+date_cols <- c("WrkAsgnmtEnd_Dt", "WrkAsgnmtStrt_Dt")
+work5 <- work5 %>%
+  mutate(across(all_of(date_cols), ~ as.Date(as.numeric(.), origin = "1899-12-30")))
+
 # -- Merge in
 date_datapull <- 20240508
 wave_no <- 5
@@ -245,7 +257,7 @@ assess <- add_wave_data(assess, assess5, date_datapull, wave_no)
 house <- add_wave_data(house, house5, date_datapull, wave_no)
 program <- add_wave_data(program, program5, date_datapull, wave_no)
 conduct <- add_wave_data(conduct, conduct5, date_datapull, wave_no)
-work <- add_wave_data(work[,which(names(work) %ni% c("WrkAsgnmtStrt_Dt", "WrkAsgnmtEnd_Dt"))], work5[,which(names(work5) %ni% c("WrkAsgnmtStrt_Dt", "WrkAsgnmtEnd_Dt"))], date_datapull, wave_no)
+work <- add_wave_data(work, work5, date_datapull, wave_no)
 visit <- add_wave_data(visit, visit5, date_datapull, wave_no)
 
 # -- -- Wave 6 ####
@@ -277,6 +289,12 @@ basic6 <- basic6 %>%
 
 basic6 <- as.data.frame(basic6)
 
+# -- WrkAsgnmtEnd_Dt and WrkAsgnmtStrt_Dt are stored as character strings that need to be from the origin
+# of excel dates
+date_cols <- c("WrkAsgnmtEnd_Dt", "WrkAsgnmtStrt_Dt")
+work6 <- work6 %>%
+  mutate(across(all_of(date_cols), ~ as.Date(as.numeric(.), origin = "1899-12-30")))
+
 # -- Merge in
 date_datapull <- 20241104
 wave_no <- 6
@@ -287,9 +305,7 @@ assess <- add_wave_data(assess, assess6, date_datapull, wave_no)
 house <- add_wave_data(house, house6, date_datapull, wave_no)
 program <- add_wave_data(program, program6, date_datapull, wave_no)
 conduct <- add_wave_data(conduct, conduct6, date_datapull, wave_no)
-work <- add_wave_data(work[,which(names(work) %ni% c("WrkAsgnmtStrt_Dt", "WrkAsgnmtEnd_Dt"))],
-                      work6[,which(names(work6) %ni% c("WrkAsgnmtStrt_Dt", "WrkAsgnmtEnd_Dt"))],
-                      date_datapull, wave_no)
+work <- add_wave_data(work, work6, date_datapull, wave_no)
 visit <- add_wave_data(visit, visit6, date_datapull, wave_no)
 
 # -- -- Wave 7 ####
@@ -320,6 +336,12 @@ basic7 <- basic7 %>%
 
 basic7 <- as.data.frame(basic7)
 
+# -- WrkAsgnmtEnd_Dt and WrkAsgnmtStrt_Dt are stored as character strings that need to be from the origin
+# of excel dates
+date_cols <- c("WrkAsgnmtEnd_Dt", "WrkAsgnmtStrt_Dt")
+work7 <- work7 %>%
+  mutate(across(all_of(date_cols), ~ as.Date(as.numeric(.), origin = "1899-12-30")))
+
 # -- Merge in
 date_datapull <- 20250514
 wave_no <- 7
@@ -330,9 +352,10 @@ assess <- add_wave_data(assess, assess7, date_datapull, wave_no)
 house <- add_wave_data(house, house7, date_datapull, wave_no)
 program <- add_wave_data(program, program7, date_datapull, wave_no)
 conduct <- add_wave_data(conduct, conduct7, date_datapull, wave_no)
-work <- add_wave_data(work[,which(names(work) %ni% c("WrkAsgnmtStrt_Dt", "WrkAsgnmtEnd_Dt"))],
-                      work7[,which(names(work7) %ni% c("WrkAsgnmtStrt_Dt", "WrkAsgnmtEnd_Dt"))],
-                      date_datapull, wave_no)
+work <- add_wave_data(work, work7, date_datapull, wave_no)
+# work <- add_wave_data(work[,which(names(work) %ni% c("WrkAsgnmtStrt_Dt", "WrkAsgnmtEnd_Dt"))],
+#                      work7[,which(names(work7) %ni% c("WrkAsgnmtStrt_Dt", "WrkAsgnmtEnd_Dt"))],
+#                      date_datapull, wave_no)
 visit <- add_wave_data(visit, visit7, date_datapull, wave_no)
 # ================================================================= ####
 # Data Manipulation  ####
