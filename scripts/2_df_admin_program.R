@@ -156,9 +156,9 @@ program %>% filter(prg_end_date == "2030-03-25")
 
 # -- some prg_end_dates are in the future building in this stop so that we can correct these
 # for future waves
-stopifnot(program$date_datapull < program$prg_end_date + 365)
+stopifnot(program$date_datapull + 365 < program$prg_end_date)
 
-temp <- program[which(program$date_datapull < program$prg_end_date),]
+temp <- program[which(program$date_datapull + 365 < program$prg_end_date),]
 # =================================================================== ####
 # Add Notes to Variables ####
 # to view notes added use str() or comment()
