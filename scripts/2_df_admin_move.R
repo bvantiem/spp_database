@@ -6,6 +6,7 @@
 # -- To do ####
 # -- -- in mve_desc figure out what RTN, DTT, ATT refer to: minor issue bcs rare codes
 # only 33 instances total
+# -- -- request Move Sequence Number from PADOC
 # ================================================================= ####
 # Set up ####
 # -- Prepare environment ####
@@ -114,9 +115,7 @@ move <- move |>
     mve_desc == "SC" ~ "Change - Status Change")) %>%
   # DATES
   # -- put in ymd formate
-  mutate(mve_date = ymd(as_date(mve_date))) %>%
-  relocate(date_datapull, .after = mve_desc) %>%
-  relocate(wave, .after = date_datapull)
+  mutate(mve_date = ymd(as_date(mve_date))) 
 # ================================================================= ####
 # Add Notes to Variables ####
 # to view notes added use str() or comment()
@@ -134,7 +133,7 @@ comment(move$mov_rec_del_flag_raw) <- "raw data, uniform `N` across all rows, cl
 # Temporary Descriptive Stats ####
 # -- total number of admin moves per person
 moves_per_person <- move %>%
-  group_by(control_number) %>%
+  group_by(research_id) %>%
   summarize(n_moves = n())
 summary(moves_per_person$n_moves)
 
@@ -142,6 +141,9 @@ summary(moves_per_person$n_moves)
 move %>%
   count(mve_desc, sort = TRUE) %>%
   slice_head(n = 10)
+# ================================================================= ####
+# Reorganize Variables ####
+move <- reorder_vars(move)
 # ================================================================= ####
 # Save Dataframe ####
 saveRDS(move, file = "data/processed/2_move_cleaned.Rds")
