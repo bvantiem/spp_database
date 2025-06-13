@@ -140,6 +140,7 @@ work <- work %>%
     job_field == "UTL" ~ "UTILITIES",
     job_field == "WF" ~ "CI - WOOD FURNITURE",
     TRUE ~ job_field )) %>%  
+  mutate(job_field = standardize_job_field(job_field)) %>%
   # create higher level categories for job_field
   mutate(job_field_cat = case_when(
     job_field %in% c("ARTIST PROGRAM") ~ "Arts Program",
@@ -223,17 +224,16 @@ comment(work$Fac_Cd)
 work_summary <- work %>%
   filter(!is.na(job_cat_desc), job_cat_desc != "Unassigned") %>%  # Exclude missing or unassigned
   distinct(research_id, job_cat_desc) %>%                         # Keep only unique roles per person
-  count(research_id, name = "num_unique_jobs") %>%                 # Count roles per person
+  count(research_id, name = "job_num_of_jobs") %>%                 # Count roles per person
   mutate(research_id = as.character(research_id))   
 # what is work_summary?
 work <- work %>%
-  left_join(work_summary, by = "research_id") %>%
-  relocate(num_unique_jobs, .after = "job_cat_desc")
+  left_join(work_summary, by = "research_id")
 # ================================================================= ####
 # Temporary Descriptive Stats ####
 # -- number of jobs per unique control_number
 jobs_per_person <- work %>%
-  group_by(control_number) %>%
+  group_by(research_id) %>%
   summarize(n_jobs = n())
 summary(jobs_per_person$n_jobs)
 
@@ -256,6 +256,9 @@ work %>%
 # frequency of each job category description
 work %>%
   count(job_cat_desc, sort = TRUE)
+# ================================================================= ####
+# Reorganize Variables ####
+work <- reorder_vars(work)
 # ================================================================= ####
 # Save Dataframe ####
 saveRDS(work, file = "data/processed/2_work_cleaned.Rds")
