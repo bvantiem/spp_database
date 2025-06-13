@@ -222,8 +222,8 @@ comment(work$job_hrs_daily) <- "Number of hours worked in a shift, 505 missing v
 comment(work$job_sch) <- "Days scheduled for work, 516 missing values and 370 NULL, WHY? (886 missing) NOT FULLY CLEANED, created using InmSchd_Cd_raw"
 comment(work$job_field) <- "Description of job field, no missing values, fully cleaned, created using Job_Nm_raw"
 comment(work$pris_loc) <- "Facility name, no missing values, fully cleaned, created using Fac_Cd"
-comment(work$job_start_date) <- "Start date of work assignemnt, no missing values, created using WrkAsgnmtStart_Dt_raw (6/13/25)"
-comment(work$job_end_date) <- "End date of work assignment, 8239/79182 missing values, created using WrkAsgnmtEnd_Dt_raw (6/13/25)"
+comment(work$job_start_date) <- "Start date of work assignemnt, no missing values,NOT FULLY CLEANED, created using WrkAsgnmtStart_Dt_raw (6/13/25)"
+comment(work$job_end_date) <- "End date of work assignment, 8239/79182 missing values, NOT FULLY CLEANED, created using WrkAsgnmtEnd_Dt_raw (6/13/25)"
 
 # -- Raw Variables ####
 comment(work$WrkAsgnmt_Tp_raw)
@@ -238,17 +238,23 @@ comment(work$Fac_Cd)
 # ================================================================= ####
 # New Variables ####
 # number of jobs for one research_id
-work_summary <- work %>%
+job_count <- work %>%
   filter(!is.na(job_cat_desc), job_cat_desc != "Unassigned") %>%  # Exclude missing or unassigned
   distinct(research_id, job_cat_desc) %>%                         # Keep only unique roles per person
   count(research_id, name = "job_num_of_jobs") %>%                 # Count roles per person
   mutate(research_id = as.character(research_id))   
-# what is work_summary?
 work <- work %>%
-  left_join(work_summary, by = "research_id")
+  left_join(job_count, by = "research_id")
+
+# number of days per job
+# -- start/end date needs to be cleaned!
+work <- work %>%
+  mutate(
+    job_duration_days = as.numeric(as.Date(job_end_date) - as.Date(job_start_date))
+  )
 # ================================================================= ####
 # Temporary Descriptive Stats ####
-# -- number of jobs per unique control_number
+# -- number of jobs per unique research_id
 jobs_per_person <- work %>%
   group_by(research_id) %>%
   summarize(n_jobs = n())
