@@ -50,6 +50,27 @@ assess_variable <- function(x) {
   )
   
   return(result)}
+
+make_dummies <- function(df, var) {
+  var <- rlang::ensym(var)  # Handle non-standard evaluation (unquoted variable name)
+  var_name <- rlang::as_string(var)
+  
+  df <- df %>%
+    # ensure the variable is a character
+    mutate(!!var := as.character(!!var)) %>%
+    mutate(row_id = row_number()) %>% 
+    tidyr::pivot_wider(
+      names_from = !!var,
+      values_from = !!var,
+      names_prefix = paste0(var_name, "_"),
+      values_fn = length,
+      values_fill = 0
+    ) %>%
+    mutate(across(starts_with(paste0(var_name, "_")), ~ ifelse(. > 0, 1, 0))) %>%
+    select(-row_id)
+  
+  df <- bind_cols(df, temp)
+}
 # -- Set Seed ####
 set.seed(1962)
 # -- Read in Data ####
