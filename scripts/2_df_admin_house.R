@@ -1,7 +1,9 @@
 # =================================================================== ####
 # Notes to Script: ####
 # -- Objective ####
+# -- -- clean and dedup house data
 # -- Readme ####
+# level of observation: research_id*loc_bld*loc_cell*loc_date_in
 # -- To do ####
 # -- -- request House Sequence Number from PADOC
 # =================================================================== ####
@@ -258,7 +260,7 @@ house <- house %>%
     loc_date_out = na_if(as.character(loc_date_out), "00000000"),  # ensure it's character first
     loc_date_in = ymd(loc_date_in),
     loc_date_out = ymd(loc_date_out),
-    loc_days_in_unit = as.numeric(loc_date_out - loc_date_in)
+    loc_days_spent = as.numeric(loc_date_out - loc_date_in)
   )
 # =================================================================== ####
 # Temporary Descriptive Stats ####
