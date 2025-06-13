@@ -188,6 +188,12 @@ basic <- basic %>%
   relocate(date_datapull, .after = dem_stg_yes) %>%
   relocate(wave, .after = date_datapull)
 
+# Create Dummies ####
+basic <- make_dummies(basic, dem_marital)
+basic <- make_dummies(basic, dem_sex)
+basic <- make_dummies(basic, sent_class)
+basic <- make_dummies(basic, sent_off_asca)
+basic <- make_dummies(basic, dem_race)
 # ================================================================= ####
 # Define new dataframes ####
 # -- Basic by static demographics ####
@@ -389,6 +395,9 @@ basic %>%
   group_by(sent_commitment_cnty, dem_race) %>%
   tally() %>%
   arrange(desc(n))
+# ================================================================= ####
+# Reorganize Varibles
+# ALPHABATIZE THEM
 # ================================================================= ####
 # Save dataframes ####
 saveRDS(basic, file = "data/processed/2_basic_cleaned.Rds")
