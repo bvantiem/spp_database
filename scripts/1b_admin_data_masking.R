@@ -72,4 +72,3 @@ for (name in c("basic", "move", "assess", "house", "program", "conduct", "work",
   masked_df <- get(paste0(name, "_masked")) %>% as.data.frame()
   saveRDS(masked_df, file = paste0("data/processed/1b_", name, "_masked.Rds"))
 }
-
