@@ -396,8 +396,8 @@ basic %>%
   tally() %>%
   arrange(desc(n))
 # ================================================================= ####
-# Reorganize Varibles
-# ALPHABATIZE THEM
+# Reorganize Variables ####
+basic <- reorder_vars(basic)
 # ================================================================= ####
 # Save dataframes ####
 saveRDS(basic, file = "data/processed/2_basic_cleaned.Rds")
