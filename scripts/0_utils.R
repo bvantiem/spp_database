@@ -10,7 +10,7 @@
 rm(list=ls())
 # -- Functions #### 
 `%ni%` = Negate(`%in%`) 
-
+# -- -- Assess Variable ####
 assess_variable <- function(x) {
   # Check data type
   data_type <- class(x)
@@ -50,7 +50,7 @@ assess_variable <- function(x) {
   )
   
   return(result)}
-
+# -- -- Create Dummy Vars ####
 make_dummies <- function(df, var) {
   var <- rlang::ensym(var)  # Handle non-standard evaluation (unquoted variable name)
   var_name <- rlang::as_string(var)
@@ -75,6 +75,25 @@ make_dummies <- function(df, var) {
     select(-row_id)
   
   return(df_final)
+}
+# -- -- Reorder Vars Alphabetically ####
+reorder_vars <- function(df) {
+  all_vars <- names(df)
+  
+  # Identify variable groups
+  id_var <- "research_id"
+  trailing_vars <- c("date_datapull", "wave")
+  raw_vars <- all_vars[grepl("_raw$", all_vars)]
+  
+  # Cleaned variables: all that are not in id, trailing, or raw
+  clean_vars <- setdiff(all_vars, c(id_var, trailing_vars, raw_vars))
+  clean_vars <- sort(clean_vars)  # Alphabetize cleaned variables
+  
+  # Final order
+  final_order <- c(id_var, clean_vars, trailing_vars, raw_vars)
+  
+  # Return reordered dataframe
+  df[, final_order]
 }
 # -- Set Seed ####
 set.seed(1962)
