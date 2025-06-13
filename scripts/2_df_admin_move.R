@@ -3,6 +3,7 @@
 # -- Objective ####
 # Clean move data 
 # -- Readme ####
+# -- -- level of observation: research_id*mve_desc*mve_date
 # -- To do ####
 # -- -- in mve_desc figure out what RTN, DTT, ATT refer to: minor issue bcs rare codes
 # only 33 instances total
