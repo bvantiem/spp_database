@@ -2,6 +2,7 @@
 # Notes to Script: ####
 # -- Objective ####
 # -- Readme ####
+# -- -- level of observation: research_id*prg_name*prg_start_date
 # -- To do ####
 # =================================================================== ####
 # Set up ####
@@ -64,8 +65,7 @@ program <- program |>
          prg_eval = Eval_Des_raw,
          prg_start_date = Inm_StrDt_raw,
          prg_end_date = Inm_EndDt_raw) |>
-  mutate(pris_loc = Fac_Cd_raw,) |>
-  relocate(ends_with("_raw"), .after = last_col()) 
+  mutate(pris_loc = Fac_Cd_raw) 
 # Clean Variables ####
 program <- program |> 
   # -- Set any empty strings to NA
@@ -112,6 +112,12 @@ program <- program |>
     TRUE ~ "Other"
   )) %>%
   relocate(prg_cat, .after = prg_name) %>%
+  mutate(prg_end_date = case_when(
+    research_id == "rid_519531" & prg_name == "Business Education"       ~ NA_Date_,
+    research_id == "rid_061378" & prg_name == "Opioid Use Disorder Therapeutic Community"  ~ NA_Date_,
+    research_id == "rid_551550" & prg_name == "Alcohol and Other Drug Education"        ~ NA_Date_,
+    TRUE                                                        ~ prg_end_date
+  )) %>%
   # DUMMY VARIABLES
   # -- create dummy variables for higher level program categories
   mutate(
@@ -128,26 +134,12 @@ program <- program |>
     prg_cat_re = ifelse(prg_cat == "Re-Entry/ Transitional Programs", 1,0),
     prg_cat_oth = ifelse(prg_cat == "Other", 1, 0)
   )  %>%
-  # -- relocate dummy variables after prg_cat variable created
-  relocate(prg_cat_vp, .after = prg_cat) %>%
-  relocate(prg_cat_tc, .after = prg_cat_vp) %>%
-  relocate(prg_cat_so, .after = prg_cat_tc) %>%
-  relocate(prg_cat_sub, .after = prg_cat_so) %>%
-  relocate(prg_cat_pv, .after = prg_cat_sub) %>%
-  relocate(prg_cat_op, .after = prg_cat_pv) %>%
-  relocate(prg_cat_prnt, .after = prg_cat_op) %>%
-  relocate(prg_cat_batt, .after = prg_cat_prnt) %>%
-  relocate(prg_cat_tforc, .after = prg_cat_batt) %>%
-  relocate(prg_cat_mnt, .after = prg_cat_tforc) %>%
-  relocate(prg_cat_re, .after = prg_cat_mnt) %>%
-  relocate(prg_cat_oth, .after = prg_cat_re) %>%
 # PRISON
   left_join(prison_lookup, by = "pris_loc") %>%
   select(-pris_loc) %>%
-  rename(pris_loc = pris_loc_full) %>%
-  relocate(pris_loc, .after = prg_end_date) %>%
-  relocate(date_datapull, .after = pris_loc) %>%
-  relocate(wave, .after = date_datapull)
+  rename(pris_loc = pris_loc_full) 
+
+program <- make_dummies(program, prg_status)
 # =================================================================== ####
 # Temporary Notes to Show Britte ####
 # -- end date issues
@@ -157,8 +149,6 @@ program %>% filter(prg_end_date == "2030-03-25")
 # -- some prg_end_dates are in the future building in this stop so that we can correct these
 # for future waves
 stopifnot(program$date_datapull + 365 < program$prg_end_date)
-
-temp <- program[which(program$date_datapull + 365 < program$prg_end_date),]
 # =================================================================== ####
 # Add Notes to Variables ####
 # to view notes added use str() or comment()
@@ -193,7 +183,7 @@ summary(program$prg_length_days)
 
 # -- number of programs per person
 programs_per_person <- program %>%
-  group_by(control_number) %>%
+  group_by(research_id) %>%
   summarize(n_programs = n())
 
 summary(programs_per_person$n_programs)
@@ -209,6 +199,9 @@ program %>%
 program %>%
   count(pris_loc, sort = TRUE)
 # =================================================================== ####
+# Reorganize Variables ####
+program <- reorder_vars(program)
+# ================================================================= ####
 # Save dataframe ####
 saveRDS(program, file = "data/processed/2_program_cleaned.Rds")
 # =================================================================== ####
