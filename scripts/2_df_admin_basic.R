@@ -102,7 +102,8 @@ cols_expir <- c("sent_min_expir_dt",
 cols_to_standardize <- c("offense_raw",
                          "sent_status", 
                          "sent_commitment_cnty", 
-                         "chg_des")
+                         "chg_des",
+                         "dem_sex")
 
 # save these acronyms to ensure they stay capitalized
 acronyms <- c("DUI", 
