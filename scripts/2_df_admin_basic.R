@@ -189,7 +189,7 @@ basic <- basic %>%
 
 # ================================================================= ####
 # Define new dataframes ####
-# -- Static demographics ####
+# -- Basic by static demographics ####
 # one row per individuals using the earliest datapull
 # -- -- Static Variables List: ####
 # -- dem_edu_grade
@@ -222,7 +222,7 @@ basic_static_demographics <- basic %>%
          marital_status_raw,
          date_of_birth_raw
   )
-# -- Individual Sentence/ Charge ####
+# -- Basic by Individual Sentence/ Charge ####
 # -- -- one row per sentence (may be mutliple rows for one id)
 basic_by_sentence <- basic %>%
   # -- group by these variables which when constant represent one charge
