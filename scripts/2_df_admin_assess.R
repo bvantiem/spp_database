@@ -2,8 +2,11 @@
 # Notes to Script: ####
 # -- Objective ####
 # clean assessment data
+# create dummy variables for each test/score
 # -- Readme ####
+# level of observation: research_id*test_name*test_date
 # -- To do ####
+# collect scoring for pass/fail of each test to create pass/fail variable
 # =================================================================== ####
 # Set up ####
 # -- Prepare Environment ####
@@ -81,7 +84,7 @@ assess <- assess |>
 # Fully NA rows ####
 NA_rows <- assess %>%
   filter(if_all(
-    .cols = -c(research_id, date_datapull, wave, control_number),
+    .cols = -c(research_id, date_datapull, wave),
     .fns = ~ is.na(.)
   ))
 # =================================================================== ####
@@ -120,6 +123,9 @@ assess %>%
     n = n()
   ) %>%
   arrange(desc(avg_score))
+# =================================================================== ####
+# Reorganize Variables ####
+assess <- reorder_vars(assess)
 # =================================================================== ####
 # Save Dataframe ####
 saveRDS(assess, file = "data/processed/2_assess_cleaned.Rds")
