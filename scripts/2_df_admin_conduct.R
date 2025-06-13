@@ -3,11 +3,13 @@
 # -- Objective ####
 # Clean conduct data 
 # -- Readme ####
+# -- -- level of observation: research_id * cndct_num * cndct_chrg_desc
 # -- To do ####
 # -- -- Follow up with PADOC on cat_chrge1 & vrdict_guilty meaning
 # Referencing the excel sheet cat_chrge1 looks to be levels of seriousness of offense
 # but want to confirm with PADOC
-# clarify PNG institution location - very common in this dataset haven't observed it in others
+# -- -- Once we have admit dates, add variables for the number and rate of incidences
+# in most recent sentence
 # ================================================================= ####
 # Set up ####
 # -- Prepare environment ####
