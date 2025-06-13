@@ -10,9 +10,9 @@
 # datapulls. We need to request start and end dates as well as talk to PADOC
 # about what is contained in this df before continuing with data cleaning.
 # -- To do ####
-# 1. Request start and end dates 
-# 2. Talk to PADOC about what is contained in this df.
-# 3. Finish cleaning script after 1 and 2 are done
+# -- -- look into inaccurate dates for job_start/end_date
+# 1. Talk to PADOC about what is contained in this df.
+# 2. Finish cleaning script after 1 and 2 are done
 # ================================================================= ####
 # Set up ####
 # -- Prepare environment ####
@@ -61,7 +61,9 @@ work <- work |>
          job_cat_desc = Catgry_Desc_raw,
          job_hrs_daily = InmDly_Hrs_raw,
          job_sch = InmSchd_Cd_raw,
-         job_field = Job_Cd_raw) |>
+         job_field = Job_Cd_raw,
+         job_start_date = WrkAsgnmtStrt_Dt_raw,
+         job_end_date = WrkAsgnmtEnd_Dt_raw) |>
   mutate(pris_loc = Fac_Cd_raw) |>
   relocate(ends_with("_raw"), .after = last_col()) 
 
@@ -70,6 +72,17 @@ work <- work %>%
   # Set any empty strings to NA
   mutate(across(everything(), ~ replace(., grepl("^\\s*$", .), NA))) %>%
   # JOB RELATED VARIABLES
+  # -- pull time out of test_date variable to separate into new column
+  mutate(
+    job_start_time = format(job_start_date, "%H:%M:%S")
+  ) %>% 
+  mutate(job_start_date = as.Date(job_start_date)) %>%
+  mutate(
+    job_end_time = format(job_end_date, "%H:%M:%S")
+  ) %>%
+  mutate(job_end_date = as.Date(job_end_date)) %>%
+  # -- drop time as they are almost fully NA or 00:00:00
+  select(-job_start_time, -job_end_time) %>%
   # -- mutate abrv description of job level into full form description
   mutate(job_lvl = case_when(
     job_lvl == "PRI" ~ "Primary",
@@ -209,6 +222,9 @@ comment(work$job_hrs_daily) <- "Number of hours worked in a shift, 505 missing v
 comment(work$job_sch) <- "Days scheduled for work, 516 missing values and 370 NULL, WHY? (886 missing) NOT FULLY CLEANED, created using InmSchd_Cd_raw"
 comment(work$job_field) <- "Description of job field, no missing values, fully cleaned, created using Job_Nm_raw"
 comment(work$pris_loc) <- "Facility name, no missing values, fully cleaned, created using Fac_Cd"
+comment(work$job_start_date) <- "Start date of work assignemnt, no missing values, created using WrkAsgnmtStart_Dt_raw (6/13/25)"
+comment(work$job_end_date) <- "End date of work assignment, 8239/79182 missing values, created using WrkAsgnmtEnd_Dt_raw (6/13/25)"
+
 # -- Raw Variables ####
 comment(work$WrkAsgnmt_Tp_raw)
 comment(work$WrkAsgnmt_Nm_raw)
