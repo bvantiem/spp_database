@@ -43,8 +43,29 @@ for (df_name in c("basic", "move", "assess", "house", "program", "conduct", "wor
   assign(paste0(df_name, "_masked"), df)
 }
 # Drop Control Number ####
-# Change DOB to YM format ####
-# Drop Other Identified Info ####
+drop_control_number <- function(df_names) {
+  for (df_name in df_names) {
+    masked_name <- paste0(df_name, "_masked")
+    print(paste("Processing:", masked_name))
+    
+    df <- get(masked_name)
+    
+    # Drop control_number and reassign
+    df <- df %>%
+      select(-control_number)
+    
+    assign(masked_name, df, envir = .GlobalEnv)
+  }
+}
+
+# Run the function on your list
+drop_control_number(c("basic", "move", "assess", "house", "program", "conduct", "work", "visit"))
+# Change DOB to First Day of Their Birth Month ####
+# (i.e., 01-29-1998 becomes 01-01-1998)
+basic <- basic %>%
+  mutate(date_of_birth_masked = floor_date(ymd(date_of_birth), unit = "month")) %>%
+  # drop identifiable dob
+  select(-date_of_birth)
 # ========================================================================= ####
 # Save masked data frames ####
 for (name in c("basic", "move", "assess", "house", "program", "conduct", "work", "visit")) {
