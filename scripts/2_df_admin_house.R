@@ -3,6 +3,7 @@
 # -- Objective ####
 # -- Readme ####
 # -- To do ####
+# -- -- request House Sequence Number from PADOC
 # =================================================================== ####
 # Set up ####
 # -- Prepare Environment ####
@@ -37,7 +38,7 @@ house <- house |>
          loc_bed_num = bed_number_raw,
          loc_bed_type = bed_type_raw,
          loc_sec_lvl = security_level_raw,
-         loc_unit_type = housing_status_raw,
+         loc_unit_type_abr = housing_status_raw,
          loc_bed_stat = bed_status_raw) |>
   mutate(dem_hndcap = handicap_stat_raw) |>
   mutate(pris_loc = facility_raw,) %>%
@@ -75,18 +76,87 @@ house <- house %>%
   # HOUSING CHARACTERISTICS
   # some have a leading zero, drop this for standardization
   mutate(loc_bed_num = sub("^0+", "", loc_bed_num)) %>%
+  # convert abbreviation into full names for loc_unit_type
+  # -- any unsure titles are given "Description Unavailable"
+  mutate(loc_unit_type = case_when(
+    loc_unit_type_abr == "GP" ~ "General Population",
+    loc_unit_type_abr == "RHU" ~ "Restricted Housing Unit",
+    loc_unit_type_abr == "TC" ~ "Therapuetic Community",
+    loc_unit_type_abr == "PC" ~ "Protective Custody",
+    loc_unit_type_abr == "DCC" ~ "Diagnostic Classification Center",
+    loc_unit_type_abr == "MHU" ~ "Mental Health Unit",
+    loc_unit_type_abr == "SMU" ~ "Special Management Unit",
+    loc_unit_type_abr == "SCU" ~ "Security Control Unit",
+    loc_unit_type_abr == "DTU" ~ "Disciplinary Treatment Unit",
+    loc_unit_type_abr == "RTU" ~ "Residential Treatment Unit",
+    loc_unit_type_abr == "IMU" ~ "Intensive Management Unit",
+    loc_unit_type_abr == "ICU" ~ "Intensive Care Unit",
+    loc_unit_type_abr == "OHU" ~ "Observation Housing Unit",
+    loc_unit_type_abr == "MCU" ~ "Medical Control Unit",
+    loc_unit_type_abr == "PCU" ~ "Protective Custody Unit",
+    loc_unit_type_abr == "ITU" ~ "Intermediate Treatment Unit",
+    loc_unit_type_abr == "IRU" ~ "Intermediate Residential Unit",
+    loc_unit_type_abr == "DMU" ~ "Diversionary Management Unit",
+    loc_unit_type_abr == "SOP" ~ "Sex Offender Program",
+    loc_unit_type_abr == "SOA" ~ "Sex Offender Assessment",
+    loc_unit_type_abr == "SOU" ~ "Sex Offender Unit",
+    loc_unit_type_abr == "SSU" ~ "Description Unavailable",
+    loc_unit_type_abr == "SDU" ~ "Description Unavailable",
+    loc_unit_type_abr == "SAU" ~ "Substance Abuse Unit",
+    loc_unit_type_abr == "SNH" ~ "Description Unavailable",
+    # special need unit?
+    loc_unit_type_abr == "SNU" ~ "Description Unavailable",
+    loc_unit_type_abr == "TPV" ~ "Technical Parole Violator Unit",
+    # violence suppression unit? veterans support unit?
+    loc_unit_type_abr == "VSU" ~ "Description Unavailable",
+    loc_unit_type_abr == "YAO" ~ "Young Adult Offender Unit",
+    loc_unit_type_abr == "U18" ~ "Under 18 Unit",
+    # behavioral adjustment center?
+    loc_unit_type_abr == "BAC" ~ "Description Unavailable",
+    # Behavioral Center/ Base Custody
+    loc_unit_type_abr == "BC" ~ "Description Unavailable",
+    loc_unit_type_abr == "BMU" ~ "Behavior Management Unit",
+    loc_unit_type_abr == "BOT" ~ "Bootcamp",
+    loc_unit_type_abr == "CAP" ~ "Description Unavailable",
+    loc_unit_type_abr == "CG" ~ "Description Unavailable",
+    loc_unit_type_abr == "DCC" ~ "Diagnostic Classification Center",
+    loc_unit_type_abr == "DEF" ~ "Description Unavailable",
+    loc_unit_type_abr == "FOR" ~ "Description Unavailable",
+    loc_unit_type_abr == "FTC" ~ "Description Unavailable",
+    loc_unit_type_abr == "GER" ~ "Geriatric Unit",
+    loc_unit_type_abr == "INF" ~ "Infirmary",
+    loc_unit_type_abr == "LDP" ~ "Description Unavailable",
+    loc_unit_type_abr == "LPH" ~ "Description Unavailable",
+    loc_unit_type_abr == "OTC" ~ "Outpatient Treatment Center",
+    loc_unit_type_abr == "PGA" ~ "Description Unavailable",
+    loc_unit_type_abr == "POC" ~ "Description Unavailable",
+    loc_unit_type_abr == "QUA" ~ "Quaratine Unit",
+    loc_unit_type_abr == "RIN" ~ "Description Unavailable",
+    loc_unit_type_abr == "SDT" ~ "Description Unavailable",
+    loc_unit_type_abr == "SIP" ~ "Description Unavailable",
+    loc_unit_type_abr == "SM" ~ "Description Unavailable",
+    loc_unit_type_abr == "SRT" ~ "Description Unavailable",
+    loc_unit_type_abr == "STG" ~ "Security Threat Group Unit",
+    loc_unit_type_abr == "TCD" ~ "Therapeutic Community- Detox",
+    loc_unit_type_abr == "TCG" ~ "Therapeutic Community- General",
+    loc_unit_type_abr == "TCH" ~ "Therapeutic Community- Housing",
+    loc_unit_type_abr == "TCO" ~ "Description Unavailable",
+    loc_unit_type_abr == "TCS" ~ "Description Unavailable",
+    loc_unit_type_abr == "TCV" ~ "Description Unavailable",
+    loc_unit_type_abr == "TCX" ~ "Description Unavailable",
+    loc_unit_type_abr == "THU" ~ "Transitional Housing Unit",
+    loc_unit_type_abr == "WMA" ~ "Description Unavailable",
+    loc_unit_type_abr == "WMO" ~ "Women's Observation Unit"
+    )) %>%
   left_join(prison_lookup, by = "pris_loc") %>%
   select(-pris_loc) %>%
-  rename(pris_loc = pris_loc_full) %>%
-  relocate(pris_loc, .after = dem_hndcap) %>%
-  relocate(date_datapull, .after = pris_loc) %>%
-  relocate(wave, .after = date_datapull)
+  rename(pris_loc = pris_loc_full) 
 
 # Fully NA Rows ####
-# -- 139 rows are fully NA except for research_id, control_number, wave, research_id
+# -- 139 rows are fully NA except for research_id, wave, research_id
 NA_rows <- house %>%
       filter(if_all(
-             .cols = -c(research_id, date_datapull, wave, control_number),
+             .cols = -c(research_id, date_datapull, wave),
              .fns = ~ is.na(.)
          ))
 # =================================================================== ####
@@ -188,13 +258,13 @@ house <- house %>%
     loc_date_out = na_if(as.character(loc_date_out), "00000000"),  # ensure it's character first
     loc_date_in = ymd(loc_date_in),
     loc_date_out = ymd(loc_date_out),
-    days_in_unit = as.numeric(loc_date_out - loc_date_in)
+    loc_days_in_unit = as.numeric(loc_date_out - loc_date_in)
   )
 # =================================================================== ####
 # Temporary Descriptive Stats ####
 # -- number of housing placements per person
 a <- house %>%
-  group_by(control_number) %>%
+  group_by(research_id) %>%
   summarize(n_placements = n())
 summary(a$n_placements)
 
@@ -202,6 +272,9 @@ summary(a$n_placements)
 house %>%
   count(dem_hndcap, sort = TRUE) %>%
   mutate(percent = n / sum(n) * 100)
+# =================================================================== ####
+# Reorganize Variables ####
+house <- reorder_vars(house)
 # =================================================================== ####
 # Save Dataframe ####
 saveRDS(house, file = "data/processed/2_house_cleaned.Rds")
