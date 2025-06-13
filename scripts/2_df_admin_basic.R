@@ -1,15 +1,14 @@
 # ================================================================= ####
 # Notes to Script ####
 # -- Objective ####
-# Clean basic demographic data 
+# Clean basic dataframe 
+# Create two new dataframes - one at the individual level with (mostly) static demographics, and one at the individual*sentence level 
 # -- Readme ####
 # Level of observation: individual*date_datapull
-# This may eventually need to become a dataset at the individual*survey participation level
-# While most variables in this file are static - some change over the course of a person's incarceration
-# Some individuals have multiple asca codes - meaning this reflects multiple admissions
+# Basic contains demographic and sentencing information 
 # -- To do ####
-# To do: ASCA classification is sometimes NULL while the offense code is the same as that of other variables, e.g "STRANGULATION: APPLYING PRESSURE TO THROAT OR NECK" is sometimes classified as violent and sometimes as NULL. Manually recategorize.
-# To do: Explore sent_min_expir_dt, sent_max_expir_dt, sent_off_asca, sent_max_expir_recmp_dt variables
+# To do: ASCA classification is sometimes NULL while the offense code is the same as that of other variables, e.g "STRANGULATION: APPLYING PRESSURE TO THROAT OR NECK" is sometimes classified as violent and sometimes as NULL. Manually recategorize?
+# See todo do section at the end of the script 
 # ================================================================= ####
 # Set up ####
 # -- Prepare environment ####
@@ -31,7 +30,7 @@ remove_leading_zeros <- function(x) {
 standardize_uppercase <- function(x) {
   x <- x %>%
     str_squish() %>%
-    str_replace_all("\\s*-\\s*", " - ") %>%                         # Normalize dash spacing
+    str_replace_all("\\s*-\\s*", " - ") %>%                        # Normalize dash spacing
     str_replace_all("\\bMoveable\\b", "Movable") %>%               # Fix spelling
     str_replace_all("Mdse", "Merchandise") %>%                     # Expand abbreviation
     str_to_title()
@@ -417,10 +416,7 @@ basic$days_to_min_at_treatment <-   with(basic, ifelse(treatment_wave==1, days_t
                                                               ifelse(treatment_wave==3, days_to_min_wave3,
                                                                      ifelse(treatment_wave==4, days_to_min_wave4,
                                                                             ifelse(treatment_wave==5, days_to_min_wave5,NA))))))
-basic$min_sent_days <- with(basic, (min_cort_sent_yrs*365)+(min_cort_sent_mths*31)+(min_cort_sent_days))
-basic$max_sent_days <- with(basic, (max_cort_sent_yrs*365)+(max_cort_sent_mths*31)+(max_cort_sent_days))
 
-basic$life <- ifelse(basic$sentence_class %in% c("LIFE"),1,0)
 
 # Calculate estimated admit dates & estimated time served
 basic$est_admit_date <- basic$max_expir_date - 2*(days(basic$max_expir_date-basic$min_expir_date)) # estimate!
