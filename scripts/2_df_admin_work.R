@@ -3,6 +3,7 @@
 # -- Objective ####
 # Clean work data 
 # -- Readme ####
+# level of observation: research_id*job_cat_desc*job_start_date
 # We've done initial work to clean and standardize these fields. 
 # This df contains work assignments, courses, and status'. The df is missing 
 # start and end dates. We know these exist as we received them in earlier
