@@ -14,9 +14,9 @@ source("scripts/0_utils.R")
 source("scripts/0_control_no_masking_function.R")
 
 # -- Load data ####
-control_nos_inmate_ids <- readRDS("data/processed/1a_control_nos_inmate_ids.Rds")
+control_nos_inmate_ids <- readRDS("data/processed/identified/1a_control_nos_inmate_ids.Rds")
 for (name in c("basic", "move", "assess", "house", "program", "conduct", "work", "visit")) {
-  assign(name, readRDS(paste0("data/processed/1a_", name, ".Rds")))
+  assign(name, readRDS(paste0("data/processed/identified/1a_", name, ".Rds")))
 }
 
 # ========================================================================= ####
@@ -70,5 +70,5 @@ basic <- basic %>%
 # Save masked data frames ####
 for (name in c("basic", "move", "assess", "house", "program", "conduct", "work", "visit")) {
   masked_df <- get(paste0(name, "_masked")) %>% as.data.frame()
-  saveRDS(masked_df, file = paste0("data/processed/1b_", name, "_masked.Rds"))
+  saveRDS(masked_df, file = paste0("data/processed/de_identified/1b_", name, "_masked.Rds"))
 }

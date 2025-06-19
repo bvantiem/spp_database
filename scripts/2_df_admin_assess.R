@@ -16,7 +16,7 @@ source("scripts/0_utils.R")
 # -- Functions ####
 
 # -- Read in Data ####
-assess <- readRDS("data/processed/1b_assess_masked.Rds")
+assess <- readRDS("data/processed/de_identified/1b_assess_masked.Rds")
 # =================================================================== ####
 # Rename raw variables ####
 assess <- assess |>
@@ -114,5 +114,5 @@ assess <- reorder_vars(assess)
 assess <- reorder_vars(assess)
 # =================================================================== ####
 # Save Dataframe ####
-saveRDS(assess, file = "data/processed/2_assess_cleaned.Rds")
+saveRDS(assess, file = "data/processed/de_identified/2_assess_cleaned.Rds")
 # =================================================================== ####

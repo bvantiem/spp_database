@@ -12,7 +12,7 @@ source("scripts/0_utils.R")
 # -- Functions ####
 
 # -- Read in Data ####
-visit <- readRDS("data/processed/1b_visit_masked.Rds")
+visit <- readRDS("data/processed/de_identified/1b_visit_masked.Rds")
 
 # =================================================================== ####
 # Rename Raw Variables ####
@@ -22,7 +22,7 @@ visit <- visit |>
 
 visit <- visit %>%
   mutate(vst_desc = Rltnshp_Cd_raw,
-         vst_id = Vstr_Num_raw,
+         vst_visitor_id = Vstr_Num_raw,
          vst_type = Vstr_TpCd_raw,
          vst_start_date = VstEvnt_DtTm_raw,
          vst_end_date = VstEvnt_TmOut_raw) %>%
@@ -74,15 +74,15 @@ visit <- visit |>
   rename(pris_loc = pris_loc_full) %>%
   relocate(pris_loc, .after = date_datapull) %>%
 # DATES
-# -- move time for program end to new column
-  mutate(vst_start_time = format(as.POSIXct(vst_start_date), format = "%H:%M:%S"),
-       vst_start_date = as.Date(vst_start_date)) %>%
-  mutate(vst_end_time = format(as.POSIXct(vst_end_date), format = "%H:%M:%S"),
-         vst_end_date = as.Date(vst_end_date)) %>%
-  relocate(vst_start_time, .after = vst_start_date) %>%
-  relocate(vst_end_time, .after = vst_end_date) %>%
-  relocate(date_datapull, .after = vst_end_time) %>%
-  relocate(wave, .after = date_datapull)
+# -- move time for visit to new column
+  mutate(
+    vst_start_time = format(as.POSIXct(vst_start_date), "%H:%M:%S"),
+    vst_end_time   = format(as.POSIXct(vst_end_date), "%H:%M:%S"),
+    
+    # drop the time from the original datetime to get date only
+    vst_start_date = as.Date(vst_start_date),
+    vst_end_date   = as.Date(vst_end_date)
+  )
   
 # =================================================================== ####
 # Add Notes to Variables ####
@@ -91,7 +91,7 @@ visit <- visit |>
 comment(visit$pris_loc) <- "Facility location, 0 NA values, fully cleaned, created using Fac_Cd_raw (6/6/25)"
 comment(visit$vst_desc) <- "Visitor description, 0 NA values, fully cleaned created using Rltnshp_Cd_raw, Rltnshp_Des_raw (6/6/25)"
 comment(visit$vst_type) <- "Type of visitor, 0 NA values, fully cleaned created using Vstr_TpCd_raw and Vstr_TpDes_raw (6/6/25)"
-comment(visit$vst_id) <- "ID number assigned to visitor, 0 NA values, fully cleaned created using Vstr_Num_raw (6/6/25)"
+comment(visit$vst_visitor_id) <- "ID number assigned to visitor, 0 NA values, fully cleaned created using Vstr_Num_raw (6/6/25)"
 comment(visit$vst_start_date) <- "Start date for visit, 0 NA values, fully cleaned, created using VstEvnt_DtTm_raw (6/6/25)"
 comment(visit$vst_start_time) <- "Start time of visit, 0 NA values, fully cleaned, created using VstEvnt_DtTm_raw (6/6/25)"
 comment(visit$vst_end_date) <- "End date for visit, 96 NA values, unknown reason for this, created using VstEvnt_TmOut_raw (6/6/25)"
@@ -107,15 +107,18 @@ comment(visit$VstEvnt_DtTm_raw) <- "raw variable, cleaned verison available as v
 comment(visit$VstEvnt_TmOut_raw) <- "raw variable, cleaned verison available as vst_end_date and vst_end_time (6/6/25)"
 # =================================================================== ####
 # New Variables ####
+# started code -> not working ...
+# visit <- visit %>%
+#   mutate(vst_duration_mins = as.numeric(difftime(vst_end_time, vst_start_time, units = "mins")))
 # =================================================================== ####
 # Temporary Descriptive Statistics ####
 # -- How many visits do people get on average? 
 visit %>%
-  count(research_id) %>%                     # Count visits per person
-  summarise(avg_visits = mean(n))            # Calculate the average
+  count(research_id) %>%                     
+  summarise(avg_visits = mean(n))            
 # -- How many unique visitors do people get on average?
 visit %>%
-  distinct(research_id, vst_id) %>%   # Drop duplicates of same visitor visiting same person
+  distinct(research_id, vst_visitor_id) %>%   # Drop duplicates of same visitor visiting same person
   count(research_id) %>%                  # Count unique visitors per person
   summarise(avg_unique_visitors = mean(n))
 # -- most common visit types
@@ -125,6 +128,9 @@ visit %>%
 visit %>%
   count(vst_desc, sort = TRUE)
 # =================================================================== ####
+# Reorganize Variables ####
+visit <- reorder_vars(visit)
+# =================================================================== ####
 # Save Dataframe ####
-saveRDS(visit, file = "data/processed/2_visit_cleaned.Rds")
+saveRDS(visit, file = "data/processed/de_identified/2_visit_cleaned.Rds")
 # =================================================================== ####

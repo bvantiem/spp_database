@@ -18,7 +18,7 @@ set.seed(1962)
 
 # -- Read in Data  ####
 # -- -- Control lookup table ####
-control_lookup <- readRDS("data/processed/processing_layer_1/control_nos_inmate_ids.Rds")
+control_lookup <- readRDS("data/processed/identified/1a_control_nos_inmate_ids.Rds")
 # -- -- Treatment waves ####
 randassign1 <- read_xlsx("data/raw/4_random_assignment/assignment/20220818_random_assignment_round1.xlsx", sheet=1) 
 randassign2 <- xl.read.file("data/raw/4_random_assignment/assignment/20221201_random_assignment_round2.xlsx", password = "LS2022", xl.sheet=1)
@@ -169,7 +169,7 @@ randassign <- randassign %>%
 # Save Dataframes
 # -- Save unmasked file ####
 stopifnot(length(unique(randassign$inmate_id))==nrow(randassign))
-saveRDS(randassign, file="data/processed/processing_layer_1/randassign.Rds")
+saveRDS(randassign, file="data/processed/identified/randassign.Rds")
 
 # -- Save masked file ####
 i <- unique(control_lookup$control_number)
@@ -180,7 +180,7 @@ randassign_masked <- randassign %>%
   select(-any_of(c("inmate_id", "control_number"))) %>%
   relocate(research_id) # moves research id to the front
 
-saveRDS(randassign_masked, file="data/processed/processing_layer_1/randassign_masked.Rds")
+saveRDS(randassign_masked, file="data/processed/de_identified/randassign_masked.Rds")
 # ================================================================ ####
 
 # OLD ####

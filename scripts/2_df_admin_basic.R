@@ -50,7 +50,7 @@ standardize_uppercase <- function(x) {
   return(x)
 }
 # -- Read in Data ####
-basic <- readRDS("data/processed/1b_basic_masked.Rds")
+basic <- readRDS("data/processed/de_identified/1b_basic_masked.Rds")
 
 # ================================================================= ####
 # Rename raw variables ####
@@ -398,9 +398,9 @@ basic %>%
 basic <- reorder_vars(basic)
 # ================================================================= ####
 # Save dataframes ####
-saveRDS(basic, file = "data/processed/2_basic_cleaned.Rds")
-saveRDS(basic, file = "data/processed/2_basic_by_sentence_cleaned.Rds")
-saveRDS(basic, file = "data/processed/2_basic_static_demographics_cleaned.Rds")
+saveRDS(basic, file = "data/processed/de_identified/2_basic_cleaned.Rds")
+saveRDS(basic, file = "data/processed/de_identified/2_basic_by_sentence_cleaned.Rds")
+saveRDS(basic, file = "data/processed/de_identified/2_basic_static_demographics_cleaned.Rds")
 # ================================================================= ####
 # Known Issues #### 
 # To Do ####
@@ -408,51 +408,51 @@ saveRDS(basic, file = "data/processed/2_basic_static_demographics_cleaned.Rds")
 # is missing [NA]
 ids_w_missing_sent_info <- basic %>% filter(is.na(sent_class))
 # ================================================================= ####
-# RELEVANT OLD CODE TO INTEGRATE LATER, INCL TIME SERVED ####
-
-# Merge in age at treatment
-basic$age_at_treatment <- with(basic, ifelse(treatment_wave==1, age_wave1,
-                                             ifelse(treatment_wave==2, age_wave2,
-                                                    ifelse(treatment_wave==3, age_wave3,
-                                                           ifelse(treatment_wave==4, age_wave4,
-                                                                  ifelse(treatment_wave==5, age_wave5,NA))))))
-
-
-
-basic$days_to_min_at_treatment <-   with(basic, ifelse(treatment_wave==1, days_to_min_wave1,
-                                                       ifelse(treatment_wave==2, days_to_min_wave2,
-                                                              ifelse(treatment_wave==3, days_to_min_wave3,
-                                                                     ifelse(treatment_wave==4, days_to_min_wave4,
-                                                                            ifelse(treatment_wave==5, days_to_min_wave5,NA))))))
-
-
-# Calculate estimated admit dates & estimated time served
-basic$est_admit_date <- basic$max_expir_date - 2*(days(basic$max_expir_date-basic$min_expir_date)) # estimate!
-
-# Link with admit dates for lifers
-basic <- left_join(basic, lifers[,c("admit_date", "research_id")])
-basic[which(basic$research_id %in% lifers$research_id),"est_admit_date"] <- basic[which(basic$research_id %in% lifers$research_id),"admit_date"]
-basic <- basic[,-which(names(basic)=="admit_date")]
-
-i <- which(basic$sentence_class=="DEFINITE/FLAT")
-basic$est_admit_date[i] <- basic$min_expir_date[i]-basic$min_sent_days[1]
-i <- which(basic$sentence_class=="INDETERMINATE" & (basic$min_expir_date==basic$max_expir_date))
-basic$est_admit_date[i] <- basic$max_expir_date[i]-basic$max_sent_days[i]
-i <- which(basic$research_id=="rid_am3704")
-basic$est_admit_date[i] <- ymd(20220430) # Manual override. Formula not 100% adequate
-
-# DATA REQUEST: Information still missing for 20 individuals
-i <- which(basic$sentence_class=="INDETERMINATE" & (basic$min_expir_date!="9999-01-01"
-                                                    & basic$max_expir_date=="9999-01-01"))
-basic$est_admit_date[i] <- NA
-i <- which(basic$sentence_class=="DETENTION" & (basic$min_expir_date=="9999-01-01"
-                                                & basic$max_expir_date=="9999-01-01"))
-basic$est_admit_date[i] <- NA
-i <- which(is.na(basic$sentence_class) & (basic$min_expir_date=="9999-01-01"
-                                          & basic$max_expir_date=="9999-01-01"))
-basic$est_admit_date[i] <- NA
-
-basic$est_days_served_on_20220501 <- ymd(20220501)-basic$est_admit_date # Update with every wave
-basic$est_days_served_on_20220501 <- as.numeric(gsub(" days", "", basic$est_days_served_on_20220501))
-
-
+# # RELEVANT OLD CODE TO INTEGRATE LATER, INCL TIME SERVED ####
+# 
+# # Merge in age at treatment
+# basic$age_at_treatment <- with(basic, ifelse(treatment_wave==1, age_wave1,
+#                                              ifelse(treatment_wave==2, age_wave2,
+#                                                     ifelse(treatment_wave==3, age_wave3,
+#                                                            ifelse(treatment_wave==4, age_wave4,
+#                                                                   ifelse(treatment_wave==5, age_wave5,NA))))))
+# 
+# 
+# 
+# basic$days_to_min_at_treatment <-   with(basic, ifelse(treatment_wave==1, days_to_min_wave1,
+#                                                        ifelse(treatment_wave==2, days_to_min_wave2,
+#                                                               ifelse(treatment_wave==3, days_to_min_wave3,
+#                                                                      ifelse(treatment_wave==4, days_to_min_wave4,
+#                                                                             ifelse(treatment_wave==5, days_to_min_wave5,NA))))))
+# 
+# 
+# # Calculate estimated admit dates & estimated time served
+# basic$est_admit_date <- basic$max_expir_date - 2*(days(basic$max_expir_date-basic$min_expir_date)) # estimate!
+# 
+# # Link with admit dates for lifers
+# basic <- left_join(basic, lifers[,c("admit_date", "research_id")])
+# basic[which(basic$research_id %in% lifers$research_id),"est_admit_date"] <- basic[which(basic$research_id %in% lifers$research_id),"admit_date"]
+# basic <- basic[,-which(names(basic)=="admit_date")]
+# 
+# i <- which(basic$sentence_class=="DEFINITE/FLAT")
+# basic$est_admit_date[i] <- basic$min_expir_date[i]-basic$min_sent_days[1]
+# i <- which(basic$sentence_class=="INDETERMINATE" & (basic$min_expir_date==basic$max_expir_date))
+# basic$est_admit_date[i] <- basic$max_expir_date[i]-basic$max_sent_days[i]
+# i <- which(basic$research_id=="rid_am3704")
+# basic$est_admit_date[i] <- ymd(20220430) # Manual override. Formula not 100% adequate
+# 
+# # DATA REQUEST: Information still missing for 20 individuals
+# i <- which(basic$sentence_class=="INDETERMINATE" & (basic$min_expir_date!="9999-01-01"
+#                                                     & basic$max_expir_date=="9999-01-01"))
+# basic$est_admit_date[i] <- NA
+# i <- which(basic$sentence_class=="DETENTION" & (basic$min_expir_date=="9999-01-01"
+#                                                 & basic$max_expir_date=="9999-01-01"))
+# basic$est_admit_date[i] <- NA
+# i <- which(is.na(basic$sentence_class) & (basic$min_expir_date=="9999-01-01"
+#                                           & basic$max_expir_date=="9999-01-01"))
+# basic$est_admit_date[i] <- NA
+# 
+# basic$est_days_served_on_20220501 <- ymd(20220501)-basic$est_admit_date # Update with every wave
+# basic$est_days_served_on_20220501 <- as.numeric(gsub(" days", "", basic$est_days_served_on_20220501))
+# 
+# 

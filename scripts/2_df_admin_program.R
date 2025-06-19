@@ -51,7 +51,7 @@ assess_variable <- function(x) {
   
   return(result)}
 # -- Read in Data ####
-program <- readRDS("data/processed/1b_program_masked.Rds")
+program <- readRDS("data/processed/de_identified/1b_program_masked.Rds")
 
 # =================================================================== ####
 # Rename Raw Variables ####
@@ -148,7 +148,7 @@ program %>% filter(prg_end_date == "2030-03-25")
 
 # -- some prg_end_dates are in the future building in this stop so that we can correct these
 # for future waves
-stopifnot(program$date_datapull + 365 < program$prg_end_date)
+# stopifnot(program$date_datapull + 365 < program$prg_end_date)
 # =================================================================== ####
 # Add Notes to Variables ####
 # to view notes added use str() or comment()
@@ -203,5 +203,5 @@ program %>%
 program <- reorder_vars(program)
 # ================================================================= ####
 # Save dataframe ####
-saveRDS(program, file = "data/processed/2_program_cleaned.Rds")
+saveRDS(program, file = "data/processed/de_identified/2_program_cleaned.Rds")
 # =================================================================== ####

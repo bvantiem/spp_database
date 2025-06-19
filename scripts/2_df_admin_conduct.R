@@ -46,7 +46,7 @@ standardize_uppercase <- function(x) {
   return(x)
 }
 # -- Read in Data ####
-conduct <- readRDS("data/processed/1b_conduct_masked.Rds")
+conduct <- readRDS("data/processed/de_identified/1b_conduct_masked.Rds")
 
 # ================================================================= ####
 # Rename Raw Variables ####
@@ -117,5 +117,5 @@ conduct %>%
 conduct <- reorder_vars(conduct)
 # ================================================================= ####
 # Save Dataframe ####
-saveRDS(conduct, file = "data/processed/2_conduct_cleaned.Rds")
+saveRDS(conduct, file = "data/processed/de_identified/2_conduct_cleaned.Rds")
 # ================================================================= ####

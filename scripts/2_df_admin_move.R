@@ -68,7 +68,7 @@ remove_leading_zeros <- function(x) {
 }
  
 # -- Read in Data ####
-move <- readRDS("data/processed/1b_move_masked.Rds")
+move <- readRDS("data/processed/de_identified/1b_move_masked.Rds")
 # ================================================================= ####
 # Rename Raw Variables ####
 move <- move |>
@@ -147,5 +147,5 @@ move %>%
 move <- reorder_vars(move)
 # ================================================================= ####
 # Save Dataframe ####
-saveRDS(move, file = "data/processed/2_move_cleaned.Rds")
+saveRDS(move, file = "data/processed/de_identified/2_move_cleaned.Rds")
 # ================================================================= ####

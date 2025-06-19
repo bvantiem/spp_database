@@ -24,7 +24,7 @@ source("scripts/0_utils.R")
 
 
 # -- -- Control Number - Inmate ID Lookup Table ####
-control_lookup <- readRDS("data/processed/1a_control_nos_inmate_ids.Rds")
+control_lookup <- readRDS("data/processed/identified/1a_control_nos_inmate_ids.Rds")
 # -- -- PCQ Surveys ####
 # -- -- -- Wave 1 ------
 # A Block

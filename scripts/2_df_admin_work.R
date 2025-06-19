@@ -46,7 +46,7 @@ remove_leading_zeros <- function(x) {
   return(cleaned_x)
 }
 # -- Read in Data ####
-work <- readRDS("data/processed/1b_work_masked.Rds")
+work <- readRDS("data/processed/de_identified/1b_work_masked.Rds")
 
 
 # ================================================================= ####
@@ -284,5 +284,5 @@ work %>%
 work <- reorder_vars(work)
 # ================================================================= ####
 # Save Dataframe ####
-saveRDS(work, file = "data/processed/2_work_cleaned.Rds")
+saveRDS(work, file = "data/processed/de_identified/2_work_cleaned.Rds")
 # ================================================================= #### 

@@ -24,7 +24,7 @@ remove_leading_zeros <- function(x) {
   return(cleaned_x)
 }
 # -- Read in Data ####
-house <- readRDS("data/processed/1b_house_masked.Rds")
+house <- readRDS("data/processed/de_identified/1b_house_masked.Rds")
 # =================================================================== ####
 # Rename Raw Variables ####
 # Append _raw to all columns except specified columns
@@ -191,68 +191,6 @@ comment(house$handicap_stat_raw) <- "raw data, non raw available as dem_hndcap"
 comment(house$housing_status_raw) <- "raw data, non raw available as loc_unit_type"
 comment(house$bed_status_raw) <- "raw data, non raw available as loc_bed_stat"
 # =================================================================== ####
-# Britte's Old Deduplication Code (to be reviewed) ####
-# Deduplicate house
-house2 <- house |>
-  # Create a group key based on all columns EXCEPT the three exceptions
-  group_by(across(-c(wave, date_datapull, control_number))) |>
-  
-  # Keep only the row with the earliest date_datapull in each group
-  slice_min(order_by = date_datapull, with_ties = FALSE) |>
-  
-  ungroup()
-
-# The last assignment within datapulls has a NA date
-# We want to drop it
-house2 <- house2 %>%
-  # -- Identify the last date within a datapull
-  group_by(date_datapull) %>%
-  mutate(last_date_within_pull = case_when(
-    loc_date_in == max(loc_date_in, na.rm = TRUE) ~ 1,
-    TRUE ~ 0)) %>%
-  ungroup() %>%
-  group_by(research_id) %>%
-  # -- We want to drop this row except when this is the last datapull an individual was a part of.
-  mutate(drop = case_when(
-    last_date_within_pull == 1 & is.na(loc_date_out) & date_datapull != max(date_datapull) ~ 1,
-    TRUE ~ 0)) %>%
-  ungroup() %>%
-  filter(drop == 0) %>%
-  select(-last_date_within_pull, -drop)
-
-# -- Within data pulls, for the last cell assignment, we observe two rows in the data, with the cell number saved as "2016" and as "061", or as "1014" and "014".
-# -- Delete the second observation
-house2 <- house2 %>%
-  group_by(research_id) %>%
-  mutate(drop = case_when(
-    date_datapull == max(date_datapull) & nchar(loc_cell)!=4  ~ 1,
-    TRUE ~ 0)) %>%
-  filter(drop == 0) %>%
-  select(-drop)
-
-# -- We sometimes observe one date_in with multiple date_outs for the same individual. When this happens, we often see someone move in and out of a cell on the same day. We delete those instances.
-house2 <- house2 %>%
-  group_by(research_id, loc_date_in) %>%
-  mutate(n_date_ins = n()) %>%
-  ungroup() %>%
-  filter(!(n_date_ins > 1 & loc_date_in == loc_date_out)) |>
-  select(-n_date_ins)
-
-# Identify consecutive moves and create a row for each new sentence
-# For now - assume every gap of more than a day is a new sentence (TO BE REFINED)
-house2 <- house2 %>%
-  # -- Sort data so we can detect chronological sequences within each individual
-  arrange(research_id, loc_date_in) %>%
-  group_by(research_id) %>%
-  # -- Identify if current entry continues directly from previous (same day or 1-day gap)
-  mutate(consecutive_within_stay = loc_date_in == lag(loc_date_out)|loc_date_in == lag(loc_date_out)+1,
-         consecutive_within_stay_and_prison = (consecutive_within_stay == TRUE) & (pris_loc == lag(pris_loc))) %>%
-  # -- Create sentence number: increment when not consecutive (or on first row)
-  # -- is.na(consecutive_within_stay) handles the first row per research_id
-  # -- !consecutive_within_stay marks where a new sentence starts.
-  mutate(sentence_no = cumsum(is.na(consecutive_within_stay) | !consecutive_within_stay)) %>%
-  ungroup()
-# =================================================================== ####
 # New Variables ####
 # -- length of stay per placement in days
 house <- house %>%
@@ -279,5 +217,66 @@ house %>%
 house <- reorder_vars(house)
 # =================================================================== ####
 # Save Dataframe ####
-saveRDS(house, file = "data/processed/2_house_cleaned.Rds")
+saveRDS(house, file = "data/processed/de_identified/2_house_cleaned.Rds")
 # =================================================================== ####
+# # Britte's Old Deduplication Code (to be reviewed) ####
+# # Deduplicate house
+# house2 <- house |>
+#   # Create a group key based on all columns EXCEPT the three exceptions
+#   group_by(across(-c(wave, date_datapull, control_number))) |>
+#   
+#   # Keep only the row with the earliest date_datapull in each group
+#   slice_min(order_by = date_datapull, with_ties = FALSE) |>
+#   
+#   ungroup()
+# 
+# # The last assignment within datapulls has a NA date
+# # We want to drop it
+# house2 <- house2 %>%
+#   # -- Identify the last date within a datapull
+#   group_by(date_datapull) %>%
+#   mutate(last_date_within_pull = case_when(
+#     loc_date_in == max(loc_date_in, na.rm = TRUE) ~ 1,
+#     TRUE ~ 0)) %>%
+#   ungroup() %>%
+#   group_by(research_id) %>%
+#   # -- We want to drop this row except when this is the last datapull an individual was a part of.
+#   mutate(drop = case_when(
+#     last_date_within_pull == 1 & is.na(loc_date_out) & date_datapull != max(date_datapull) ~ 1,
+#     TRUE ~ 0)) %>%
+#   ungroup() %>%
+#   filter(drop == 0) %>%
+#   select(-last_date_within_pull, -drop)
+# 
+# # -- Within data pulls, for the last cell assignment, we observe two rows in the data, with the cell number saved as "2016" and as "061", or as "1014" and "014".
+# # -- Delete the second observation
+# house2 <- house2 %>%
+#   group_by(research_id) %>%
+#   mutate(drop = case_when(
+#     date_datapull == max(date_datapull) & nchar(loc_cell)!=4  ~ 1,
+#     TRUE ~ 0)) %>%
+#   filter(drop == 0) %>%
+#   select(-drop)
+# 
+# # -- We sometimes observe one date_in with multiple date_outs for the same individual. When this happens, we often see someone move in and out of a cell on the same day. We delete those instances.
+# house2 <- house2 %>%
+#   group_by(research_id, loc_date_in) %>%
+#   mutate(n_date_ins = n()) %>%
+#   ungroup() %>%
+#   filter(!(n_date_ins > 1 & loc_date_in == loc_date_out)) |>
+#   select(-n_date_ins)
+# 
+# # Identify consecutive moves and create a row for each new sentence
+# # For now - assume every gap of more than a day is a new sentence (TO BE REFINED)
+# house2 <- house2 %>%
+#   # -- Sort data so we can detect chronological sequences within each individual
+#   arrange(research_id, loc_date_in) %>%
+#   group_by(research_id) %>%
+#   # -- Identify if current entry continues directly from previous (same day or 1-day gap)
+#   mutate(consecutive_within_stay = loc_date_in == lag(loc_date_out)|loc_date_in == lag(loc_date_out)+1,
+#          consecutive_within_stay_and_prison = (consecutive_within_stay == TRUE) & (pris_loc == lag(pris_loc))) %>%
+#   # -- Create sentence number: increment when not consecutive (or on first row)
+#   # -- is.na(consecutive_within_stay) handles the first row per research_id
+#   # -- !consecutive_within_stay marks where a new sentence starts.
+#   mutate(sentence_no = cumsum(is.na(consecutive_within_stay) | !consecutive_within_stay)) %>%
+#   ungroup()
