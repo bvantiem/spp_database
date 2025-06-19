@@ -1,0 +1,53 @@
+id_num - release_type - release_date
+QN1884 - Refused Program, moved to AC unit - 5/19/22
+
+QM8079 - Transferred to SCI BEN to QUE - 5/26/22
+
+NM1963 - Paroled - 6/7/22
+
+MX2788 - Paroled - 6/8/22
+
+NS1433 - Paroled - 9/26/22
+
+QH9433 - Paroled - 7/26/22
+
+NX7007 - Paroled - 8/16/22
+
+HX8307 - Paroled - 8/24/22
+
+NC0861 - Paroled - 8/30/22
+
+NR9667 - no record of him ever being on CA. Tompkins thinks he was the other guy in 2nd wave who refused the opportunity.
+
+QG2468 - Paroled - 9/14/22
+
+QK4987 - Paroled - 12/13/22
+
+QN0083 - Paroled - 10/12/22
+
+QN0566 - Paroled - 11/17/22
+
+QN5431 - Paroled - 11/18/22
+
+QH5079 - Paroled - 1/19/23
+
+QL9123 - Transferred to SCI BEN 1/31/23 to be paroled to ICE Detainer/Deportation - 2/8/23
+
+QL3372 - Transferred to SCI Benner on day of moving onto unit (wave 2) - 11/19/22
+
+QM2723 - Paroled - 2/20/23
+
+QC7740 - Paroled - 3/7/23
+
+BF6556 - Sentence Vacated, released - 3/8/23
+
+QG7429 - Paroled - 3/22/23
+
+QN2340 - Removed from unit due to misconduct(s) on - 4/11/23
+
+NM6441 - Paroled - 4/18/23
+
+QJ0746 - Paroled - 5/10/23 
+
+QG8037 - Paroled - 5/11/23
+

@@ -1,0 +1,34 @@
+1 out of 40 individuals who are on the roster does not appear as treated in our data. The individual is question is dl3766. We know from previous rounds that he is on the unit and he is a commuted lifer. He is not on the list because we do not have controls for him.
+
+Our data indicate that the following individuals were treated and not yet released:
+1 qk4233
+2 ql4946
+3 mt5220
+4 qn0005
+5 qp2567
+
+
+The above assumes the following - we need to confirm that the below are correct assumptions:
+
+That ID OL4946 (Samuel Philips) is a typo and is in reality QL4946
+
+That ID OK4233 (Justin Blazer)  is a typo and is in reality QK4233. 
+
+That ID GH0546 (Soto) is a typo and is in reality QH0546  
+
+That the removals to RHU on the list are permanent removals from the unit (FB1508 and QQ1419)
+
+That Michael Simpson (JQ3455) was released to "Hospital" and will not be returning to LSU from the hospital. 
+
+Other things that need confirming:
+- Confirm what the correct date Michael Simpson (JQ3455) was released to the hospital (currently says 1/41/2025)
+
+
+
+
+
+
+
+
+
+ 
