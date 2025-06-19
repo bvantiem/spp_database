@@ -439,33 +439,13 @@ rm(dfa, dfb, dfc, dfd, dfe, dfinf, dfrhu)
 # Merge waves ####
 pcq <- rbind(pcq1, pcq2, pcq3, pcq4, pcq5, pcq6, pcq7)
 # ================================================================= ####
-# Rename raw variables ####
-# Append _raw to all columns except specified columns
-pcq <- pcq |>
-  mutate(
-    across(
-      .cols = setdiff(names(pcq), c("date_datapull")),
-      .fns = ~ .x,
-      .names = "{.col}_raw"
-    )
-  )
-# Change variable order ####
-pcq <- pcq %>%
-  rename(wave = survey_wave_raw) %>%
-  relocate(unit, .after = id_num) %>%
-  relocate(block_raw, .after = unit) %>%
-  relocate(wave, .after = block_raw) %>%
-  relocate(ends_with("_raw"), .after = last_col()) 
-
-# ================================================================= ####
 # Create clean inmate_id using id_num and id_num_2 #### 
 # -- Clean id_num column2 
 names(pcq)[which(names(pcq)=="id_num")] <- "inmate_id"
 pcq$inmate_id <- tolower(pcq$inmate_id)
 pcq$id_num_2 <- tolower(pcq$id_num_2)
 pcq <- pcq %>%
-  relocate(inmate_id) %>%
-  relocate(id_num_2_raw, .after = notes_raw)
+  relocate(inmate_id) 
 
 # -- Set anon ids to NA 
 pcq[which(pcq$id_num=="anon"), "inmate_id"] <- NA
@@ -502,16 +482,16 @@ pcq <- pcq |>
 
 # Clean dates ####
 # standardize date format
-pcq$date <- pcq$date_raw
+pcq$date_raw <- pcq$date
 pcq$date[which(pcq$date_raw %in% c("999", "9092099"))] <- NA # 9092099, Wave 3, in unidentified stack
-pcq$date <- parse_date_time(pcq$date_raw, c("ymd", "mdy")) # wave 1 stored as ymd, wave 2 stored dates as mdy
+pcq$date <- parse_date_time(pcq$date, c("ymd", "mdy")) # wave 1 stored as ymd, wave 2 stored dates as mdy
 pcq$date <- as.Date(pcq$date)
 
 # When dates are NA, assign most common date in that wave and unit
 # -- filter and count dates by unit and wave
 temp1 <- pcq %>%
   filter(!is.na(date)) %>%
-  group_by(wave, unit) %>%
+  group_by(survey_wave, unit) %>%
   count(date) %>%
   slice_max(n, with_ties = FALSE) %>%
   ungroup() %>%
@@ -519,15 +499,15 @@ temp1 <- pcq %>%
 # -- some are unidenfied unit, get common date by only wave for these cases
 temp2 <- pcq %>%
   filter(!is.na(date)) %>%
-  group_by(wave) %>%
+  group_by(survey_wave) %>%
   count(date) %>%
   slice_max(n, with_ties = FALSE) %>%
   ungroup() %>%
   rename(most_common_date_wave_only = date)
 # -- Join both: first by unit + wave, then fallback by wave only
 pcq <- pcq %>%
-  left_join(temp1, by = c("wave", "unit")) %>%
-  left_join(temp2, by = "wave")
+  left_join(temp1, by = c("survey_wave", "unit")) %>%
+  left_join(temp2, by = "survey_wave")
 
 # -- fill in any missing dates using unit+wave fallback or wave-only fallback
 pcq <- pcq %>%

@@ -196,20 +196,42 @@ pcq <- pcq %>%
   relocate(unit_type, .after = unit) %>%
   mutate(unit_type = as.factor(unit_type))
 
-# -- Identify survey number by research_id ####
-# This code needs to be fixed, see todo. 
-pcq$survey_no <- NA
-pcq <- as.data.frame(pcq)
+# -- Evaluate coherence between self-selected unit in pcq vs. admin-recorded unit ####
+df_q89_vs_unit_type <- pcq %>%
+  count(survey_wave, q89, unit_type) %>%
+  group_by(survey_wave, q89) %>%
+  mutate(prop = round(n / sum(n)*100,0))
 
-for(i in unique(pcq$research_id)){
-  dates.list <- sort(pcq[pcq$research_id==i,c("date")]) 
-  for(k in 1:length(dates.list)){
-    pcq[which(pcq$research_id==i & pcq$date==dates.list[k]),"survey_no"] <- k
-  }
-}
+figure_q89_vs_unit_type <- ggplot(df_q89_vs_unit_type, aes(x = unit_type, y = factor(q89), fill = prop)) +
+  geom_tile() +
+  scale_fill_gradient() +
+  geom_text(label=paste0(df_q89_vs_unit_type$n, " (", df_q89_vs_unit_type$prop, "%)"), size=2, color="white") +
+  labs(title = "q89 vs unit_type by n (%)", x = "unit_type", y = "q89",
+       subtitle = "Each row is the self-reported unit (q89); values count of people (percent rowise) correctly distributed with unit_type show number of distributed \n across unit_type. Rows sum to 100%.") +
+  theme(
+    panel.grid = element_blank(),
+    axis.text.x = element_text(angle = 90, hjust = 1)
+  ) +
+  facet_wrap(~survey_wave, ncol=1)
 
+ggsave(plot=figure_q89_vs_unit_type, "output/figures/figure_q89_vs_unit_type_2.png", width = 6, height = 8, dpi = 300)
+
+# -- Count number of surveys and waves by research_id ####
 pcq <- pcq %>%
-  relocate(survey_no, .after = research_id)
+  group_by(research_id) %>%
+  arrange(survey_wave, .by_group = TRUE) %>%  # TODO: Switch from 'survey_wave' to 'date' once 'date' is cleaned
+  mutate(
+    n_wave_max = n_distinct(survey_wave),  # Count of unique waves participated in (1, 2, 4 = 3 / 1, 2, 2 = 2) 
+    n_survey = row_number()  # Count of total surveys (by 'survey_wave' order)
+  ) %>%
+  mutate(n_survey_max = max(n_survey)) %>%
+  ungroup() %>% 
+  mutate(n_survey = ifelse(is.na(research_id), NA, n_survey)) %>% 
+  mutate(n_survey_max = ifelse(is.na(research_id), NA, n_survey_max)) %>% 
+  relocate(n_wave_max, .after = survey_wave) %>% 
+  relocate(n_survey, .after = n_wave_max) %>% 
+  relocate(n_survey_max, .after = n_survey)
+
 
 # ================================================================= ####
 # Save pcq_masked_clean #####
