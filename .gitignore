@@ -5,3 +5,5 @@
 
 data/
 output/
+data_restricted_access/
+scripts_restricted_access/

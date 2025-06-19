@@ -18,7 +18,7 @@ source("scripts/0_control_no_masking_function.R")
 
 
 # -- Read in Data ####
-control_nos_inmate_ids <- readRDS("data/processed/processing_layer_1/control_nos_inmate_ids.Rds")
+control_nos_inmate_ids <- readRDS("data_restricted_access/processed/identified/1a_control_nos_inmate_ids.Rds")
 pcq_unmasked <- readRDS("data/processed/processing_layer_2/pcq_unmasked.Rds")
 
 # ========================================================================= ####

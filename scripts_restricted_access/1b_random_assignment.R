@@ -169,7 +169,7 @@ randassign <- randassign %>%
 # Save Dataframes
 # -- Save unmasked file ####
 stopifnot(length(unique(randassign$inmate_id))==nrow(randassign))
-saveRDS(randassign, file="data_restricted_access/processed/identified/randassign.Rds")
+saveRDS(randassign, file="data_restricted_access/processed/identified/1b_randassign.Rds")
 
 # -- Save masked file ####
 i <- unique(control_lookup$control_number)
@@ -180,7 +180,7 @@ randassign_masked <- randassign %>%
   select(-any_of(c("inmate_id", "control_number"))) %>%
   relocate(research_id) # moves research id to the front
 
-saveRDS(randassign_masked, file="data/processed/de_identified/randassign_masked.Rds")
+saveRDS(randassign_masked, file="data/processed/de_identified/1b_randassign_masked.Rds")
 # ================================================================ ####
 
 # OLD ####
