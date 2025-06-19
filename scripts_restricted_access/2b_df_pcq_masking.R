@@ -13,13 +13,13 @@
 rm(list=ls())
 source("scripts/00_packages.R")
 source("scripts/0_utils.R")
-source("scripts/0_control_no_masking_function.R")
+source("scripts_restricted_access/0_control_no_masking_function.R")
 # -- Functions (delete if none) ####
 
 
 # -- Read in Data ####
 control_nos_inmate_ids <- readRDS("data_restricted_access/processed/identified/1a_control_nos_inmate_ids.Rds")
-pcq_unmasked <- readRDS("data/processed/processing_layer_2/pcq_unmasked.Rds")
+pcq_unmasked <- readRDS("data_restricted_access/processed/identified/2a_pcq.Rds")
 
 # ========================================================================= ####
 # Mask IDs ####
@@ -33,4 +33,4 @@ pcq_masked <- pcq_unmasked %>%
 
 # ================================================================= ####
 # Save pcq_masked #####
-saveRDS(pcq_masked, file = paste0("data/processed/processing_layer_2/pcq_masked.Rds"))
+saveRDS(pcq_masked, file = paste0("data/processed/de_identified/2b_pcq_masked.Rds"))
