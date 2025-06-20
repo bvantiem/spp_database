@@ -17,11 +17,11 @@ source("scripts/00_packages.R")
 source("scripts/0_utils.R")
 
 # -- Read in Data ####
-pcq <- readRDS("data/processed/processing_layer_2/pcq_masked.Rds")
+pcq <- readRDS("data/processed/de_identified/2b_pcq_masked.Rds")
 pcq <- as.data.frame(pcq)
-randassign <- readRDS("data/processed/processing_layer_1/randassign_masked.Rds")
-basic <- readRDS("data/processed/processing_layer_3/basic_cleaned.Rds")
-survey_population <- readRDS("data/processed/processing_layer_2/survey_population_masked.Rds")
+randassign <- readRDS("data/processed/de_identified/1b_randassign_masked.Rds")
+basic <- readRDS("data/processed/de_identified/2_basic_static_demographics_cleaned.Rds")
+survey_population <- readRDS("data/processed/de_identified/2b_survey_population_masked.Rds")
 # ================================================================= ####
 
 
@@ -183,7 +183,7 @@ sum(research_participants$nsurveys)
 length(unique(research_participants[which(research_participants$nsurveys>0),"research_id"]))
 
 # Save ####
-saveRDS(research_participants, file="data/processed/processing_layer_3/research_participants_masked.Rds")
+saveRDS(research_participants, file="data/processed/de_identified/3_research_participants_masked.Rds")
 
 # OLD Code ####
 # # Merge with static characteristics from basic ####

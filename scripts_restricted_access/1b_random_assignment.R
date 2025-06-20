@@ -19,6 +19,7 @@ set.seed(1962)
 # -- Read in Data  ####
 # -- -- Control lookup table ####
 control_lookup <- readRDS("data_restricted_access/processed/identified/1a_control_nos_inmate_ids.Rds")
+
 # -- -- Treatment waves ####
 randassign1 <- read_xlsx("data_restricted_access/raw/4_random_assignment/assignment/20220818_random_assignment_round1.xlsx", sheet=1) 
 randassign2 <- xl.read.file("data_restricted_access/raw/4_random_assignment/assignment/20221201_random_assignment_round2.xlsx", password = "LS2022", xl.sheet=1)
@@ -43,7 +44,11 @@ randassign0 <- data.frame(treated = c(rep(1,7), rep(0,7), rep(1,1), rep(0,2)),
                                         "dl3766", "eq1988", "jc9806"), 
                           stratum = c(rep("lifer",14), rep("commuted death", 3)),
                           treatment_wave = c(rep(0,6), 2.5, rep(0,6), 2.5, rep(NA,3)),
-                          treatment_date = c(rep(NA,6), "2023/4/4", rep(NA,6), "2023/4/4", rep("2024/11/6", 3)))
+                          treatment_date = ymd(c(rep(NA,6), 
+                                             20230404,
+                                             rep(NA,6),
+                                             20230404,
+                                             rep(20241106, 3))))
 
 # -- -- Release dates ####
 # Using just the latest release date file which was updated ahead of wave 7
@@ -112,26 +117,19 @@ randassign5$treatment_wave <- 5
 randassign6$treatment_wave <- 6
 randassign7$treatment_wave <- 7
 
-randassign1$treatment_date <- "2022/05/02"
-randassign2$treatment_date <- "2022/11/14"
-randassign3$treatment_date <- "2023/5/19"
-randassign4$treatment_date <- "2023/11/27"
-randassign5$treatment_date <- "2024/06/05"
-randassign6$treatment_date <- "2999/01/01" # DATE MISSING - confirming with Jordan, email sent 20250425
-randassign7$treatment_date <- "2025/05/22"
+randassign1$treatment_date <- rand1_date
+randassign2$treatment_date <- rand2_date
+randassign3$treatment_date <- rand3_date
+randassign4$treatment_date <- rand4_date
+randassign5$treatment_date <- rand5_date
+randassign6$treatment_date <- rand6_date # DATE MISSING - confirming with Jordan, email sent 20250425
+randassign7$treatment_date <- rand7_date
 
 # ================================================================ ####
 # Merge ####
 # -- Merge assignment data into one dataframe ####
 randassign <- rbind(randassign0, randassign1, randassign2, randassign3, randassign4, randassign5, randassign6, randassign7)
 randassign$inmate_id <- tolower(randassign$inmate_id)
-rm(randassign0, randassign1, randassign2, randassign3, randassign4, randassign5, randassign6, randassign7)
-
-# -- Notes on specific individuals ####
-randassign$notes <- NA
-randassign$notes[which(randassign$inmate_id=="qn1884")] <- "left_ls_2022_05_19"
-randassign$notes[which(randassign$inmate_id=="ns9433")] <- "missing_admin_data"
-randassign$notes[which(randassign$inmate_id=="qn2340")] <- "removed_ls_2023_04"
 
 # -- Merge in release dates ####
 rel$release_date[which(rel$release_date=="")] <- NA
@@ -140,7 +138,44 @@ rel$release_type <- gsub("(^ )(.*)", "\\2", rel$release_type)
 rel$release_date <- gsub("(^ )(.*)", "\\2", rel$release_date)
 rel$release_date <- as.Date(rel$release_date)
 
-randassign <- left_join(randassign, rel)
+rel <- rel %>%
+  rename(release_from_unit_date = release_date) %>%
+  rename(release_type_raw = release_type) %>%
+  mutate(release_type = case_when(
+    release_type_raw %in% c("Removed - Misconducts", 
+                            "Removed from unit due to misconduct(s) on ",
+                            "Removal to BB Unit",
+                            "Removed due to misconduct/behavior",
+                            "Removal to RHU") ~ "Removed From LSU",
+    release_type_raw %in% c("Never on CA - May have been selected and replaced due to ATA", # This is not technically a refusal - discuss. TODO
+                            "Refused Program, moved to AC unit",
+                            "Refused Participation",
+                            "Never on CA - Refusal from 2nd wave",
+                            "never on CA he was selected and then refused participation",
+                            "Never Selected",
+                            "Refused to move to CA. Paroled") ~ "Refused to Move to LSU",
+    release_type_raw %in% c("Transferred to SCI BEN to QUE ",
+                            "Transfer",
+                            "Hospital",
+                            "Transferred to SCI BEN 1/31/23 to be paroled to ICE Detainer/Deportation ",
+                            "Transferred to SCI Benner on day of moving onto unit (wave 2) ",
+                            "Transferred - ICE Detainer",
+                            "Transferred to LAU for mandatory programming",
+                            "Transferred to QUE for SDTP",
+                            "Camp Hill Transfer") ~ "Transferred Out of CHS",
+    is.na(release_type_raw) ~ "Not Yet Released",
+    TRUE ~ "Released to Community"
+  )) %>%
+  # Temporarily replace release dates for these individuals with their treatment date
+  # Confirm these are the correct dates - might be that they moved for a few days until they were moved back?
+  mutate(release_from_unit_date = ifelse(release_type == "Never on LSU", treatment_date, release_from_unit_date)) %>%
+  select(-treatment_date, - treatment_wave)
+
+randassign <- left_join(randassign, rel, by = c("inmate_id", "treated", "stratum"))
+randassign$release_type_removed <- ifelse(randassign$release_type == "Removed From LSU", 1, 0)
+randassign$release_type_refused <- ifelse(randassign$release_type == "Refused to Move to LSU", 1, 0)
+randassign$release_type_transferred <- ifelse(randassign$release_type == "Transferred Out of CHS", 1, 0)
+randassign$release_type_community <- ifelse(randassign$release_type == "Released to Community", 1, 0)
 
 # -- Link inmate ids to control numbers ####
 # -- Pivot control_lookup to long format
@@ -154,13 +189,10 @@ control_long <- control_lookup |>
   ) |>
   select(control_number, inmate_id)
 
-# -- Join with pcq on inmate_id
+# -- Join with control_lookup on inmate_id
 randassign <- randassign |>
   left_join(control_long, by = "inmate_id") %>%
   relocate(control_number)
-
-# Missing data on 3 individuals in our sample! ####
-randassign[which(is.na(randassign$control_number)),]
 
 randassign <- randassign %>%
   relocate(control_number, .after = inmate_id)
@@ -174,6 +206,10 @@ saveRDS(randassign, file="data_restricted_access/processed/identified/1b_randass
 # -- Save masked file ####
 i <- unique(control_lookup$control_number)
 id.link <- mask_control_nos(i) # Generate masked Research IDs
+
+# Missing data on 3 individuals in our sample! TODO ####
+# Temporarily assign them zz9999 
+randassign[which(is.na(randassign$control_number)),"control_number"] <- "zz9999"
 
 randassign_masked <- randassign %>%
   left_join(id.link, by = "control_number") %>%

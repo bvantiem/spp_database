@@ -480,44 +480,6 @@ pcq <- pcq |>
   left_join(control_long, by = "inmate_id") %>%
   relocate(control_number)
 
-# Clean dates ####
-# standardize date format
-pcq$date_raw <- pcq$date
-pcq$date[which(pcq$date_raw %in% c("999", "9092099"))] <- NA # 9092099, Wave 3, in unidentified stack
-pcq$date <- parse_date_time(pcq$date, c("ymd", "mdy")) # wave 1 stored as ymd, wave 2 stored dates as mdy
-pcq$date <- as.Date(pcq$date)
-
-# When dates are NA, assign most common date in that wave and unit
-# -- filter and count dates by unit and wave
-temp1 <- pcq %>%
-  filter(!is.na(date)) %>%
-  group_by(survey_wave, unit) %>%
-  count(date) %>%
-  slice_max(n, with_ties = FALSE) %>%
-  ungroup() %>%
-  rename(most_common_date = date)
-# -- some are unidenfied unit, get common date by only wave for these cases
-temp2 <- pcq %>%
-  filter(!is.na(date)) %>%
-  group_by(survey_wave) %>%
-  count(date) %>%
-  slice_max(n, with_ties = FALSE) %>%
-  ungroup() %>%
-  rename(most_common_date_wave_only = date)
-# -- Join both: first by unit + wave, then fallback by wave only
-pcq <- pcq %>%
-  left_join(temp1, by = c("survey_wave", "unit")) %>%
-  left_join(temp2, by = "survey_wave")
-
-# -- fill in any missing dates using unit+wave fallback or wave-only fallback
-pcq <- pcq %>%
-  mutate(
-    most_common_date_combined = coalesce(most_common_date, most_common_date_wave_only),
-    date = coalesce(date, most_common_date_combined)
-  ) %>% 
-  select(-most_common_date, -most_common_date_wave_only, -most_common_date_combined) %>%
-  relocate(date, .after = unit)
-
 # ================================================================= ####
 # Save pcq_unmasked with control numbers #####
 saveRDS(pcq, file = paste0("data_restricted_access/processed/identified/2a_pcq.Rds"))

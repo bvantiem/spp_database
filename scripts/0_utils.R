@@ -119,6 +119,24 @@ unit_mapping <- unit_mapping %>%
                 .names = "unit_type_named_{col}" # Creating new columns with names like unit_type_named_wave1, etc.
   ))
 
+unit_mapping_nonumbers_complete <- unit_mapping %>%
+  mutate(across(starts_with("unit_type_wave"),
+                ~ case_when(
+                  . == "rhu" ~ "Restrictive Housing",
+                  . == "gp" ~ "General Population",
+                  . == "gp-tc" ~ "Therapeutic Community", 
+                  . == "rec" ~ "Recovery Unit",
+                  . == "hons" ~ "Honor Block",
+                  . == "gp-epu" ~ "Enhanced Privilege Unit",
+                  . == "gp-senior" ~ "Senior Unit",
+                  . == "ls" ~ "Little Scandinavia",
+                  . == "inf" ~ "Inf",
+                  . == "pv" ~ "Parole Violators",
+                  TRUE ~ NA_character_
+                ),
+                .names = "unit_type_named_{col}" # Creating new columns with names like unit_type_named_wave1, etc.
+  ))
+
 unit_mapping$unit_type_nols <- with(unit_mapping, ifelse(unit %in% c("aa", "ab", "ac", "ad", "eb", "da", "db", "ca"), "gp",
                                                          ifelse(unit %in% c("bb", "bc", "bd"), "gp-tc",
                                                                 ifelse(unit=="ba", "rec",
@@ -183,6 +201,15 @@ wave3_date = lubridate::ymd(20230520)
 wave4_date = lubridate::ymd(20231128)
 wave5_date = lubridate::ymd(20240606)
 wave6_date = lubridate::ymd(20241022)
+# ======================================================================= #### 
+# Randomization Dates ####
+rand1_date <- lubridate::ymd(20220502)
+rand2_date <- lubridate::ymd(20221114)
+rand3_date <- lubridate::ymd(20230519)
+rand4_date <- lubridate::ymd(20231127)
+rand5_date <- lubridate::ymd(20240605)
+rand6_date <- lubridate::ymd(29990101) # DATE MISSING - confirming with Jordan, email sent 20250425
+rand7_date <- lubridate::ymd(20250522)
 # ======================================================================= #### 
 # Prison Lookup Table ####
 # -- table for transforming the abr facility to full facility name. 

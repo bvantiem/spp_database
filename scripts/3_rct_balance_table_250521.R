@@ -14,12 +14,12 @@ rm(list=ls())
 library(webshot2) # for PDF building below
 source("scripts/00_packages.R")
 source("scripts/0_utils.R")
-source("scripts/0_id_masking_function.R")
+source("scripts_restricted_access/0_id_masking_function.R")
 
 # -- Read in Data ####
 
-randassign <- readRDS("data/processed/randassign_masked.Rds")
-basic <- readRDS("data/processed/processing_layer_3/basic_cleaned.Rds")
+randassign <- readRDS("data/processed/de_identified/1b_randassign_masked.Rds")
+basic <- readRDS("data/processed/de_identified/2_basic_cleaned.Rds")
 
 # ====================================================== ####
 # De-duplicate basic ####

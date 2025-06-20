@@ -69,40 +69,23 @@ remove_leading_zeros <- function(x) {
 }
 
 # -- Read in Data ####
-pcq <- readRDS("data/processed/processing_layer_2/pcq_masked.Rds")
-# -- TEMP from utils ####
-unit_mapping <- read.csv("data/raw/2_data_keys/unit_mapping.csv")
-# -- INF is not included due to small sample of this unit
-unit_mapping <- read.csv("data/raw/2_data_keys/unit_mapping.csv")
-unit_mapping <- unit_mapping %>%
-  mutate(across(starts_with("unit_type_wave"),
-                ~ case_when(
-                  . == "rhu" ~ "Restrictive Housing",
-                  . == "gp" ~ "General Population",
-                  . == "gp-tc" ~ "Therapeutic Community", 
-                  . == "rec" ~ "Recovery Unit",
-                  . == "hons" ~ "Honor Block",
-                  . == "gp-epu" ~ "Enhanced Privilege Unit",
-                  . == "gp-senior" ~ "Senior Unit",
-                  . == "ls" ~ "Little Scandinavia",
-                  . == "inf" ~ "Inf",
-                  . == "pv" ~ "Parole Violators",
-                  TRUE ~ NA_character_
-                ),
-                .names = "unit_type_named_{col}" # Creating new columns with names like unit_type_named_wave1, etc.
-  ))
-
-pcq_lookup <- read_xlsx("data/raw/5_pcq_survey_questions/250605_pcq_survey_questions_PA.xlsx")
-pcq_lookup <- pcq_lookup %>%
-  mutate(question_qno = paste0("q", question_no), .after = question_no)
-pcq_lookup <- as.data.frame(pcq_lookup)
+pcq <- readRDS("data/processed/de_identified/2b_pcq_masked.Rds")
 # ================================================================= ####
 # Clean PCQ ####
 # -- Retain raw data as colname_raw ####
 pcq <- pcq |>
-  bind_cols(
-    pcq |>
-      rename_with(~ paste0(., "_raw"))
+  mutate(
+    across(
+      .cols = setdiff(names(pcq), c("date_datapull")),
+      .fns = ~ .x,
+      .names = "{.col}_raw"
+    )) |>
+  # Convert all question columns to numeric
+  mutate(
+    across(
+      .cols = matches("^q\\d{1,3}(_raw)?$"),
+      .fns = ~ as.numeric(.x)
+    )
   )
 
 # -- Clean Variables ####
@@ -116,15 +99,59 @@ pcq <- pcq %>%
       unit %in% c("da", "db") ~ "d",
       unit %in% c("ea", "eb") ~ "e",
       TRUE ~ unit
-  ))
+  )) %>%
+  rename(wave = survey_wave) %>% # Standardize with other files
+  relocate(date, .after = research_id) %>%
+  relocate(block, .after = unit) %>%
+  relocate(wave, .after = date)
+
+# -- -- Clean dates ####
+# standardize date format
+pcq$date[which(pcq$date_raw %in% c("999", "9092099"))] <- NA # 9092099, Wave 3, in unidentified stack
+pcq$date <- parse_date_time(pcq$date, c("ymd", "mdy")) # wave 1 stored as ymd, wave 2 stored dates as mdy # Gabby is this still accurate? 
+pcq$date <- as.Date(pcq$date)
+
+# When dates are NA, assign most common date in that wave and unit
+# -- filter and count dates by unit and wave
+temp1 <- pcq %>%
+  filter(!is.na(date)) %>%
+  group_by(wave, unit) %>%
+  count(date) %>%
+  slice_max(n, with_ties = FALSE) %>%
+  ungroup() %>%
+  rename(most_common_date = date) %>%
+  select(-n)
+# -- some are unidenfied unit, get common date by only wave for these cases
+temp2 <- pcq %>%
+  filter(!is.na(date)) %>%
+  group_by(wave) %>%
+  count(date) %>%
+  slice_max(n, with_ties = FALSE) %>%
+  ungroup() %>%
+  rename(most_common_date_wave_only = date) %>%
+  select(-n)
+# -- Join both to merge in most_common_date: first by unit + wave, then fallback by wave only
+pcq <- pcq %>%
+  left_join(temp1, by = c("wave", "unit")) %>%
+  left_join(temp2, by = "wave")
+
+# -- fill in any missing dates using unit+wave fallback or wave-only fallback
+pcq <- pcq %>%
+  mutate(
+    most_common_date_combined = coalesce(most_common_date, most_common_date_wave_only),
+    date = coalesce(date, most_common_date_combined)
+  ) %>% 
+  select(-most_common_date, -most_common_date_wave_only, -most_common_date_combined)
 
 # -- Recoding ####
 # -- -- Recode such that 5 is always the most positive answer ####
 # Get variable names to recode as positive reverse 
-recode <- pcq_lookup[pcq_lookup$recode_positive==1,"question_qno"]
+recode <- pcq_lookup |>
+  filter(recode_positive == 1) |>
+  pull(question_qno)
 
+# reverse the score: (6-)1=5,  (6-)2=4, (6-)3=3, (6-)4=2, (6-)5=1
 pcq <- pcq |>
-  # reverse the score: (6-)1=5,  (6-)2=4, (6-)3=3, (6-)4=2, (6-)5=1
   mutate(
     across(
       .cols = all_of(recode),
@@ -175,31 +202,29 @@ pcq$q160 <- ifelse(pcq$q158==1 & pcq$q160==999, 996, pcq$q160)
 pcq$q161 <- ifelse(pcq$q158==1 & pcq$q161==999, 996, pcq$q161)
 
 # ================================================================= ####
-# New Variables 
-# 
-# Add variables ####
+# New Variables  ####
 # -- Link unit to unit type ####
-unit_mapping_long <- unit_mapping %>%
+unit_mapping_long <- unit_mapping_nonumbers_complete%>%
   pivot_longer(
     cols = starts_with("unit_type_wave"), # Select columns with unit_type_named_waveX
-    names_to = "survey_wave",
+    names_to = "wave",
     names_prefix = "unit_type_wave", # Remove the prefix to keep just the wave number
     values_to = "unit_type" # Store the value as unit_type_named
   ) %>%
-  mutate(survey_wave = as.numeric(survey_wave)) %>% # Convert survey_wave to numeric
+  mutate(wave = as.numeric(wave)) %>% # Convert survey_wave to numeric
   mutate(unit_type = ifelse(unit_type=="closed", NA, unit_type)) %>%
-  select(unit, survey_wave, unit_type)
+  select(unit, wave, unit_type)
 
-# Merge unit_mapping with pcq dataframe based on 'survey_wave' and 'unit'
+# Merge unit_mapping_nonumbers_complete with pcq dataframe based on 'survey_wave' and 'unit'
 pcq <- pcq %>%
-  left_join(unit_mapping_long, by = c("survey_wave" = "survey_wave", "unit" = "unit")) %>%
+  left_join(unit_mapping_long, by = c("wave" = "wave", "unit" = "unit")) %>%
   relocate(unit_type, .after = unit) %>%
   mutate(unit_type = as.factor(unit_type))
 
 # -- Evaluate coherence between self-selected unit in pcq vs. admin-recorded unit ####
 df_q89_vs_unit_type <- pcq %>%
-  count(survey_wave, q89, unit_type) %>%
-  group_by(survey_wave, q89) %>%
+  count(wave, q89, unit_type) %>%
+  group_by(wave, q89) %>%
   mutate(prop = round(n / sum(n)*100,0))
 
 figure_q89_vs_unit_type <- ggplot(df_q89_vs_unit_type, aes(x = unit_type, y = factor(q89), fill = prop)) +
@@ -212,27 +237,27 @@ figure_q89_vs_unit_type <- ggplot(df_q89_vs_unit_type, aes(x = unit_type, y = fa
     panel.grid = element_blank(),
     axis.text.x = element_text(angle = 90, hjust = 1)
   ) +
-  facet_wrap(~survey_wave, ncol=1)
+  facet_wrap(~wave, ncol=1)
 
 ggsave(plot=figure_q89_vs_unit_type, "output/figures/figure_q89_vs_unit_type_2.png", width = 6, height = 8, dpi = 300)
 
 # -- Count number of surveys and waves by research_id ####
 pcq <- pcq %>%
   group_by(research_id) %>%
-  arrange(survey_wave, .by_group = TRUE) %>%  # TODO: Switch from 'survey_wave' to 'date' once 'date' is cleaned
+  arrange(date, .by_group = TRUE) %>%  # TODO: Switch from 'survey_wave' to 'date' once 'date' is cleaned
   mutate(
-    n_wave_max = n_distinct(survey_wave),  # Count of unique waves participated in (1, 2, 4 = 3 / 1, 2, 2 = 2) 
+    n_wave_max = n_distinct(wave),  # Count of unique waves participated in (1, 2, 4 = 3 / 1, 2, 2 = 2) 
     n_survey = row_number()  # Count of total surveys (by 'survey_wave' order)
   ) %>%
   mutate(n_survey_max = max(n_survey)) %>%
   ungroup() %>% 
   mutate(n_survey = ifelse(is.na(research_id), NA, n_survey)) %>% 
   mutate(n_survey_max = ifelse(is.na(research_id), NA, n_survey_max)) %>% 
-  relocate(n_wave_max, .after = survey_wave) %>% 
-  relocate(n_survey, .after = n_wave_max) %>% 
-  relocate(n_survey_max, .after = n_survey)
+  relocate(n_survey, .after = wave) %>% 
+  relocate(n_survey_max, .after = n_survey) %>%
+  relocate(n_wave_max, .after = n_survey_max)
 
 
 # ================================================================= ####
 # Save pcq_masked_clean #####
-saveRDS(pcq, file = "data/processed/processing_layer_3/pcq_masked_clean.Rds")
+saveRDS(pcq, file = "data/processed/de_identified/3_pcq_cleaned.Rds")
