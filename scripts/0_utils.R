@@ -4,6 +4,8 @@
 # -- Objective ####
 # -- Readme ####
 # -- To do ####
+# Confirm wave 6 randomization date ####
+# Confirm randomization date for lifers ####
 # ======================================================================= ####
 # Set Up ####
 # -- Prepare Environment ####
@@ -264,8 +266,10 @@ wave7_date = lubridate::ymd(20250501)
 
 # ======================================================================= #### 
 # Randomization Dates ####
+rand0_date <- lubridate::ymd(20220502) # For lifers - discuss with Jordan TODO 
 rand1_date <- lubridate::ymd(20220502)
 rand2_date <- lubridate::ymd(20221114)
+rand2.5_date <- lubridate::ymd(20230404) 
 rand3_date <- lubridate::ymd(20230519)
 rand4_date <- lubridate::ymd(20231127)
 rand5_date <- lubridate::ymd(20240605)
