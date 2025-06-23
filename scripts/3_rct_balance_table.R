@@ -24,7 +24,8 @@ basic <- readRDS("data/processed/de_identified/2_basic_cleaned.Rds")
 
 # ====================================================== ####
 # New code ####
-# De-duplicate basic (VERY CRUDE) .. TODO ####
+# De-duplicate basic (VERY CRUDE) .. ####
+# Need to link sentences with admissions TODO ####
 basic <- basic |>
   distinct(research_id, .keep_all = TRUE)
 

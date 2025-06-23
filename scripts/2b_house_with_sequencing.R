@@ -182,7 +182,7 @@ house_final <- house_deduped_merged2 %>%
   mutate(
     adm_rct = case_when(
       rct %in% c(0,1) ~ {
-        dates <- adm_date[adm_date < rct_date]
+        dates <- adm_date[adm_date < rct_treat_dt]
         if (length(dates) > 0) max(dates, na.rm = TRUE) else as.Date(NA)
       },
       TRUE ~ as.Date(NA)
