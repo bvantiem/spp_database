@@ -43,7 +43,7 @@ randassign0 <- data.frame(treated = c(rep(1,7), rep(0,7), rep(1,1), rep(0,2)),
                                         "bj8105", "ay5858",
                                         "dl3766", "eq1988", "jc9806"), 
                           stratum = c(rep("lifer",14), rep("commuted death", 3)),
-                          treatment_wave = c(rep(0,6), 2.5, rep(0,6), 2.5, rep(NA,3)),
+                          treatment_wave = c(rep(0,6), 2.5, rep(0,6), 2.5, rep(6,3)),
                           treatment_date = ymd(c(rep(NA,6), 
                                              20230404,
                                              rep(NA,6),
@@ -122,7 +122,7 @@ randassign2$treatment_date <- rand2_date
 randassign3$treatment_date <- rand3_date
 randassign4$treatment_date <- rand4_date
 randassign5$treatment_date <- rand5_date
-randassign6$treatment_date <- rand6_date # DATE MISSING - confirming with Jordan, email sent 20250425
+randassign6$treatment_date <- rand6_date # DATE TO BE CONFIRMED - confirming with Jordan, email sent 20250425
 randassign7$treatment_date <- rand7_date
 
 # ================================================================ ####
