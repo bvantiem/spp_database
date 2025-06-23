@@ -109,9 +109,17 @@ comment(visit$VstEvnt_DtTm_raw) <- "raw variable, cleaned verison available as v
 comment(visit$VstEvnt_TmOut_raw) <- "raw variable, cleaned verison available as vst_end_date and vst_end_time (6/6/25)"
 # =================================================================== ####
 # New Variables ####
-# started code -> not working ...
-# visit <- visit %>%
-#   mutate(vst_duration_mins = as.numeric(difftime(vst_end_time, vst_start_time, units = "mins")))
+# visit duration in mins
+# -- some values are invalid how should we handle these?
+visit <- visit %>%
+  mutate(
+    vst_start_time = ymd_hms(paste("2000-01-01", vst_start_time)),
+    vst_end_time = ymd_hms(paste("2000-01-01", vst_end_time))
+  )
+visit <- visit %>%
+  mutate(
+    vst_duration_mins = as.numeric(difftime(vst_end_time, vst_start_time, units = "mins"))
+  )
 # =================================================================== ####
 # Temporary Descriptive Statistics ####
 # -- How many visits do people get on average? 
