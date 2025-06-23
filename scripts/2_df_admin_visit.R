@@ -84,6 +84,8 @@ visit <- visit |>
     vst_end_date   = as.Date(vst_end_date)
   )
   
+# Make Dummies ####
+
 # =================================================================== ####
 # Add Notes to Variables ####
 # to view notes added use str() or comment()
