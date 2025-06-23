@@ -82,22 +82,22 @@ randassign <- readRDS("data/processed/de_identified/1b_randassign_masked.Rds") #
 # Treatment compliance table ####
 # -- Prepare data ####
 treatment_compliance <- randassign %>%
-  filter(treated == 1) %>%
-  filter(stratum != "lifer") %>%
-  mutate(onunit = ifelse(is.na(release_from_unit_date), 1, 0)) 
+  filter(rct == 1) %>%
+  filter(rct_stratum != "lifer") %>%
+  mutate(onunit = ifelse(is.na(rct_release_dt), 1, 0)) 
 
 # Percents ####
 on_unit <- treatment_compliance %>% 
-  group_by(treatment_wave) %>%
+  group_by(rct_treat_wave) %>%
   summarise(currently_on_the_lsu = mean(onunit)*100)
 
 released <- treatment_compliance %>% 
   filter(onunit==0) %>%
-  group_by(treatment_wave) %>%
-  summarise(released = mean(release_type_community)*100,
-            removed = mean(release_type_removed)*100,
-            transferred = mean(release_type_transferred)*100,
-            refused_treatment = mean(release_type_refused)*100)
+  group_by(rct_treat_wave) %>%
+  summarise(released = mean(rct_release_community)*100,
+            removed = mean(rct_release_removed)*100,
+            transferred = mean(rct_release_transferred)*100,
+            refused_treatment = mean(rct_release_refused)*100)
 
 tab_percents <- left_join(on_unit, released)
 tab_percents <- tab_percents %>%
@@ -106,16 +106,16 @@ tab_percents
 
 # Numbers ####
 on_unit_numbers <- treatment_compliance %>% 
-  group_by(treatment_wave) %>%
+  group_by(rct_treat_wave) %>%
   summarise(currently_on_the_lsu = sum(onunit))
 
 released_numbers <- treatment_compliance %>% 
   filter(onunit==0) %>%
-  group_by(treatment_wave) %>%
-  summarise(released = sum(release_type_community),
-            removed = sum(release_type_removed),
-            transferred = sum(release_type_transferred),
-            refused_treatment = sum(release_type_refused))
+  group_by(rct_treat_wave) %>%
+  summarise(released = sum(rct_release_community),
+            removed = sum(rct_release_removed),
+            transferred = sum(rct_release_transferred),
+            refused_treatment = sum(rct_release_refused))
 
 tab_numbers <- left_join(on_unit_numbers, released_numbers)
 tab_numbers <- tab_numbers %>%
@@ -124,8 +124,9 @@ tab_numbers
 
 # Combine dataframes
 tab_combined <- bind_rows(tab_numbers, tab_percents) |>
-  arrange(treatment_wave, row_type) %>%
-  select(-row_type)
+  arrange(rct_treat_wave, row_type) %>%
+  select(-row_type) %>%
+  rename(treatment_wave = rct_treat_wave)
 
 # Compute column sums and add as last row ####
 totals <- tab_numbers |>
@@ -140,17 +141,18 @@ totals <- tab_numbers |>
 
 tab_combined_with_totals <- rbind(tab_combined, totals)
 
-# Save table #### o
-tab %>%
+# Latex table #### o
+tab_latex <- tab_combined_with_totals %>%
   kbl(caption = "Treatment Compliance",
       align = c("lrrrrr"),
       row.names = FALSE) %>%
   kable_classic(full_width = F,
                 html_font = "Times New Roman") %>%
-  row_spec(c(12,13),
+  row_spec(c(14,15),
            hline_after=TRUE,
-           extra_css = "border-bottom: 1px solid") %>%
-  save_kable(file = "output/tables/tabx_balance_table_waves123456.pdf",
-             self_contained = T,density = 200)
+           extra_css = "border-bottom: 1px solid") 
+
+# -- Save ####
+# tab_latex <- save_kable(file = "output/tables/tabx_balance_table_waves123456.pdf", self_contained = T,density = 200)
 
 
