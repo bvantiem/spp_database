@@ -44,11 +44,11 @@ randassign0 <- data.frame(treated = c(rep(1,7), rep(0,7), rep(1,1), rep(0,2)),
                                         "dl3766", "eq1988", "jc9806"), 
                           stratum = c(rep("lifer",14), rep("commuted death", 3)),
                           treatment_wave = c(rep(0,6), 2.5, rep(0,6), 2.5, rep(6,3)),
-                          treatment_date = ymd(c(rep(NA,6), 
-                                             20230404,
-                                             rep(NA,6),
-                                             20230404,
-                                             rep(20241106, 3))))
+                          treatment_date = ymd(c(rep(rand0_date,6), 
+                                                 rand2.5_date,
+                                             rep(rand0_date,6),
+                                             rand2.5_date,
+                                             rep(rand6_date, 3))))
 
 # -- -- Release dates ####
 # Using just the latest release date file which was updated ahead of wave 7
@@ -196,6 +196,30 @@ randassign <- randassign |>
 
 randassign <- randassign %>%
   relocate(control_number, .after = inmate_id)
+
+# Rename and reorder variables 
+randassign <- randassign %>%
+  rename(rct = treated,
+         rct_stratum = stratum,
+         rct_wave = treatment_wave,
+         rct_date = treatment_date,
+         rct_notes = notes,
+         rct_release = release_type,
+         rct_release_removed = release_type_removed,
+         rct_release_refused = release_type_refused,
+         rct_release_transferred = release_type_transferred,
+         rct_release_community = release_type_community) %>%
+  relocate(inmate_id,
+           control_number,
+           rct,
+           rct_stratum,
+           rct_wave,
+           rct_date,
+           rct_release,
+           rct_release_removed,
+           rct_release_refused,
+           rct_release_transferred,
+           rct_release_community)
 
 # ================================================================ ####
 # Save Dataframes
