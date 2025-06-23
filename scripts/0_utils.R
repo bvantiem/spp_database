@@ -83,9 +83,9 @@ make_dummies <- function(df, var, drop_temp = TRUE) {
     ),
     prg_cat = tibble(
       original = c("Batterers Program", "Mental Health or Counseling", "Other", "OutPatient",
-                  "Parenting Program", "Parole Violator Program", "Re-Entry/ Transitional Programs",
-                  "Sex Offender Program", "Substance Abuse Program", "Therapeutic Community",
-                  "Thinking for a Change", "Violence Prevention"),
+                   "Parenting Program", "Parole Violator Program", "Re-Entry/ Transitional Programs",
+                   "Sex Offender Program", "Substance Abuse Program", "Therapeutic Community",
+                   "Thinking for a Change", "Violence Prevention"),
       simplified = c("batt", "mnt", "other", "op", "prnt", "pv", "re", "so", "sub", "tc", "tforc", "vp")
     ),
     prg_status = tibble(
@@ -96,37 +96,38 @@ make_dummies <- function(df, var, drop_temp = TRUE) {
   
   df_with_id <- df %>%
     mutate(row_id = row_number()) %>%
-    mutate(!!var := as.character(!!var))
+    mutate(`__dummy_base__` = as.character(!!var))
   
-  # If the variable is in the mapping list, apply the standardization
+  # If a mapping is defined, apply it
   if (var_name %in% names(built_in_maps)) {
     rename_map <- built_in_maps[[var_name]]
     df_with_id <- df_with_id %>%
-      left_join(rename_map, by = setNames("original", var_name)) %>%
-      mutate(!!var := simplified)
+      left_join(rename_map, by = c("__dummy_base__" = "original")) %>%
+      mutate(`__dummy_base__` = simplified)
   }
   
-  # Lowercase everything before dummy creation
+  # Lowercase dummy values
   df_with_id <- df_with_id %>%
-    mutate(!!var := tolower(!!var))
+    mutate(`__dummy_base__` = tolower(`__dummy_base__`))
   
-  # Create dummy variables
+  # Create dummy columns
   dummy_df <- df_with_id %>%
-    select(row_id, !!var) %>%
+    select(row_id, `__dummy_base__`) %>%
     tidyr::pivot_wider(
-      names_from = !!var,
-      values_from = !!var,
+      names_from = `__dummy_base__`,
+      values_from = `__dummy_base__`,
       names_prefix = paste0(var_name, "_"),
       values_fn = length,
       values_fill = 0
     ) %>%
     mutate(across(starts_with(paste0(var_name, "_")), ~ ifelse(. > 0, 1, 0)))
   
+  # Merge dummy columns back into original dataframe
   df_final <- df_with_id %>%
     left_join(dummy_df, by = "row_id") %>%
-    select(-row_id)
+    select(-row_id, -`__dummy_base__`)
   
-  # Drop temporary column if used
+  # Remove simplified column if created and drop_temp is TRUE
   if (var_name %in% names(built_in_maps) && drop_temp) {
     df_final <- df_final %>%
       select(-simplified)
