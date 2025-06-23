@@ -201,6 +201,8 @@ wave3_date = lubridate::ymd(20230520)
 wave4_date = lubridate::ymd(20231128)
 wave5_date = lubridate::ymd(20240606)
 wave6_date = lubridate::ymd(20241022)
+wave7_date = lubridate::ymd(20250501)
+
 # ======================================================================= #### 
 # Randomization Dates ####
 rand1_date <- lubridate::ymd(20220502)
@@ -208,7 +210,7 @@ rand2_date <- lubridate::ymd(20221114)
 rand3_date <- lubridate::ymd(20230519)
 rand4_date <- lubridate::ymd(20231127)
 rand5_date <- lubridate::ymd(20240605)
-rand6_date <- lubridate::ymd(29990101) # DATE MISSING - confirming with Jordan, email sent 20250425
+rand6_date <- lubridate::ymd(20241106) # CONFIRM DATE - confirming with Jordan, email sent 20250425
 rand7_date <- lubridate::ymd(20250522)
 # ======================================================================= #### 
 # Prison Lookup Table ####
