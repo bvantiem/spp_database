@@ -43,19 +43,10 @@ assess <- assess |>
     test_name == "HIQ" ~ "Hostile Interpretations Questionnaire",
     test_name == "RST" ~ "Risk Screen Tool",
     TRUE ~ test_name 
-  )) |>
-  # Create dummy variables
-# if i use the make_dummies here it would make the dummy variable test_name_static_99... 
-# do we want that? 
-  # -- test_name dummy
-  mutate(
-    test_name_cssm = if_else(test_name == "Criminal Sentiments Scale - Modified", 1, 0),
-    test_name_st99 = if_else(test_name == "Static 99", 1, 0),
-    test_name_lsir = if_else(test_name == "Level of Service Inventory - Revised", 1, 0),
-    test_name_tcu  = if_else(test_name == "Texas Christian University Drug Screen", 1, 0),
-    test_name_hiq  = if_else(test_name == "Hostile Interpretations Questionnaire", 1, 0),
-    test_name_rst  = if_else(test_name == "Risk Screen Tool", 1, 0)) |>
-  # create test_Score variables for each test_name
+  )) 
+# create dummies
+assess <- make_dummies(assess,test_name)
+assess <- assess |>
   # -- if they took the test their score list under test_score will appear if not then an NA will 
   mutate(
     test_score_cssm = if_else(test_name_cssm == 1, test_score, NA_real_),
@@ -65,7 +56,6 @@ assess <- assess |>
     test_score_hiq  = if_else(test_name_hiq == 1,  test_score, NA_real_),
     test_score_rst  = if_else(test_name_rst == 1,  test_score, NA_real_)
   )
-
 # Fully NA rows ####
 NA_rows <- assess %>%
   filter(if_all(
@@ -110,7 +100,6 @@ assess %>%
   arrange(desc(avg_score))
 # =================================================================== ####
 # Reorganize Variables ####
-assess <- reorder_vars(assess)
 assess <- reorder_vars(assess)
 # =================================================================== ####
 # Save Dataframe ####
