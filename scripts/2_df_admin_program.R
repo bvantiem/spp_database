@@ -118,27 +118,14 @@ program <- program |>
     research_id == "rid_551550" & prg_name == "Alcohol and Other Drug Education"        ~ NA_Date_,
     TRUE                                                        ~ prg_end_date
   )) %>%
-  # DUMMY VARIABLES
-  # -- create dummy variables for higher level program categories
-  mutate(
-    prg_cat_vp = ifelse(prg_cat == "Violence Prevention", 1, 0),
-    prg_cat_tc = ifelse(prg_cat == "Therapeutic Community", 1, 0),
-    prg_cat_so = ifelse(prg_cat == "Sex Offender Program", 1, 0),
-    prg_cat_sub = ifelse(prg_cat == "Substance Abuse Program", 1, 0),
-    prg_cat_pv = ifelse(prg_cat == "Parole Violator Program", 1, 0),
-    prg_cat_op = ifelse(prg_cat == "OutPatient", 1, 0),
-    prg_cat_prnt = ifelse(prg_cat == "Parenting Program", 1, 0),
-    prg_cat_batt = ifelse(prg_cat == "Batterers Program", 1, 0),
-    prg_cat_tforc = ifelse(prg_cat == "Thinking for a Change", 1, 0),
-    prg_cat_mnt = ifelse(prg_cat == "Mental Health or Counseling", 1, 0),
-    prg_cat_re = ifelse(prg_cat == "Re-Entry/ Transitional Programs", 1,0),
-    prg_cat_oth = ifelse(prg_cat == "Other", 1, 0)
-  )  %>%
 # PRISON
   left_join(prison_lookup, by = "pris_loc") %>%
   select(-pris_loc) %>%
   rename(pris_loc = pris_loc_full) 
 
+# Dummy Variables
+# -- create dummy variables for higher level program categories
+program <- make_dummies(program, prg_cat)
 program <- make_dummies(program, prg_status)
 # =================================================================== ####
 # Temporary Notes to Show Britte ####
