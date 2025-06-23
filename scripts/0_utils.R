@@ -68,6 +68,12 @@ make_dummies <- function(df, var, drop_temp = TRUE) {
     dem_race = tibble(
       original = c("Black", "White", "Asian", "Other", "American Indian"),
       simplified = c("black", "white", "asian", "other", "amerindian")
+    ),
+    test_name = tibble(
+      original = c("Correctional Supervision Scale - Modified", "Hostile Interpretations Questionnaire", 
+                   "Level of Service Inventory - Revised", "Risk Screen Tool", "Static 1999", 
+                   "Texas Christian University Drug Screen"),
+      simplified = c("cssm", "hiq", "lsir", "rst", "st99", "tcu")
     )
   )
   
