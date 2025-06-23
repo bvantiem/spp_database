@@ -51,14 +51,43 @@ assess_variable <- function(x) {
   
   return(result)}
 # -- -- Create Dummy Vars ####
-make_dummies <- function(df, var) {
-  var <- rlang::ensym(var)  # Handle non-standard evaluation (unquoted variable name)
+make_dummies <- function(df, var, drop_temp = TRUE) {
+  var <- rlang::ensym(var)
   var_name <- rlang::as_string(var)
+  
+  # Built-in standardization maps
+  built_in_maps <- list(
+    sent_off_asca = tibble(
+      original = c("Public Order", "Property", "Violent", "Drugs", "Not An Arrest"),
+      simplified = c("puborder", "prop", "violent", "drugs", "nonarrest")
+    ),
+    sent_class = tibble(
+      original = c("Commuted Life", "Definite", "Detention", "Indeterminate", "Life"),
+      simplified = c("commutedlife", "definite", "detention", "indeterminate", "life")
+    ),
+    dem_race = tibble(
+      original = c("Black", "White", "Asian", "Other", "American Indian"),
+      simplified = c("black", "white", "asian", "other", "amerindian")
+    )
+  )
   
   df_with_id <- df %>%
     mutate(row_id = row_number()) %>%
     mutate(!!var := as.character(!!var))
   
+  # If the variable is in the mapping list, apply the standardization
+  if (var_name %in% names(built_in_maps)) {
+    rename_map <- built_in_maps[[var_name]]
+    df_with_id <- df_with_id %>%
+      left_join(rename_map, by = setNames("original", var_name)) %>%
+      mutate(!!var := simplified)
+  }
+  
+  # Lowercase everything before dummy creation
+  df_with_id <- df_with_id %>%
+    mutate(!!var := tolower(!!var))
+  
+  # Create dummy variables
   dummy_df <- df_with_id %>%
     select(row_id, !!var) %>%
     tidyr::pivot_wider(
@@ -73,6 +102,12 @@ make_dummies <- function(df, var) {
   df_final <- df_with_id %>%
     left_join(dummy_df, by = "row_id") %>%
     select(-row_id)
+  
+  # Drop temporary column if used
+  if (var_name %in% names(built_in_maps) && drop_temp) {
+    df_final <- df_final %>%
+      select(-simplified)
+  }
   
   return(df_final)
 }
