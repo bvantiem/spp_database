@@ -80,6 +80,13 @@ make_dummies <- function(df, var, drop_temp = TRUE) {
                    "Restrictive Housing Unit", "Therapeutic Community- General", "Therapeutic Community",
                    "Not in Chester"),
       simplified = c("verifying", "gp", "inf", "otc", "rhu", "tcg", "tc", "notinchester")
+    ),
+    prg_cat = tibble(
+      origina = c("Batterers Program", "Mental Health or Counseling", "Other", "OutPatient",
+                  "Parenting Program", "Parole Violator Program", "Re-Entry/ Transitional Programs",
+                  "Sex Offender Program", "Substance Abuse Program", "Therapeutic Community",
+                  "Thinking for a Change", "Violence Prevention"),
+      simplified = c("batt", "mnt", "other", "op", "prnt", "pv", "re", "so", "sub", "tc", "tforc", "vp")
     )
   )
   
