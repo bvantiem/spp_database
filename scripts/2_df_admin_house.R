@@ -160,7 +160,7 @@ house <- house %>%
   left_join(prison_lookup, by = "pris_loc") %>%
   select(-pris_loc) %>%
   rename(pris_loc = pris_loc_full) 
-# Create Dummies
+# Create Dummies ####
 house <- make_dummies(house, loc_unit_type)
 # Fully NA Rows ####
 # -- 139 rows are fully NA except for research_id, wave, research_id
