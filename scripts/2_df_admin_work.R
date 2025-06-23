@@ -154,7 +154,6 @@ work <- work %>%
     job_field == "UTL" ~ "UTILITIES",
     job_field == "WF" ~ "CI - WOOD FURNITURE",
     TRUE ~ job_field )) %>%  
-  mutate(job_field = standardize_job_field(job_field)) %>%
   # create higher level categories for job_field
   mutate(job_field_cat = case_when(
     job_field %in% c("ARTIST PROGRAM") ~ "Arts Program",
@@ -183,6 +182,7 @@ work <- work %>%
     job_field %in% c("COMMUNITY WORK PROGRAMS") ~ "Community Work Programs",
     TRUE ~ "Other"
   )) %>%
+  mutate(job_field = standardize_job_field(job_field)) %>%
   relocate(job_field_cat, .after = job_field) %>%
   # -- fix misspelling/standardization of spacing and capitalization
   mutate(job_cat_desc = str_replace_all(job_cat_desc, "\\bOutpatientRecoveryUnit", "Outpatient Recovery Unit")) %>%
