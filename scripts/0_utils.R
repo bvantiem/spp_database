@@ -77,8 +77,9 @@ make_dummies <- function(df, var, drop_temp = TRUE) {
     ),
     loc_unit_type = tibble(
       original = c("Verifying", "General Population", "Infirmary", "Outpatient Treatment Center", 
-                   "Restrictive Housing Unit", "Therapeutic Community- General", "Therapeutic Community"),
-      simplified = c("verifying", "gp", "inf", "otc", "rhu", "tcg", "tc")
+                   "Restrictive Housing Unit", "Therapeutic Community- General", "Therapeutic Community",
+                   "Not in Chester"),
+      simplified = c("verifying", "gp", "inf", "otc", "rhu", "tcg", "tc", "notinchester")
     )
   )
   
