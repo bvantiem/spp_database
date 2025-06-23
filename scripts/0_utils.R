@@ -82,11 +82,15 @@ make_dummies <- function(df, var, drop_temp = TRUE) {
       simplified = c("verifying", "gp", "inf", "otc", "rhu", "tcg", "tc", "notinchester")
     ),
     prg_cat = tibble(
-      origina = c("Batterers Program", "Mental Health or Counseling", "Other", "OutPatient",
+      original = c("Batterers Program", "Mental Health or Counseling", "Other", "OutPatient",
                   "Parenting Program", "Parole Violator Program", "Re-Entry/ Transitional Programs",
                   "Sex Offender Program", "Substance Abuse Program", "Therapeutic Community",
                   "Thinking for a Change", "Violence Prevention"),
       simplified = c("batt", "mnt", "other", "op", "prnt", "pv", "re", "so", "sub", "tc", "tforc", "vp")
+    ),
+    prg_status = tibble(
+      original = c("Discharged Prior to Completion", "Fail", "Success"),
+      simplified = c("discharged", "fail", "success")
     )
   )
   
