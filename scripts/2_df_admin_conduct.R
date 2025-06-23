@@ -93,6 +93,23 @@ comment(conduct$category_charge1_raw) <- "raw data, no cleaned variable availabl
 comment(conduct$chrg_description_raw) <- "raw data, cleaned variable available as cndct_chrg_desc (6/4/25)"
 # ================================================================= ####
 # New Variables ####
+# count by individual the number of misconduct incidents prior to the date of the first randomization for cndct_all_rand_1,
+# make each one cumulative
+# do for all waves
+#  cndct_all_rand1, cndct_all_rand2, etc.
+
+# another set of columns with only the conducts in which people were found guilty
+# make cumulative and do for all waves
+# cndct_guilty_rand1, cndct_guilty_rand3, etc.
+
+# guilt rate by month
+# Steps:
+# 0. add column to house with admit dates (this is a constant within individual)
+# 1. merge in admit date from house (left_join on unique combinations of research_id and admit_date)
+# 2. calculate number of months between admit date and date of rand1, rand2 etc. (doesnt need to be whole number, can be decimal)
+# 3. divide the number of guilty incidents by number of month
+# cndct_guilty_rand1_mnthly, etc.
+# cndct_all_ran1_mnthly, etc.
 # ================================================================= ####
 # Temporary Descriptive Stats ####
 # -- number of misconducts per unique control number
