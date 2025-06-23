@@ -79,8 +79,12 @@ house <- house %>%
   # some have a leading zero, drop this for standardization
   mutate(loc_bed_num = sub("^0+", "", loc_bed_num)) %>%
   # convert abbreviation into full names for loc_unit_type
-  # -- any unsure titles are given "Description Unavailable"
-  mutate(loc_unit_type = case_when(
+  mutate(loc_unit_type = if_else(
+  # -- convert all descriptions for units not found in Chester to "Not in Chester",
+    # any waiting to be verified are labeled "Verifying"
+    pris_loc != "CHS",
+    "Not in Chester",
+    case_when(
     loc_unit_type_abr == "GP" ~ "General Population",
     loc_unit_type_abr == "RHU" ~ "Restricted Housing Unit",
     loc_unit_type_abr == "TC" ~ "Therapuetic Community",
@@ -97,7 +101,7 @@ house <- house %>%
     loc_unit_type_abr == "MCU" ~ "Medical Control Unit",
     loc_unit_type_abr == "PCU" ~ "Protective Custody Unit",
     loc_unit_type_abr == "ITU" ~ "Intermediate Treatment Unit",
-    loc_unit_type_abr == "IRU" ~ "Intermediate Residential Unit",
+    loc_unit_type_abr == "IRU" ~ "Verifying",
     loc_unit_type_abr == "DMU" ~ "Diversionary Management Unit",
     loc_unit_type_abr == "SOP" ~ "Sex Offender Program",
     loc_unit_type_abr == "SOA" ~ "Sex Offender Assessment",
@@ -120,7 +124,7 @@ house <- house %>%
     loc_unit_type_abr == "BMU" ~ "Behavior Management Unit",
     loc_unit_type_abr == "BOT" ~ "Bootcamp",
     loc_unit_type_abr == "CAP" ~ "Description Unavailable",
-    loc_unit_type_abr == "CG" ~ "Description Unavailable",
+    loc_unit_type_abr == "CG" ~ "Verifying",
     loc_unit_type_abr == "DCC" ~ "Diagnostic Classification Center",
     loc_unit_type_abr == "DEF" ~ "Description Unavailable",
     loc_unit_type_abr == "FOR" ~ "Description Unavailable",
@@ -131,8 +135,8 @@ house <- house %>%
     loc_unit_type_abr == "LPH" ~ "Description Unavailable",
     loc_unit_type_abr == "OTC" ~ "Outpatient Treatment Center",
     loc_unit_type_abr == "PGA" ~ "Description Unavailable",
-    loc_unit_type_abr == "POC" ~ "Description Unavailable",
-    loc_unit_type_abr == "QUA" ~ "Quaratine Unit",
+    loc_unit_type_abr == "POC" ~ "Verifying",
+    loc_unit_type_abr == "QUA" ~ "Verifying",
     loc_unit_type_abr == "RIN" ~ "Description Unavailable",
     loc_unit_type_abr == "SDT" ~ "Description Unavailable",
     loc_unit_type_abr == "SIP" ~ "Description Unavailable",
@@ -148,12 +152,16 @@ house <- house %>%
     loc_unit_type_abr == "TCX" ~ "Description Unavailable",
     loc_unit_type_abr == "THU" ~ "Transitional Housing Unit",
     loc_unit_type_abr == "WMA" ~ "Description Unavailable",
-    loc_unit_type_abr == "WMO" ~ "Women's Observation Unit"
-    )) %>%
+    loc_unit_type_abr == "WMO" ~ "Women's Observation Unit",
+    pris_loc == "Chester" ~ "Not in Chester",
+    TRUE ~ NA_character_
+  ))) %>%
+  # PRISON
   left_join(prison_lookup, by = "pris_loc") %>%
   select(-pris_loc) %>%
   rename(pris_loc = pris_loc_full) 
-
+# Create Dummies
+house <- make_dummies(house, loc_unit_type)
 # Fully NA Rows ####
 # -- 139 rows are fully NA except for research_id, wave, research_id
 NA_rows <- house %>%
