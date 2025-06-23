@@ -74,6 +74,11 @@ make_dummies <- function(df, var, drop_temp = TRUE) {
                    "Level of Service Inventory - Revised", "Risk Screen Tool", "Static 1999", 
                    "Texas Christian University Drug Screen"),
       simplified = c("cssm", "hiq", "lsir", "rst", "st99", "tcu")
+    ),
+    loc_unit_type = tibble(
+      original = c("Verifying", "General Population", "Infirmary", "Outpatient Treatment Center", 
+                   "Restrictive Housing Unit", "Therapeutic Community- General", "Therapeutic Community"),
+      simplified = c("verifying", "gp", "inf", "otc", "rhu", "tcg", "tc")
     )
   )
   
