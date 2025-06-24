@@ -114,7 +114,7 @@ misconducts_expanded <- tidyr::crossing(misconducts, wave_dates) %>%
 cumulative_counts <- misconducts_expanded %>%
   group_by(research_id, wave) %>%
   summarise(cum_cndct = n_distinct(cndct_num), .groups = "drop") %>%
-  mutate(varname = paste0("cndct_all_rand", wave)) %>%
+  mutate(varname = paste0("cndct_rand", wave, "_all")) %>%
   select(research_id, varname, cum_cndct) %>%
   pivot_wider(names_from = varname, values_from = cum_cndct)
 
@@ -139,7 +139,7 @@ guilty_expanded <- tidyr::crossing(guilty_misconducts, wave_dates) %>%
 guilty_counts <- guilty_expanded %>%
   group_by(research_id, wave) %>%
   summarise(cum_guilty = n_distinct(cndct_num), .groups = "drop") %>%
-  mutate(varname = paste0("cndct_guilty_rand", wave)) %>%
+  mutate(varname = paste0("cndct_rand", wave, "_guilty")) %>%
   select(research_id, varname, cum_guilty) %>%
   pivot_wider(names_from = varname, values_from = cum_guilty)
 
