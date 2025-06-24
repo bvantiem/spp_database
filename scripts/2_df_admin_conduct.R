@@ -329,7 +329,20 @@ conduct <- conduct %>%
   left_join(rct_rates %>% select(research_id, rct_pre_rate, rct_post_rate), by = "research_id")
 
 conduct <- conduct %>%
-  mutate(across(everything(), ~ ifelse(is.nan(.), NA, .)))
+  mutate(across(where(is.numeric), ~ ifelse(is.nan(.), NA, .)))
+# -- Temporary Descriptive Stats ####
+temp <- conduct %>%
+  mutate(rate_diff = rct_post_rate - rct_pre_rate)
+
+# Summary of change
+temp %>%
+  summarise(
+    avg_change = mean(rate_diff, na.rm = TRUE),
+    median_change = median(rate_diff, na.rm = TRUE),
+    improved = sum(rate_diff < 0, na.rm = TRUE),
+    worsened = sum(rate_diff > 0, na.rm = TRUE),
+    no_change = sum(rate_diff == 0, na.rm = TRUE)
+  )
 # ================================================================= ####
 # Temporary Descriptive Stats ####
 # -- number of misconducts per unique control number
