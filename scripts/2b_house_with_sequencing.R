@@ -236,6 +236,11 @@ admission.stats <- house_final %>%
            adm_study_start_before_n_total,
            pris_within_adm_n_total, 
            in_prison_at_study_start,
+           rct,
+           rct_stratum,
+           rct_treat_dt,
+           rct_treat_wave,
+           adm_rct,
            adm_treatment_start_after_n_total,
            adm_treatment_start_before_n_total)
 
