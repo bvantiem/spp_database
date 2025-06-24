@@ -268,12 +268,68 @@ conduct <- conduct %>%
 # ================================================================= ####
 # Merge in RCT Data + Calculate Conduct Rates Pre and Post Treatment ####
 # 1. Merge rct data from df-admissions into df-conduct
-# 2. Use rct_adm (latest admission prior to treatment) rct_treat_dt (the date that the person got treated) to # -- -- calculate misconduct rate prior to being treated. 
+# 2. Use rct_adm (latest admission prior to treatment) rct_treat_dt (the date that the person got treated) to calculate misconduct rate prior to being treated. 
 # -- -- Example: If someone got treated in May 2022, and their latest admission was in Jan 2020. We want to
 # -- -- (1) calculate the number of misconducts between Jan 2020 and May 2022, (2) divide number of of misconducts by number of months between Jan 2020 and May 2022. 
+# 1. Merge rct data from df-admissions into df-conduct
+conduct <- conduct %>%
+  select(-adm_rct) %>%  # drop to prevent conflict
+  left_join(admission %>% select(research_id, adm_rct, rct_treat_dt), by = "research_id") %>%
+  mutate(
+    adm_rct = as.Date(adm_rct),
+    rct_treat_dt = as.Date(rct_treat_dt),
+    cndct_date = as.Date(cndct_date)
+  )
 
+# 2. Flag each midsonduct as pre- or post-treatment
+conduct <- conduct %>%
+  mutate(
+    misconduct_phase = case_when(
+      !is.na(adm_rct) & !is.na(rct_treat_dt) & cndct_date >= adm_rct & cndct_date < rct_treat_dt ~ "pre",
+      !is.na(rct_treat_dt) & cndct_date >= rct_treat_dt ~ "post",
+      TRUE ~ NA_character_
+    )
+  )
 
+# 3. Count pre/post misconducts per person
+misconduct_counts <- conduct %>%
+  filter(misconduct_phase %in% c("pre", "post")) %>%
+  group_by(research_id, misconduct_phase) %>%
+  summarise(misconducts = n_distinct(cndct_num), .groups = "drop")
 
+# 4. Calculate time periods in months
+treatment_windows <- admission %>%
+  select(research_id, adm_rct, rct_treat_dt) %>%
+  mutate(
+    months_pre = as.numeric(difftime(rct_treat_dt, adm_rct, units = "days")) / 30.44
+  )
+
+# -- use date_datapull for post time period
+latest_date <- max(as.Date(conduct$date_datapull), na.rm = TRUE)
+
+treatment_windows <- treatment_windows %>%
+  mutate(
+    months_post = as.numeric(difftime(latest_date, rct_treat_dt, units = "days")) / 30.44
+  )
+
+# 5. Merge misconudct counts and compute rates
+misconduct_wide <- misconduct_counts %>%
+  pivot_wider(names_from = misconduct_phase, values_from = misconducts, values_fill = 0)
+
+# Merge everything
+rct_rates <- treatment_windows %>%
+  left_join(misconduct_wide, by = "research_id") %>%
+  mutate(
+    rct_pre_rate = ifelse(is.na(months_pre) | months_pre <= 0, NA, pre / months_pre),
+    rct_post_rate = ifelse(is.na(months_post) | months_post <= 0, NA, post / months_post)
+  )
+
+# 6. Join pre/post rates into df-conduct
+conduct <- conduct %>%
+  left_join(rct_rates %>% select(research_id, rct_pre_rate, rct_post_rate), by = "research_id")
+
+conduct <- conduct %>%
+  mutate(across(everything(), ~ ifelse(is.nan(.), NA, .)))
 # ================================================================= ####
 # Temporary Descriptive Stats ####
 # -- number of misconducts per unique control number
