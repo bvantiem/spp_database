@@ -60,6 +60,8 @@ rel <- xl.read.file("data_restricted_access/raw/4_random_assignment/release_date
 names(rel)[which(names(rel)=="id_num")] <- "inmate_id"
 rel$release_date <- ymd(rel$release_date)
 stopifnot(length(unique(rel$inmate_id))==nrow(rel))
+rel$inmate_id <- gsub(" ", "", rel$inmate_id)
+rel$release_type <- gsub("(^ )(.*)", "\\2", rel$release_type)
 
 # -- Prepare random assignment data for merging ####
 names(randassign1) <- c("treated", "inmate_id", "stratum")
@@ -132,12 +134,6 @@ randassign <- rbind(randassign0, randassign1, randassign2, randassign3, randassi
 randassign$inmate_id <- tolower(randassign$inmate_id)
 
 # -- Merge in release dates ####
-rel$release_date[which(rel$release_date=="")] <- NA
-rel$inmate_id <- gsub(" ", "", rel$inmate_id)
-rel$release_type <- gsub("(^ )(.*)", "\\2", rel$release_type)
-rel$release_date <- gsub("(^ )(.*)", "\\2", rel$release_date)
-rel$release_date <- as.Date(rel$release_date)
-
 rel <- rel %>%
   rename(release_from_unit_date = release_date) %>%
   rename(release_type_raw = release_type) %>%
@@ -167,8 +163,8 @@ rel <- rel %>%
     TRUE ~ "Released to Community"
   )) %>%
   # Temporarily replace release dates for these individuals with their treatment date
-  # Confirm these are the correct dates - might be that they moved for a few days until they were moved back?
-  mutate(release_from_unit_date = ifelse(release_type == "Never on LSU", treatment_date, release_from_unit_date)) %>%
+  # Confirm these are the correct dates - might be that they moved for a few days until they were moved back? TODO
+  mutate(release_from_unit_date = ifelse(release_type == "Refused to Move to LSU", treatment_date, release_from_unit_date)) %>%
   select(-treatment_date, - treatment_wave)
 
 randassign <- left_join(randassign, rel, by = c("inmate_id", "treated", "stratum"))
