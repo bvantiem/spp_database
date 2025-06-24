@@ -93,14 +93,59 @@ comment(conduct$category_charge1_raw) <- "raw data, no cleaned variable availabl
 comment(conduct$chrg_description_raw) <- "raw data, cleaned variable available as cndct_chrg_desc (6/4/25)"
 # ================================================================= ####
 # New Variables ####
-# count by individual the number of misconduct incidents prior to the date of the first randomization for cndct_all_rand_1,
-# make each one cumulative
-# do for all waves
-#  cndct_all_rand1, cndct_all_rand2, etc.
+# count by individual the number of misconduct incidents prior to the date of the first wave
+# -- define wave dates
+wave_dates <- tibble(
+  wave = 1:7,
+  wave_date = as.Date(c("2022-05-01", "2022-11-15", "2023-05-20",
+                        "2023-11-28", "2024-06-06", "2024-10-22", "2025-05-01")))
 
-# another set of columns with only the conducts in which people were found guilty
-# make cumulative and do for all waves
-# cndct_guilty_rand1, cndct_guilty_rand3, etc.
+# -- Get unique misconducts with date
+misconducts <- conduct %>%
+  select(research_id, cndct_num, cndct_date) %>%
+  distinct() %>%
+  mutate(cndct_date = as.Date(cndct_date))
+
+# -- Cross join each misconduct with each wave, and keep those that happened BEFORE or ON the wave date
+misconducts_expanded <- tidyr::crossing(misconducts, wave_dates) %>%
+  filter(cndct_date <= wave_date)
+
+# -- Count unique misconducts per person per wave
+cumulative_counts <- misconducts_expanded %>%
+  group_by(research_id, wave) %>%
+  summarise(cum_cndct = n_distinct(cndct_num), .groups = "drop") %>%
+  mutate(varname = paste0("cndct_all_rand", wave)) %>%
+  select(research_id, varname, cum_cndct) %>%
+  pivot_wider(names_from = varname, values_from = cum_cndct)
+
+# -- Join back into your original conduct data
+conduct <- conduct %>%
+  left_join(cumulative_counts, by = "research_id")
+
+
+# only the conducts in which people were found guilty
+# -- Filter misconducts to those that were found guilty ("001")
+guilty_misconducts <- conduct %>%
+  filter(cndct_guilty == "1") %>%
+  select(research_id, cndct_num, cndct_date) %>%
+  distinct() %>%
+  mutate(cndct_date = as.Date(cndct_date))
+
+# -- Cross join with wave dates, keep those on or before wave date
+guilty_expanded <- tidyr::crossing(guilty_misconducts, wave_dates) %>%
+  filter(cndct_date <= wave_date)
+
+# -- Count unique guilty misconducts per person per wave
+guilty_counts <- guilty_expanded %>%
+  group_by(research_id, wave) %>%
+  summarise(cum_guilty = n_distinct(cndct_num), .groups = "drop") %>%
+  mutate(varname = paste0("cndct_guilty_rand", wave)) %>%
+  select(research_id, varname, cum_guilty) %>%
+  pivot_wider(names_from = varname, values_from = cum_guilty)
+
+# -- Join back into conduct
+conduct <- conduct %>%
+  left_join(guilty_counts, by = "research_id")
 
 # guilt rate by month
 # Steps:
