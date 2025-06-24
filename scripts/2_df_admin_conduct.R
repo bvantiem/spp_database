@@ -343,6 +343,10 @@ temp %>%
     worsened = sum(rate_diff > 0, na.rm = TRUE),
     no_change = sum(rate_diff == 0, na.rm = TRUE)
   )
+# -- Conduct Treated df ####
+conduct_treated <- conduct %>%
+  filter(!is.na(rct_treat_dt)) %>%
+  select(rct_treat_dt, rct_pre_rate, rct_post_rate, wave)
 # ================================================================= ####
 # Temporary Descriptive Stats ####
 # -- number of misconducts per unique control number
