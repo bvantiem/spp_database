@@ -16,18 +16,20 @@ source("scripts/0_utils.R")
 
 # -- Functions ####
 
-# Read in data ####
+# -- Read in data ####
 respart <- readRDS("data/processed/de_identified/3_research_participants_masked.Rds")
 randassign <- readRDS("data/processed/de_identified/1b_randassign_masked.Rds") # Need to update release dates 
 
+# ================================================================= ####
 # Treatment compliance table ####
-# -- Prepare data ####
+# -- Prepare table ####
+# -- -- Subset to treated ####
 treatment_compliance <- randassign %>%
   filter(rct == 1) %>%
   filter(rct_stratum %ni% c("lifer", "commuted death")) %>%
   mutate(onunit = ifelse(is.na(rct_release_dt), 1, 0)) 
 
-# Percents ####
+# -- -- Percent rows ####
 tab_percents <- treatment_compliance %>% 
   group_by(rct_treat_wave) %>%
   summarise(currently_on_unit = mean(onunit)*100,
@@ -42,13 +44,7 @@ tab_percents <- treatment_compliance %>%
          refused_treatment = paste0(format(refused_treatment, digits = 2), "%")) %>%
   mutate(row_type = "percent")
 
-
-# Numbers ####
-on_unit_numbers <- treatment_compliance %>% 
-  group_by(rct_treat_wave) %>%
-  summarise(currently_on_unit = sum(onunit)) %>%
-  mutate(currently_on_unit = as.character(round(currently_on_unit)))
-
+# -- -- Integer rows ####
 tab_numbers <- treatment_compliance %>% 
   group_by(rct_treat_wave) %>%
   summarise(currently_on_unit = sum(onunit),
@@ -64,13 +60,13 @@ tab_numbers <- treatment_compliance %>%
   mutate(row_type = "numbers")
 
 
-# Combine dataframes
+# -- -- Combine number and percent rows ####
 tab_combined <- bind_rows(tab_numbers, tab_percents) |>
   arrange(rct_treat_wave, row_type) %>%
   select(-row_type) %>%
   rename(treatment_wave = rct_treat_wave)
 
-# Compute column sums and add as last row ####
+# -- -- Compute column sums and add as last row ####
 totals <- tab_numbers |>
   summarise(
     treatment_wave = "Total",
@@ -84,7 +80,8 @@ totals <- tab_numbers |>
 tab_combined_with_totals <- rbind(tab_combined, totals)
 names(tab_combined_with_totals) <- str_to_title(gsub("_", " ", names(tab_combined_with_totals)))
 
-# PDF table #### 
+# -- Save table ####
+# -- -- PDF table #### 
 tab_pdf<- tab_combined_with_totals %>%
   kbl(caption = "Treatment Compliance",
       align = c("lrrrrr"),
@@ -99,7 +96,7 @@ tab_pdf<- tab_combined_with_totals %>%
 
 tab_pdf
 
-# Latex Table ####
+# -- -- Latex Table ####
 tab_combined_with_totals %>%
   kbl(caption = "Treatment Compliance",
       align = c("lrrrrr"),
