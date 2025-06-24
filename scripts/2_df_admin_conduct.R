@@ -93,6 +93,7 @@ comment(conduct$category_charge1_raw) <- "raw data, no cleaned variable availabl
 comment(conduct$chrg_description_raw) <- "raw data, cleaned variable available as cndct_chrg_desc (6/4/25)"
 # ================================================================= ####
 # New Variables ####
+# -- Misconduct Count by Individual ####
 # count by individual the number of misconduct incidents prior to the date of the first wave
 # count based on misconduct number meaning there could be multiple charges but only counted as one
 # misconduct
@@ -125,7 +126,7 @@ cumulative_counts <- misconducts_expanded %>%
 conduct <- conduct %>%
   left_join(cumulative_counts, by = "research_id")
 
-
+# -- Guilty Misconduct Count by Individual ####
 # only the conducts in which people were found guilty
 # -- Filter misconducts to those that were found guilty ("001")
 guilty_misconducts <- conduct %>%
@@ -141,23 +142,129 @@ guilty_expanded <- tidyr::crossing(guilty_misconducts, wave_dates) %>%
 # -- Count unique guilty misconducts per person per wave
 guilty_counts <- guilty_expanded %>%
   group_by(research_id, wave) %>%
-  summarise(cum_guilty = n_distinct(cndct_num), .groups = "drop") %>%
-  mutate(varname = paste0("cndct_rand", wave, "_guilty")) %>%
-  select(research_id, varname, cum_guilty) %>%
-  pivot_wider(names_from = varname, values_from = cum_guilty)
+  summarise(n_guilty = n_distinct(cndct_num), .groups = "drop") %>%
+  pivot_wider(
+    names_from = wave,
+    values_from = n_guilty,
+    names_prefix = "cndct_rand",
+    names_sep = ""
+  )
+
+# -- Rename columns to match your naming format (e.g., cndct_rand1_guilty)
+names(guilty_counts) <- names(guilty_counts) %>%
+  gsub("^cndct_rand(\\d+)$", "cndct_rand\\1_guilty", .)
 
 # -- Join back into conduct
 conduct <- conduct %>%
+  select(-starts_with("cndct_rand")) %>%
+  left_join(cumulative_counts, by = "research_id") %>%
   left_join(guilty_counts, by = "research_id")
 
+# -- Guilt Rate by Month ####
 # guilt rate by month
 # Steps:
-# 0. add column to house with admit dates (this is a constant within individual)
 # 1. merge in admit date from house (left_join on unique combinations of research_id and admit_date)
-# 2. calculate number of months between admit date and date of rand1, rand2 etc. (doesnt need to be whole number, can be decimal)
-# 3. divide the number of guilty incidents by number of month
-# cndct_guilty_rand1_mnthly, etc.
-# cndct_all_ran1_mnthly, etc.
+conduct <- conduct %>%
+  left_join(admission %>% select(research_id, adm_rct), by = "research_id")
+# 2. longform table of guilty counts
+guilty_long <- conduct %>%
+  select(research_id, starts_with("cndct_rand"), ends_with("_guilty"), adm_rct) %>%
+  pivot_longer(
+    cols = matches("^cndct_rand[1-7]_guilty$"),
+    names_to = "wave_label",
+    values_to = "guilty_count"
+  ) %>%
+  mutate(
+    wave = as.integer(gsub("\\D+", "", wave_label))
+  ) %>%
+  left_join(wave_dates, by = "wave") %>%
+  arrange(research_id, wave)
+# 3. compute monthly rates
+guilty_long <- guilty_long %>%
+  group_by(research_id) %>%
+  arrange(wave) %>%
+  mutate(
+    adm_rct = as.Date(adm_rct),
+    
+    # months since admit (used for wave 1 only)
+    months_since_admit = as.numeric(difftime(wave_date, adm_rct, units = "days")) / 30.44,
+    
+    # difference in cumulative count between waves
+    prior_count = lag(guilty_count),
+    prior_date = lag(wave_date),
+    new_guilty = guilty_count - coalesce(prior_count, 0),
+    
+    months_between = as.numeric(difftime(wave_date, prior_date, units = "days")) / 30.44,
+    
+    # Final guilty rate: use months_since_admit for wave 1, months_between otherwise
+    guilty_rate = case_when(
+      wave == 1 ~ ifelse(is.na(months_since_admit), NA, guilty_count / months_since_admit),
+      months_between > 0 ~ new_guilty / months_between,
+      TRUE ~ NA
+    ),
+    
+    wave_label = paste0("cndct_rand", wave, "_guilty_mnthly")
+  ) %>%
+  ungroup()
+# 4. pivot back and join
+guilty_rate_wide <- guilty_long %>%
+  group_by(research_id, wave_label) %>%
+  summarise(guilty_rate = mean(guilty_rate, na.rm = TRUE), .groups = "drop") %>%
+  pivot_wider(names_from = wave_label, values_from = guilty_rate)
+
+conduct <- conduct %>%
+  left_join(guilty_rate_wide, by = "research_id")
+# -- Misconduct Rate by Month ####
+# rate for all misconducts, not just guilty
+# -- Pivot cumulative misconduct counts into long format
+all_long <- conduct %>%
+  select(research_id, starts_with("cndct_rand"), ends_with("_all"), adm_rct) %>%
+  pivot_longer(
+    cols = matches("^cndct_rand[1-7]_all$"),
+    names_to = "wave_label",
+    values_to = "all_count"
+  ) %>%
+  mutate(
+    wave = as.integer(gsub("\\D+", "", wave_label))  # extract wave number from label
+  ) %>%
+  left_join(wave_dates, by = "wave") %>%
+  arrange(research_id, wave)
+
+# -- Calculate monthly rate
+all_long <- all_long %>%
+  group_by(research_id) %>%
+  arrange(wave) %>%
+  mutate(
+    adm_rct = as.Date(adm_rct),
+    
+    # For wave 1: time since admission
+    months_since_admit = as.numeric(difftime(wave_date, adm_rct, units = "days")) / 30.44,
+    
+    # For wave 2–7: time between waves
+    prior_count = lag(all_count),
+    prior_date = lag(wave_date),
+    new_all = all_count - coalesce(prior_count, 0),
+    months_between = as.numeric(difftime(wave_date, prior_date, units = "days")) / 30.44,
+    
+    # Final rate logic
+    all_rate = case_when(
+      wave == 1 ~ ifelse(is.na(months_since_admit), NA, all_count / months_since_admit),
+      months_between > 0 ~ new_all / months_between,
+      TRUE ~ NA
+    ),
+    
+    wave_label = paste0("cndct_rand", wave, "_all_mnthly")
+  ) %>%
+  ungroup()
+
+# -- Pivot wide and join back into conduct
+all_rate_wide <- all_long %>%
+  group_by(research_id, wave_label) %>%
+  summarise(all_rate = mean(all_rate, na.rm = TRUE), .groups = "drop") %>%
+  pivot_wider(names_from = wave_label, values_from = all_rate)
+
+conduct <- conduct %>%
+  left_join(all_rate_wide, by = "research_id")
 # ================================================================= ####
 # Merge in RCT Data + Calculate Conduct Rates Pre and Post Treatment ####
 # 1. Merge rct data from df-admissions into df-conduct
