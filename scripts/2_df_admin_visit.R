@@ -109,17 +109,6 @@ comment(visit$VstEvnt_DtTm_raw) <- "raw variable, cleaned verison available as v
 comment(visit$VstEvnt_TmOut_raw) <- "raw variable, cleaned verison available as vst_end_date and vst_end_time (6/6/25)"
 # =================================================================== ####
 # New Variables ####
-# visit duration in mins
-# -- some values are invalid how should we handle these?
-visit <- visit %>%
-  mutate(
-    vst_start_time = ymd_hms(paste("2000-01-01", vst_start_time)),
-    vst_end_time = ymd_hms(paste("2000-01-01", vst_end_time))
-  )
-visit <- visit %>%
-  mutate(
-    vst_duration_mins = as.numeric(difftime(vst_end_time, vst_start_time, units = "mins"))
-  )
 # =================================================================== ####
 # Temporary Descriptive Statistics ####
 # -- How many visits do people get on average? 
@@ -143,4 +132,18 @@ visit <- reorder_vars(visit)
 # =================================================================== ####
 # Save Dataframe ####
 saveRDS(visit, file = "data/processed/de_identified/2_visit_cleaned.Rds")
+# =================================================================== ####
+# Discarded Code ####
+# -- Visit Duration in Mins ####
+# -- median vst duration is 174 mins, plus some values are implausible code discarded bcs we dont
+# think this data holds much information
+# visit <- visit %>%
+#   mutate(
+#     vst_start_time = ymd_hms(paste("2000-01-01", vst_start_time)),
+#     vst_end_time = ymd_hms(paste("2000-01-01", vst_end_time))
+#   )
+# visit <- visit %>%
+#   mutate(
+#     vst_duration_mins = as.numeric(difftime(vst_end_time, vst_start_time, units = "mins"))
+#   )
 # =================================================================== ####
