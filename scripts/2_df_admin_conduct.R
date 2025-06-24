@@ -94,6 +94,8 @@ comment(conduct$chrg_description_raw) <- "raw data, cleaned variable available a
 # ================================================================= ####
 # New Variables ####
 # count by individual the number of misconduct incidents prior to the date of the first wave
+# count based on misconduct number meaning there could be multiple charges but only counted as one
+# misconduct
 # -- define wave dates
 
 wave_dates <- tibble(
