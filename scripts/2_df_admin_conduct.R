@@ -297,7 +297,27 @@ misconduct_counts <- conduct %>%
   group_by(research_id, misconduct_phase) %>%
   summarise(misconducts = n_distinct(cndct_num), .groups = "drop")
 
-# 4. Calculate time periods in months
+# 4. Expand so every treated person has both pre/post rows
+treated_ids <- conduct %>%
+  filter(!is.na(rct_treat_dt)) %>%
+  distinct(research_id)
+
+phases <- tibble(misconduct_phase = c("pre", "post"))
+
+all_treated_combos <- tidyr::crossing(treated_ids, phases)
+
+misconduct_counts_full <- all_treated_combos %>%
+  left_join(misconduct_counts, by = c("research_id", "misconduct_phase")) %>%
+  mutate(misconducts = replace_na(misconducts, 0))
+
+# 5. Pivot into wide format
+misconduct_wide <- misconduct_counts_full %>%
+  pivot_wider(
+    names_from = misconduct_phase,
+    values_from = misconducts
+  )
+
+# 6. Calculate time periods in months
 treatment_windows <- admission %>%
   select(research_id, adm_rct, rct_treat_dt) %>%
   mutate(
@@ -312,19 +332,26 @@ treatment_windows <- treatment_windows %>%
     months_post = as.numeric(difftime(latest_date, rct_treat_dt, units = "days")) / 30.44
   )
 
-# 5. Merge misconudct counts and compute rates
+# 7. Merge misconduct counts and compute rates
 misconduct_wide <- misconduct_counts %>%
-  pivot_wider(names_from = misconduct_phase, values_from = misconducts, values_fill = 0)
+  pivot_wider(
+    names_from = misconduct_phase,
+    values_from = misconducts,
+    values_fill = list(misconducts = 0) # fills any cases with no post misconducts with 0 instead of NA
+  )
 
 # Merge everything
 rct_rates <- treatment_windows %>%
   left_join(misconduct_wide, by = "research_id") %>%
   mutate(
     rct_pre_rate = ifelse(is.na(months_pre) | months_pre <= 0, NA, pre / months_pre),
-    rct_post_rate = ifelse(is.na(months_post) | months_post <= 0, NA, post / months_post)
+    rct_post_rate = ifelse(
+      is.na(months_post) | months_post <= 0, NA,
+      post / months_post
+    )
   )
 
-# 6. Join pre/post rates into df-conduct
+# 8. Join pre/post rates into df-conduct
 conduct <- conduct %>%
   left_join(rct_rates %>% select(research_id, rct_pre_rate, rct_post_rate), by = "research_id")
 
@@ -343,7 +370,19 @@ temp %>%
     worsened = sum(rate_diff > 0, na.rm = TRUE),
     no_change = sum(rate_diff == 0, na.rm = TRUE)
   )
-# -- Conduct Treated df ####
+# -- Temporary Debug Code ####
+rct_rates %>%
+  filter(is.na(rct_pre_rate) | is.na(rct_post_rate)) %>%
+  mutate(
+    reason = case_when(
+      is.na(months_pre) | is.na(months_post) ~ "missing months",
+      months_pre <= 0 | months_post <= 0 ~ "nonpositive time window",
+      is.na(pre) | is.na(post) ~ "missing counts",
+      TRUE ~ "other"
+    )
+  ) %>%
+  count(reason)
+# -- Misconduct for Treated df ####
 conduct_treated <- conduct %>%
   filter(!is.na(rct_treat_dt)) %>%
   select(rct_treat_dt, rct_pre_rate, rct_post_rate, wave)
