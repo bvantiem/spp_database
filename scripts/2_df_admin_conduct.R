@@ -47,7 +47,7 @@ standardize_uppercase <- function(x) {
 }
 # -- Read in Data ####
 conduct <- readRDS("data/processed/de_identified/1b_conduct_masked.Rds")
-
+admission <- readRDS("data/processed/de_identified/2b_admissions_rct.Rds")
 # ================================================================= ####
 # Rename Raw Variables ####
 # Append _raw to all columns except specified columns
@@ -155,6 +155,15 @@ conduct <- conduct %>%
 # 3. divide the number of guilty incidents by number of month
 # cndct_guilty_rand1_mnthly, etc.
 # cndct_all_ran1_mnthly, etc.
+# ================================================================= ####
+# Merge in RCT Data + Calculate Conduct Rates Pre and Post Treatment ####
+# 1. Merge rct data from df-admissions into df-conduct
+# 2. Use rct_adm (latest admission prior to treatment) rct_treat_dt (the date that the person got treated) to # -- -- calculate misconduct rate prior to being treated. 
+# -- -- Example: If someone got treated in May 2022, and their latest admission was in Jan 2020. We want to
+# -- -- (1) calculate the number of misconducts between Jan 2020 and May 2022, (2) divide number of of misconducts by number of months between Jan 2020 and May 2022. 
+
+
+
 # ================================================================= ####
 # Temporary Descriptive Stats ####
 # -- number of misconducts per unique control number
