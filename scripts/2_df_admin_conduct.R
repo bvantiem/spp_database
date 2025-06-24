@@ -95,10 +95,11 @@ comment(conduct$chrg_description_raw) <- "raw data, cleaned variable available a
 # New Variables ####
 # count by individual the number of misconduct incidents prior to the date of the first wave
 # -- define wave dates
+
 wave_dates <- tibble(
   wave = 1:7,
-  wave_date = as.Date(c("2022-05-01", "2022-11-15", "2023-05-20",
-                        "2023-11-28", "2024-06-06", "2024-10-22", "2025-05-01")))
+  wave_date = as.Date(c(wave1_date, wave2_date, wave3_date, wave4_date,
+                        wave5_date, wave6_date, wave7_date)))
 
 # -- Get unique misconducts with date
 misconducts <- conduct %>%
