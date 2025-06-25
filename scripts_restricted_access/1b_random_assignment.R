@@ -3,6 +3,7 @@
 # -- Objective ####
 # -- Readme ####
 # Includes random assignment data from waves 1-7
+# We are missing control numbers for 3 individuals, af4296 (lifer, treat wave 0), eq1988 (commuted death, treat wave 6), qp1616 (0-6m, treat wave 2)
 # -- Todo ####
 # =============================================================== ####
 # Set up  ####
