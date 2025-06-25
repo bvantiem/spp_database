@@ -203,24 +203,24 @@ randassign <- randassign %>%
          rct_treat_wave = treatment_wave,
          rct_treat_dt = treatment_date,
          rct_notes = notes,
-         rct_release_dt = release_from_unit_date,
-         rct_release = release_type,
-         rct_release_removed = release_type_removed,
-         rct_release_refused = release_type_refused,
-         rct_release_transferred = release_type_transferred,
-         rct_release_community = release_type_community) %>%
+         rct_exit_dt = release_from_unit_date,
+         rct_exit = release_type,
+         rct_exit_removed = release_type_removed,
+         rct_exit_refused = release_type_refused,
+         rct_exit_transferred = release_type_transferred,
+         rct_exit_community = release_type_community) %>%
   relocate(inmate_id,
            control_number,
            rct,
            rct_stratum,
            rct_treat_wave,
            rct_treat_dt,
-           rct_release,
-           rct_release_dt,
-           rct_release_removed,
-           rct_release_refused,
-           rct_release_transferred,
-           rct_release_community)
+           rct_exit,
+           rct_exit_dt,
+           rct_exit_removed,
+           rct_exit_refused,
+           rct_exit_transferred,
+           rct_exit_community)
 
 # ================================================================ ####
 # Save Dataframes
