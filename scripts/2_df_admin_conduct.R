@@ -101,10 +101,10 @@ comment(conduct$chrg_description_raw) <- "raw data, cleaned variable available a
 # misconduct
 # -- define wave dates
 
-wave_dates <- tibble(
+rand_dates <- tibble(
   wave = 1:7,
-  wave_date = as.Date(c(wave1_date, wave2_date, wave3_date, wave4_date,
-                        wave5_date, wave6_date, wave7_date)))
+  rand_date = as.Date(c(rand1_date, rand2_date, rand3_date, rand4_date,
+                        rand5_date, rand6_date, rand7_date)))
 
 # -- Get unique misconducts with date
 misconducts <- conduct %>%
@@ -112,9 +112,9 @@ misconducts <- conduct %>%
   distinct() %>%
   mutate(cndct_date = as.Date(cndct_date))
 
-# -- Cross join each misconduct with each wave, and keep those that happened BEFORE or ON the wave date
-misconducts_expanded <- tidyr::crossing(misconducts, wave_dates) %>%
-  filter(cndct_date <= wave_date)
+# -- Cross join each misconduct with each wave, and keep those that happened BEFORE or ON the rand date
+misconducts_expanded <- tidyr::crossing(misconducts, rand_dates) %>%
+  filter(cndct_date <= rand_date)
 
 # -- Count unique misconducts per person per wave
 cumulative_counts <- misconducts_expanded %>%
@@ -137,9 +137,9 @@ guilty_misconducts <- conduct %>%
   distinct() %>%
   mutate(cndct_date = as.Date(cndct_date))
 
-# -- Cross join with wave dates, keep those on or before wave date
-guilty_expanded <- tidyr::crossing(guilty_misconducts, wave_dates) %>%
-  filter(cndct_date <= wave_date)
+# -- Cross join with wave dates, keep those on or before rand date
+guilty_expanded <- tidyr::crossing(guilty_misconducts, rand_dates) %>%
+  filter(cndct_date <= rand_date)
 
 # -- Count unique guilty misconducts per person per wave
 guilty_counts <- guilty_expanded %>%
