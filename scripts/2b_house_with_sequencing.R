@@ -232,6 +232,7 @@ admission.stats <- house_final %>%
   distinct(research_id,
            adm_date, 
            adm_n_total, 
+           adm_study,
            adm_study_start_after_n_total,
            adm_study_start_before_n_total,
            pris_within_adm_n_total, 
