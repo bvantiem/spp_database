@@ -16,19 +16,12 @@ source("scripts/0_utils.R")
 # source("scripts_restricted_access/0_id_masking_function.R")
 
 # -- Read in Data ####
-
 randassign <- readRDS("data/processed/de_identified/1b_randassign_masked.Rds")
 basic <- readRDS("data/processed/de_identified/2_basic_cleaned.Rds")
 # basic_by_sentence <- readRDS("data/processed/de_identified/2_basic_by_sentence_cleaned.Rds")
 
 
 # ====================================================== ####
-# New code ####
-# De-duplicate basic (VERY CRUDE) .. ####
-# Need to link sentences with admissions TODO ####
-basic <- basic |>
-  distinct(research_id, .keep_all = TRUE)
-
 
 # Merge with static characteristics from basic ####
 static_vars <- c("dem_age_wave1", # Replace with age at time of treatment 
