@@ -176,88 +176,75 @@ admission <- admission %>%
   distinct(research_id, adm_rct, rct_treat_dt, rct_treat_wave)
 
 conduct <- conduct %>%
-  left_join(admission %>% select(research_id, adm_rct, rct_treat_wave), by = "research_id") %>%
-  group_by(research_id) %>%
-  #Rand0
-  mutate(no_months_before_rand_date = as.numeric(rand1_date-adm_rct)/30) %>%
-  mutate(cndct_mnthly_rand0_all = cndct_rand0_all/no_months_before_rand_date) %>%
-  #Rand1
-  mutate(no_months_before_rand_date = as.numeric(rand1_date-adm_rct)/30) %>%
-  mutate(cndct_mnthly_rand1_all = cndct_rand1_all/no_months_before_rand_date) %>%
-  #Rand2
-  mutate(no_months_before_rand_date = as.numeric(rand2_date-adm_rct)/30) %>%
-  mutate(cndct_mnthly_rand2_all = cndct_rand2_all/no_months_before_rand_date) %>%
-  #Rand3
-  mutate(no_months_before_rand_date = as.numeric(rand3_date-adm_rct)/30) %>%
-  mutate(cndct_mnthly_rand3_all = cndct_rand3_all/no_months_before_rand_date) %>%
-  #Rand4
-  mutate(no_months_before_rand_date = as.numeric(rand4_date-adm_rct)/30) %>%
-  mutate(cndct_mnthly_rand4_all = cndct_rand4_all/no_months_before_rand_date) %>%
-  #Rand5
-  mutate(no_months_before_rand_date = as.numeric(rand5_date-adm_rct)/30) %>%
-  mutate(cndct_mnthly_rand5_all = cndct_rand5_all/no_months_before_rand_date) %>%
-  #Rand6
-  mutate(no_months_before_rand_date = as.numeric(rand6_date-adm_rct)/30) %>%
-  mutate(cndct_mnthly_rand6_all = cndct_rand6_all/no_months_before_rand_date) %>%
-  #Rand7
-  mutate(no_months_before_rand_date = as.numeric(rand7_date-adm_rct)/30) %>%
-  mutate(cndct_mnthly_rand7_all = cndct_rand7_all/no_months_before_rand_date) %>%
-  #Drop helper column 
-  select(-no_months_before_rand_date) %>%
-  # Calculate before treatment rates 
-  mutate(cndct_mnthly_pretreat_all = case_when(
-    rct_treat_wave == 0 ~ cndct_mnthly_rand0_all,
-    rct_treat_wave == 1 ~ cndct_mnthly_rand1_all,
-    rct_treat_wave == 2 ~ cndct_mnthly_rand2_all,
-    rct_treat_wave == 3 ~ cndct_mnthly_rand3_all,
-    rct_treat_wave == 4 ~ cndct_mnthly_rand4_all,
-    rct_treat_wave == 5 ~ cndct_mnthly_rand5_all,
-    rct_treat_wave == 6 ~ cndct_mnthly_rand6_all,
-    rct_treat_wave == 7 ~ cndct_mnthly_rand7_all,
-  )) %>% 
-  ungroup() 
+  left_join(admission %>% select(research_id, adm_rct, rct_treat_wave), by = "research_id")
+
+add_pretreatment_rates <- function(conduct, admission) {
+  
+  for (i in 0:7) {
+    date_col <- sym(paste0("rand", i, "_date"))
+    count_col <- sym(paste0("cndct_rand", i, "_all"))
+    rate_col  <- paste0("cndct_mnthly_rand", i, "_all")
+    
+    conduct <- conduct %>%
+      mutate(
+        !!rate_col := !!count_col / (as.numeric(!!date_col - adm_rct) / 30)
+      )
+  }
+  
+  conduct <- conduct %>%
+    mutate(
+      cndct_mnthly_pretreat_all = case_when(
+        rct_treat_wave == 0 ~ cndct_mnthly_rand0_all,
+        rct_treat_wave == 1 ~ cndct_mnthly_rand1_all,
+        rct_treat_wave == 2 ~ cndct_mnthly_rand2_all,
+        rct_treat_wave == 3 ~ cndct_mnthly_rand3_all,
+        rct_treat_wave == 4 ~ cndct_mnthly_rand4_all,
+        rct_treat_wave == 5 ~ cndct_mnthly_rand5_all,
+        rct_treat_wave == 6 ~ cndct_mnthly_rand6_all,
+        rct_treat_wave == 7 ~ cndct_mnthly_rand7_all,
+        TRUE ~ NA_real_
+      )
+    ) %>%
+    ungroup()
+  
+  return(conduct)
+}
+conduct <- add_pretreatment_rates(conduct,admission)
 
 # -- Misconduct Monthly Guilty Rate ####
-conduct <- conduct %>%
-  group_by(research_id) %>%
-  #Rand0
-  mutate(no_months_before_rand_date = as.numeric(rand1_date-adm_rct)/30) %>%
-  mutate(cndct_mnthly_rand0_guilty = cndct_rand0_guilty/no_months_before_rand_date) %>%
-  #Rand1
-  mutate(no_months_before_rand_date = as.numeric(rand1_date-adm_rct)/30) %>%
-  mutate(cndct_mnthly_rand1_guilty = cndct_rand1_guilty/no_months_before_rand_date) %>%
-  #Rand2
-  mutate(no_months_before_rand_date = as.numeric(rand2_date-adm_rct)/30) %>%
-  mutate(cndct_mnthly_rand2_guilty = cndct_rand2_guilty/no_months_before_rand_date) %>%
-  #Rand3
-  mutate(no_months_before_rand_date = as.numeric(rand3_date-adm_rct)/30) %>%
-  mutate(cndct_mnthly_rand3_guilty = cndct_rand3_guilty/no_months_before_rand_date) %>%
-  #Rand4
-  mutate(no_months_before_rand_date = as.numeric(rand4_date-adm_rct)/30) %>%
-  mutate(cndct_mnthly_rand4_guilty = cndct_rand4_guilty/no_months_before_rand_date) %>%
-  #Rand5
-  mutate(no_months_before_rand_date = as.numeric(rand5_date-adm_rct)/30) %>%
-  mutate(cndct_mnthly_rand5_guilty = cndct_rand5_guilty/no_months_before_rand_date) %>%
-  #Rand6
-  mutate(no_months_before_rand_date = as.numeric(rand6_date-adm_rct)/30) %>%
-  mutate(cndct_mnthly_rand6_guilty = cndct_rand6_guilty/no_months_before_rand_date) %>%
-  #Rand7
-  mutate(no_months_before_rand_date = as.numeric(rand7_date-adm_rct)/30) %>%
-  mutate(cndct_mnthly_rand7_guilty = cndct_rand7_guilty/no_months_before_rand_date) %>%
-  #Drop helper column 
-  select(-no_months_before_rand_date) %>%
-  # Calculate before treatment rates 
-  mutate(cndct_mnthly_pretreat_guilty = case_when(
-    rct_treat_wave == 0 ~ cndct_mnthly_rand0_guilty,
-    rct_treat_wave == 1 ~ cndct_mnthly_rand1_guilty,
-    rct_treat_wave == 2 ~ cndct_mnthly_rand2_guilty,
-    rct_treat_wave == 3 ~ cndct_mnthly_rand3_guilty,
-    rct_treat_wave == 4 ~ cndct_mnthly_rand4_guilty,
-    rct_treat_wave == 5 ~ cndct_mnthly_rand5_guilty,
-    rct_treat_wave == 6 ~ cndct_mnthly_rand6_guilty,
-    rct_treat_wave == 7 ~ cndct_mnthly_rand7_guilty,
-  )) %>% 
-  ungroup() 
+add_pretreatment_guilty_rates <- function(conduct, admission) {
+  
+  for (i in 0:7) {
+    date_col <- sym(paste0("rand", i, "_date"))
+    count_col <- sym(paste0("cndct_rand", i, "_guilty"))
+    rate_col  <- paste0("cndct_mnthly_rand", i, "_guilty")
+    
+    conduct <- conduct %>%
+      mutate(
+        !!rate_col := !!count_col / (as.numeric(!!date_col - adm_rct) / 30)
+      )
+  }
+  
+  conduct <- conduct %>%
+    mutate(
+      cndct_mnthly_pretreat_all = case_when(
+        rct_treat_wave == 0 ~ cndct_mnthly_rand0_guilty,
+        rct_treat_wave == 1 ~ cndct_mnthly_rand1_guilty,
+        rct_treat_wave == 2 ~ cndct_mnthly_rand2_guilty,
+        rct_treat_wave == 3 ~ cndct_mnthly_rand3_guilty,
+        rct_treat_wave == 4 ~ cndct_mnthly_rand4_guilty,
+        rct_treat_wave == 5 ~ cndct_mnthly_rand5_guilty,
+        rct_treat_wave == 6 ~ cndct_mnthly_rand6_guilty,
+        rct_treat_wave == 7 ~ cndct_mnthly_rand7_guilty,
+        TRUE ~ NA_real_
+      )
+    ) %>%
+    ungroup()
+  
+  return(conduct)
+}
+conduct <- add_pretreatment_guilty_rates(conduct,admission)
+
 # ================================================================= ####
 # Merge in RCT Data + Calculate Conduct Rates Pre and Post Treatment ####
 # 1. Merge rct data from df-admissions into df-conduct
