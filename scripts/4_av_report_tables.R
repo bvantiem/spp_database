@@ -18,25 +18,25 @@ source("scripts/0_utils.R")
 
 # -- Read in data ####
 respart <- readRDS("data/processed/de_identified/3_research_participants_masked.Rds")
-randassign <- readRDS("data/processed/de_identified/1b_randassign_masked.Rds") # Need to update release dates 
+randassign <- readRDS("data/processed/de_identified/1b_randassign_masked.Rds")
 
 # ================================================================= ####
-# Treatment compliance table ####
+# Treatment compliance table - by Treatment Cohort ####
 # -- Prepare table ####
 # -- -- Subset to treated ####
 treatment_compliance <- randassign %>%
   filter(rct == 1) %>%
   filter(rct_stratum %ni% c("lifer", "commuted death")) %>%
-  mutate(onunit = ifelse(is.na(rct_release_dt), 1, 0)) 
+  mutate(onunit = ifelse(is.na(rct_exit_dt), 1, 0)) 
 
 # -- -- Percent rows ####
 tab_percents <- treatment_compliance %>% 
   group_by(rct_treat_wave) %>%
   summarise(currently_on_unit = mean(onunit)*100,
-            released = mean(rct_release_community)*100,
-            transferred = mean(rct_release_transferred)*100,
-            removed = mean(rct_release_removed)*100,
-            refused_treatment = mean(rct_release_refused)*100) %>%
+            released = mean(rct_exit_community)*100,
+            transferred = mean(rct_exit_transferred)*100,
+            removed = mean(rct_exit_removed)*100,
+            refused_treatment = mean(rct_exit_refused)*100) %>%
   mutate(currently_on_unit = paste0(format(currently_on_unit, digits = 2), "%"),
          released = paste0(format(released, digits = 2), "%"),
          removed = paste0(format(removed, digits = 2), "%"),
@@ -48,10 +48,10 @@ tab_percents <- treatment_compliance %>%
 tab_numbers <- treatment_compliance %>% 
   group_by(rct_treat_wave) %>%
   summarise(currently_on_unit = sum(onunit),
-            released = sum(rct_release_community),
-            transferred = sum(rct_release_transferred),
-            removed = sum(rct_release_removed),
-            refused_treatment = sum(rct_release_refused)) %>%
+            released = sum(rct_exit_community),
+            transferred = sum(rct_exit_transferred),
+            removed = sum(rct_exit_removed),
+            refused_treatment = sum(rct_exit_refused)) %>%
   mutate(currently_on_unit = as.character(round(currently_on_unit)),
          released = as.character(round(released)),
          removed = as.character(round(removed)),
@@ -111,6 +111,12 @@ tab_combined_with_totals %>%
            extra_css = "border-bottom: 1px solid") %>%
   save_kable(file = "output/tables/tabx_treatment_compliance.tex", self_contained = T)
 
+# Treatment compliance table - by Stratum ####
+# ================================================================= ####
 
-
-
+# Enrollment table - by Treatment Cohort####
+# Enrollment table - by Stratum ####
+# ================================================================= ####
+# Time spent table - by Treatment Cohort ####
+# Time spent table - by Stratum ####
+# ================================================================= ####
