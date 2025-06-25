@@ -4,8 +4,12 @@
 # Clean basic dataframe 
 # Create two new dataframes - one at the individual level with (mostly) static demographics, and one at the individual*sentence level 
 # -- Readme ####
-# Level of observation: individual*date_datapull
 # Basic contains demographic and sentencing information 
+# Level of observation: individual*date_datapull*conviction*charge on which people were convicted
+# Britte: I think that each datapull contains sentencing information for only the latest conviction - confirm 
+# Multiple charges may be associated with different sentence expiry dates
+# -- but if you subtract the sent_in_days you end up with the same date - e.g. see rid_001394
+# -- these are likely sentences served concurrently 
 # -- To do ####
 # To do: ASCA classification is sometimes NULL while the offense code is the same as that of other variables, e.g "STRANGULATION: APPLYING PRESSURE TO THROAT OR NECK" is sometimes classified as violent and sometimes as NULL. Manually recategorize?
 # See todo do section at the end of the script 
@@ -359,8 +363,9 @@ basic <- basic %>%
     sent_days_to_min_wave6 = sent_min_expir_dt - ymd(wave6_date)) %>%
   relocate(starts_with("sent_days_to_min_wave"), .after = sent_max_expir_recmp_dt) %>%
   mutate(
-    sent_min_in_days = (sent_min_cort_yrs*365)+(sent_min_cort_mths*12)+sent_min_cort_days,
-    sent_max_in_days = (sent_max_cort_yrs*365)+(sent_max_cort_mths*12)+sent_max_cort_days) %>%
+    # -- Assuming 30 day months for simplicity
+    sent_min_in_days = (sent_min_cort_yrs*365)+(sent_min_cort_mths*30)+sent_min_cort_days,
+    sent_max_in_days = (sent_max_cort_yrs*365)+(sent_max_cort_mths*30)+sent_max_cort_days) %>%
   relocate(starts_with("sent_min_in_days"), .after = sent_max_cort_days) %>%
   relocate(starts_with("sent_max_in_days"), .after = sent_min_in_days)
 # ================================================================= ####
