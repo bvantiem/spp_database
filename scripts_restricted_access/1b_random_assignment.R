@@ -57,12 +57,14 @@ rel <- xl.read.file("data_restricted_access/raw/4_random_assignment/release_date
 # ================================================================ ####
 # Cleaning ####
 # -- Release dates ####
-# Old release date code at the bottom of this script
-names(rel)[which(names(rel)=="id_num")] <- "inmate_id"
-rel$release_date <- ymd(rel$release_date)
-stopifnot(length(unique(rel$inmate_id))==nrow(rel))
-rel$inmate_id <- gsub(" ", "", rel$inmate_id)
-rel$release_type <- gsub("(^ )(.*)", "\\2", rel$release_type)
+rel <- rel |>
+  rename(inmate_id = id_num) |>
+  mutate(
+    release_date = ymd(release_date),
+    treatment_date = ymd(treatment_date),
+    inmate_id = gsub(" ", "", inmate_id),
+    release_type = gsub("(^ )(.*)", "\\2", release_type)
+  )
 
 # -- Prepare random assignment data for merging ####
 names(randassign1) <- c("treated", "inmate_id", "stratum")
@@ -165,7 +167,7 @@ rel <- rel %>%
   )) %>%
   # Temporarily replace release dates for these individuals with their treatment date
   # Confirm these are the correct dates - might be that they moved for a few days until they were moved back? TODO
-  mutate(release_from_unit_date = ifelse(release_type == "Refused to Move to LSU", treatment_date, release_from_unit_date)) %>%
+  mutate(release_from_unit_date = if_else(release_type == "Refused to Move to LSU", treatment_date, release_from_unit_date)) %>%
   select(-treatment_date, - treatment_wave)
 
 randassign <- left_join(randassign, rel, by = c("inmate_id", "treated", "stratum"))
