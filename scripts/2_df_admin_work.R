@@ -12,7 +12,7 @@
 # -- To do ####
 # -- -- look into inaccurate dates for job_start/end_date
 # 1. Talk to PADOC about what is contained in this df.
-# 2. Finish cleaning script after 1 and 2 are done
+# 2. Finish cleaning script after that is done
 # ================================================================= ####
 # Set up ####
 # -- Prepare environment ####
