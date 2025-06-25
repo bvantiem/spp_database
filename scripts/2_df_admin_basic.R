@@ -55,7 +55,7 @@ standardize_uppercase <- function(x) {
 }
 # -- Read in Data ####
 basic <- readRDS("data/processed/de_identified/1b_basic_masked.Rds")
-
+randassign <- readRDS("data/processed/de_identified/1b_randassign_masked.Rds")
 # ================================================================= ####
 # Rename raw variables ####
 # Append _raw to all columns except specified columns
@@ -192,92 +192,12 @@ basic <- basic %>%
   relocate(date_datapull, .after = dem_stg_yes) %>%
   relocate(wave, .after = date_datapull)
 
-# Create Dummies ####
+# Create Dummies for Categorical Variables ####
 basic <- make_dummies(basic, dem_marital)
 basic <- make_dummies(basic, dem_sex)
 basic <- make_dummies(basic, sent_class)
 basic <- make_dummies(basic, sent_off_asca)
 basic <- make_dummies(basic, dem_race)
-# ================================================================= ####
-# Define new dataframes ####
-# -- Basic by static demographics ####
-# one row per individuals using the earliest datapull
-# -- -- Static Variables List: ####
-# -- dem_edu_grade
-# -- dem_dob_dt
-# -- date_of_birth_raw
-# -- -- Mostly Static Variables List: ####
-# -- dem_race       2 ids (out of 2401) have changing race categorization
-# -- race_code_raw  2 ids (out of 2401) have changing race categorization
-# -- race_raw       2 ids (out of 2401) have changing race categorization
-# -- dem_marital                1 id (out of 2401) has changing marital status
-# -- marital_status_code_raw,   1 id (out of 2401) has changing marital status
-# -- marital_status_raw         1 id (out of 2401) has changing marital status
-# -- -- df Formation ####
-basic_static_demographics <- basic %>%
-  group_by(research_id) %>%
-  # -- take variable info from only the earliest wave participated
-  slice(1) %>% 
-  ungroup() %>%
-  # -- drop all variables but these, only static demographic variables
-  select(research_id, 
-         dem_race,
-         dem_marital,
-         dem_edu_grade,
-         dem_dob_dt,
-         date_datapull,
-         race_code_raw,
-         race_raw,
-         marital_status_code_raw,
-         marital_status_raw,
-         date_of_birth_raw
-  )
-# -- Basic by Individual Sentence/ Charge ####
-# -- -- one row per sentence (may be mutliple rows for one id)
-basic_by_sentence <- basic %>%
-  # -- group by these variables which when constant represent one charge
-  group_by(dem_dob_dt, 
-  # -- if any of these change than it will be reflected as a second row aka new charge
-           sent_min_cort_yrs, 
-           sent_min_cort_mths, 
-           sent_min_cort_days) %>%
-  slice(1) %>%     # One row per unique sentence
-  ungroup() %>%
-  # -- include only the following variables in new dataframe
-  select(research_id,
-         date_datapull,
-         sent_class,
-         sent_min_cort_days,
-         sent_min_cort_mths,
-         sent_min_cort_yrs,
-         sent_max_cort_days,
-         sent_max_cort_mths,
-         sent_max_cort_yrs,
-         sent_commitment_cnty,
-         sent_off_asca,
-         chg_off_code,
-         chg_des,
-         dem_race,
-         dem_marital,
-         dem_edu_grade,
-         dem_dob_dt,
-         sentence_class_raw,
-         min_cort_sent_days_raw,
-         min_cort_sent_mths_raw,
-         min_cort_sent_yrs_raw,
-         max_cort_sent_days_raw,
-         max_cort_sent_mths_raw,
-         max_cort_sent_yrs_raw,
-         commit_cnty_raw,
-         `ASCA Category - Ranked_raw`,
-         offense_code_raw,
-         offense_raw,
-         race_code_raw,
-         race_raw,
-         marital_status_code_raw,
-         marital_status_raw,
-         grade_complete_raw,
-         date_of_birth_raw)
 # ================================================================= ####
 # Add Notes to Variables ####
   # to view notes added use str() or comment()
@@ -341,7 +261,12 @@ comment(basic$MHCode_raw) <-"raw data, cleaned non raw variable avail as dem_mhc
 comment(basic$STG_raw) <- "raw data, cleaned non raw variable avail as dem_stg_yes"
 
 # ================================================================= ####
-
+# Merge in treatment status ####
+basic <- basic %>%
+  left_join(randassign,
+            by = "research_id", 
+            relationship = "many-to-one")
+# ================================================================= ####
 # New Variables ####
 basic <- basic %>%
   mutate(dem_edu_high_school = ifelse(dem_edu_grade>=12, 1,0)) %>%
@@ -352,8 +277,19 @@ basic <- basic %>%
     dem_age_wave3 = decimal_date(ymd(wave3_date))-decimal_date(dem_dob_dt),
     dem_age_wave4 = decimal_date(ymd(wave4_date))-decimal_date(dem_dob_dt),
     dem_age_wave5 = decimal_date(ymd(wave5_date))-decimal_date(dem_dob_dt),
-    dem_age_wave6 = decimal_date(ymd(wave6_date))-decimal_date(dem_dob_dt)) %>%
+    dem_age_wave6 = decimal_date(ymd(wave6_date))-decimal_date(dem_dob_dt),
+    dem_age_wave7 = decimal_date(ymd(wave7_date))-decimal_date(dem_dob_dt)) %>%
   relocate(starts_with("dem_age_wave"), .after = dem_dob_dt) %>%
+  mutate(dem_age_at_treatment = case_when(
+    rct_treat_wave == 0 ~ decimal_date(ymd(rand1_date))-decimal_date(dem_dob_dt),
+    rct_treat_wave == 1 ~ decimal_date(ymd(rand2_date))-decimal_date(dem_dob_dt),
+    rct_treat_wave == 2.5 ~ decimal_date(ymd(rand2.5_date))-decimal_date(dem_dob_dt),
+    rct_treat_wave == 3 ~ decimal_date(ymd(rand3_date))-decimal_date(dem_dob_dt),
+    rct_treat_wave == 4 ~ decimal_date(ymd(rand4_date))-decimal_date(dem_dob_dt),
+    rct_treat_wave == 5 ~ decimal_date(ymd(rand5_date))-decimal_date(dem_dob_dt),
+    rct_treat_wave == 6 ~ decimal_date(ymd(rand6_date))-decimal_date(dem_dob_dt),
+    rct_treat_wave == 7 ~ decimal_date(ymd(rand7_date))-decimal_date(dem_dob_dt),
+    TRUE ~ NA)) %>%
   mutate(
     sent_days_to_min_wave1 = sent_min_expir_dt - ymd(wave1_date),
     sent_days_to_min_wave2 = sent_min_expir_dt - ymd(wave2_date),
@@ -368,6 +304,19 @@ basic <- basic %>%
     sent_max_in_days = (sent_max_cort_yrs*365)+(sent_max_cort_mths*30)+sent_max_cort_days) %>%
   relocate(starts_with("sent_min_in_days"), .after = sent_max_cort_days) %>%
   relocate(starts_with("sent_max_in_days"), .after = sent_min_in_days)
+# ================================================================= ####
+# Crude De-duplication ####
+basic <- basic |>
+  arrange(research_id, wave, desc(sent_min_in_days)) %>%
+  # Keep only the first time we pulled data for this person 
+  # -- For the majority of people, this will be the conviction for the admission
+  # -- that is linked to their RCT participation 
+  # -- plus the most serious charge (per desc(sent_min_in_days)) 
+  # -- -- Note there will be more variability for the PCQ sample 
+  distinct(research_id, .keep_all = TRUE) 
+
+# Should now have a dataframe at the individual level 
+stopifnot(length(unique(basic$research_id))==nrow(basic))
 # ================================================================= ####
 # Temporary Descriptive Stats ####
 
@@ -404,8 +353,6 @@ basic <- reorder_vars(basic)
 # ================================================================= ####
 # Save dataframes ####
 saveRDS(basic, file = "data/processed/de_identified/2_basic_cleaned.Rds")
-saveRDS(basic, file = "data/processed/de_identified/2_basic_by_sentence_cleaned.Rds")
-saveRDS(basic, file = "data/processed/de_identified/2_basic_static_demographics_cleaned.Rds")
 # ================================================================= ####
 # Known Issues #### 
 # To Do ####
@@ -461,3 +408,83 @@ ids_w_missing_sent_info <- basic %>% filter(is.na(sent_class))
 # basic$est_days_served_on_20220501 <- as.numeric(gsub(" days", "", basic$est_days_served_on_20220501))
 # 
 # 
+
+# Discarded code ####
+# # -- Basic by static demographics ####
+# # one row per individuals using the earliest datapull
+# # -- -- Static Variables List:
+# # -- dem_edu_grade
+# # -- dem_dob_dt
+# # -- date_of_birth_raw
+# # -- -- Mostly Static Variables List: 
+# # -- dem_race       2 ids (out of 2401) have changing race categorization
+# # -- race_code_raw  2 ids (out of 2401) have changing race categorization
+# # -- race_raw       2 ids (out of 2401) have changing race categorization
+# # -- dem_marital                1 id (out of 2401) has changing marital status
+# # -- marital_status_code_raw,   1 id (out of 2401) has changing marital status
+# # -- marital_status_raw         1 id (out of 2401) has changing marital status
+# # -- -- df Formation 
+# basic_static_demographics <- basic %>%
+#   group_by(research_id) %>%
+#   # -- take variable info from only the earliest wave participated
+#   slice(1) %>% 
+#   ungroup() %>%
+#   # -- drop all variables but these, only static demographic variables
+#   select(research_id, 
+#          dem_race,
+#          dem_marital,
+#          dem_edu_grade,
+#          dem_dob_dt,
+#          date_datapull,
+#          race_code_raw,
+#          race_raw,
+#          marital_status_code_raw,
+#          marital_status_raw,
+#          date_of_birth_raw
+#   )
+# # -- Basic by Individual Sentence/ Charge ####
+# # -- -- one row per sentence (may be mutliple rows for one id)
+# basic_by_sentence <- basic %>%
+#   # -- group by these variables which when constant represent one charge
+#   group_by(dem_dob_dt, 
+#            # -- if any of these change than it will be reflected as a second row aka new charge
+#            sent_min_cort_yrs, 
+#            sent_min_cort_mths, 
+#            sent_min_cort_days) %>%
+#   slice(1) %>%     # One row per unique sentence
+#   ungroup() %>%
+#   # -- include only the following variables in new dataframe
+#   select(research_id,
+#          date_datapull,
+#          sent_class,
+#          sent_min_cort_days,
+#          sent_min_cort_mths,
+#          sent_min_cort_yrs,
+#          sent_max_cort_days,
+#          sent_max_cort_mths,
+#          sent_max_cort_yrs,
+#          sent_commitment_cnty,
+#          sent_off_asca,
+#          chg_off_code,
+#          chg_des,
+#          dem_race,
+#          dem_marital,
+#          dem_edu_grade,
+#          dem_dob_dt,
+#          sentence_class_raw,
+#          min_cort_sent_days_raw,
+#          min_cort_sent_mths_raw,
+#          min_cort_sent_yrs_raw,
+#          max_cort_sent_days_raw,
+#          max_cort_sent_mths_raw,
+#          max_cort_sent_yrs_raw,
+#          commit_cnty_raw,
+#          `ASCA Category - Ranked_raw`,
+#          offense_code_raw,
+#          offense_raw,
+#          race_code_raw,
+#          race_raw,
+#          marital_status_code_raw,
+#          marital_status_raw,
+#          grade_complete_raw,
+#          date_of_birth_raw)
