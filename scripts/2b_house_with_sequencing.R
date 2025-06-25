@@ -246,10 +246,6 @@ admission.stats <- house_final %>%
            adm_treatment_start_after_n_total,
            adm_treatment_start_before_n_total)
 
-admission.stats.rct <- admission.stats %>% 
-  filter(rct %in% c(0,1)) %>%
-  distinct(research_id, adm_rct, rct_treat_dt)
-
 # ================================================================= ####
 # Save ####
 # -- House with Admission Information ####
@@ -258,5 +254,4 @@ saveRDS(house_final, "data/processed/de_identified/2b_house_with_admissions.Rds"
 saveRDS(admission.stats, "data/processed/de_identified/2b_admissions.Rds")
 
   
-# -- RCT Admission and treatment dates by treated IDs ####
-saveRDS(admission.stats.rct, "data/processed/de_identified/2b_admissions_rct.Rds")
+
