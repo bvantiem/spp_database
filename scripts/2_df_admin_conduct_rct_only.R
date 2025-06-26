@@ -362,13 +362,6 @@ pretreat_window <- pretreat_cat_counts_wide %>%
 conduct_rct <- conduct_rct %>%
   left_join(pretreat_window, by = "research_id")
 
-# 8. Create pre-treatment rates: all misconducts by category
-conduct_rct <- conduct_rct %>%
-  mutate(
-    cndct_pretreat_all_rate_a = cndct_pretreat_all_count_a / months_pre,
-    cndct_pretreat_all_rate_b = cndct_pretreat_all_count_b / months_pre,
-    cndct_pretreat_all_rate_c = cndct_pretreat_all_count_c / months_pre,
-  )
 
 # -- Pretreatment Counts/Rates by Guilty Misconduct Category ####
 # 1. Filter to pre-treatment GUILTY misconducts
@@ -395,13 +388,6 @@ guilty_cat_counts_wide <- guilty_cat_counts %>%
 conduct_rct <- conduct_rct %>%
   left_join(guilty_cat_counts_wide, by = "research_id")
 
-# 5. Create pre-treatment rates: guilty misconducts by category
-conduct_rct <- conduct_rct %>%
-  mutate(
-    cndct_pretreat_guilty_rate_a = cndct_pretreat_guilty_count_a / months_pre,
-    cndct_pretreat_guilty_rate_b = cndct_pretreat_guilty_count_b / months_pre,
-    cndct_pretreat_guilty_rate_c = cndct_pretreat_guilty_count_c / months_pre,
-  )
 # ================================================================= ####
 # Temporary Descriptive Stats Britte ####
 
