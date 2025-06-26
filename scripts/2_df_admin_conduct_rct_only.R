@@ -10,6 +10,15 @@
 # but want to confirm with PADOC
 # -- -- Once we have admit dates, add variables for the number and rate of incidences
 # in most recent sentence
+# Definitions: (find home for)
+# cndct_pretreat_all
+# -- count of unique misconduct numbers by individual prior to rct_treat_dt
+# cndct_pretreat_all_count_a
+# -- count of unique misconduct numbers where the most serious charge was cat a prior to rct_treat_dt
+# cndct_pretreat_guilty
+# -- count of unique misconduct numbers by individual prior to rct_treat_dt on which they were found guilty on atleast one charge
+# cndct_pretreat_guilty_count_a
+# -- count of unique misconduct numbers by individual prior to rct_treat_dt on which the most serious charge on which they were found guilty was cat a
 # ================================================================= ####
 # Set up ####
 # -- Prepare environment ####
@@ -324,84 +333,75 @@ conduct_rct <- conduct_rct %>%
   ) %>%
   ungroup()
 
-# 3. filter to pre-treatment charges
-temp <- conduct_rct %>%
-  filter(!is.na(cndct_chrg_cat), cndct_date >= adm_rct, cndct_date < rct_treat_dt)
+# 3. Filter to pre-treatment misconducts (using only most serious charge)
+pretreat_most_serious <- conduct_rct %>%
+  distinct(research_id, cndct_num, cndct_charge_cat_most_serious, cndct_date, rct_treat_dt, adm_rct) %>%
+  filter(!is.na(cndct_charge_cat_most_serious), !is.na(cndct_date), !is.na(rct_treat_dt)) %>%
+  filter(cndct_date >= adm_rct, cndct_date < rct_treat_dt)
 
-# 4. count charges per misconduct event per category
-pretreat_counts <- temp %>%
-  group_by(research_id, cndct_num, cndct_chrg_cat) %>%
-  summarise(n_charges = n(), .groups = "drop")
+# 4. Count number of misconducts by category per person
+pretreat_cat_counts <- pretreat_most_serious %>%
+  group_by(research_id, cndct_charge_cat_most_serious, adm_rct, rct_treat_dt) %>%
+  summarise(count = n_distinct(cndct_num), .groups = "drop")
 
-# 5. Aggregate up to research_id level to get total A, B, C charges pre-treatment
-charges_by_person_cat <- pretreat_counts %>%
-  group_by(research_id, cndct_chrg_cat, cndct_num) %>%
-  summarise(cndct_pretreat_all_count = sum(n_charges), .groups = "drop")
+# 5. Pivot wide
+pretreat_cat_counts_wide <- pretreat_cat_counts %>%
+  pivot_wider(
+    names_from = cndct_charge_cat_most_serious,
+    values_from = count,
+    names_glue = "cndct_pretreat_all_count_{tolower(cndct_charge_cat_most_serious)}",
+    values_fill = 0
+  )
 
-# 6. get months pre-treatment per person
-pretreat_window <- conduct_rct %>%
-  distinct(research_id, adm_rct, rct_treat_dt, cndct_num) %>%
+# 6. create person-level pre-treatment duration (in months) for rates
+pretreat_window <- pretreat_cat_counts_wide %>%
+  distinct(research_id, adm_rct, rct_treat_dt) %>%
   mutate(months_pre = as.numeric(difftime(rct_treat_dt, adm_rct, units = "days")) / 30.44)
 
-# 7. join and calculate rates
-pretreat_rates <- charges_by_person_cat  %>%
-  left_join(pretreat_window, by = "cndct_num") %>%
-  mutate(cndct_pretreat_all_rate = cndct_pretreat_all_count / months_pre)
-
-# 8. pivot wider so each category becomes its own column
-pretreat_rates_wide <- pretreat_rates %>%
-  select(cndct_num, cndct_chrg_cat, cndct_pretreat_all_count, cndct_pretreat_all_rate) %>%
-  rename(count = cndct_pretreat_all_count, rate = cndct_pretreat_all_rate) %>%
-  pivot_wider(
-    names_from = cndct_chrg_cat,
-    values_from = c(count, rate),
-    # if there are no misconducts fill with a 0
-    values_fill = 0,
-    names_glue = "cndct_pretreat_all_{.value}_{tolower(cndct_chrg_cat)}"
-  )
-
-# 9. combine
+# 7. Join back into conduct_rct
 conduct_rct <- conduct_rct %>%
-  left_join(pretreat_rates_wide, by = "cndct_num")
+  left_join(pretreat_window, by = "research_id")
+
+# 8. Create pre-treatment rates: all misconducts by category
+conduct_rct <- conduct_rct %>%
+  mutate(
+    cndct_pretreat_all_rate_a = cndct_pretreat_all_count_a / months_pre,
+    cndct_pretreat_all_rate_b = cndct_pretreat_all_count_b / months_pre,
+    cndct_pretreat_all_rate_c = cndct_pretreat_all_count_c / months_pre,
+  )
 
 # -- Pretreatment Counts/Rates by Guilty Misconduct Category ####
-# 1. filter only pre-treatment guilty charges
-temp <- conduct_rct %>%
-  filter(
-    !is.na(cndct_chrg_cat),
-    cndct_date >= adm_rct, cndct_date < rct_treat_dt,
-    cndct_guilty == "1"
-  )
+# 1. Filter to pre-treatment GUILTY misconducts
+pretreat_guilty <- conduct_rct %>%
+  distinct(research_id, cndct_num, cndct_charge_cat_most_serious_guilty, cndct_date, rct_treat_dt, adm_rct) %>%
+  filter(!is.na(cndct_charge_cat_most_serious_guilty), !is.na(cndct_date), !is.na(rct_treat_dt)) %>%
+  filter(cndct_date >= adm_rct, cndct_date < rct_treat_dt)
 
-# 2. count guilty charges per misconduct event
-pretreat_counts <- temp %>%
-  group_by(research_id, cndct_num, cndct_chrg_cat) %>%
-  summarise(n_charges = n(), .groups = "drop")
+# 2. Count number of guilty misconducts by most serious category per person
+guilty_cat_counts <- pretreat_guilty %>%
+  group_by(research_id, cndct_charge_cat_most_serious_guilty) %>%
+  summarise(count = n_distinct(cndct_num), .groups = "drop")
 
-# 3. summarize by cndct_num and category
-charges_by_person_cat_guilty <- pretreat_counts %>%
-  group_by(cndct_num, cndct_chrg_cat) %>%
-  summarise(cndct_pretreat_guilty_count = sum(n_charges), .groups = "drop")
-
-# 4. join and calculate guilty rate
-pretreat_rates <- charges_by_person_cat_guilty %>%
-  left_join(pretreat_window, by = "cndct_num") %>%
-  mutate(cndct_pretreat_guilty_rate = cndct_pretreat_guilty_count / months_pre)
-
-# 5. pivot wider 
-pretreat_rates_wide <- pretreat_rates %>%
-  select(cndct_num, cndct_chrg_cat, cndct_pretreat_guilty_count, cndct_pretreat_guilty_rate) %>%
-  rename(count = cndct_pretreat_guilty_count, rate = cndct_pretreat_guilty_rate) %>%
+# 3. Pivot wide to make each category a new column
+guilty_cat_counts_wide <- guilty_cat_counts %>%
   pivot_wider(
-    names_from = cndct_chrg_cat,
-    values_from = c(count, rate),
-    values_fill = 0,
-    names_glue = "cndct_pretreat_guilty_{.value}_{tolower(cndct_chrg_cat)}"
+    names_from = cndct_charge_cat_most_serious_guilty,
+    values_from = count,
+    names_glue = "cndct_pretreat_guilty_count_{tolower(cndct_charge_cat_most_serious_guilty)}",
+    values_fill = 0
   )
 
-# 6. join back to df
+# 4. Join into conduct_rct
 conduct_rct <- conduct_rct %>%
-  left_join(pretreat_rates_wide, by = "cndct_num")
+  left_join(guilty_cat_counts_wide, by = "research_id")
+
+# 5. Create pre-treatment rates: guilty misconducts by category
+conduct_rct <- conduct_rct %>%
+  mutate(
+    cndct_pretreat_guilty_rate_a = cndct_pretreat_guilty_count_a / months_pre,
+    cndct_pretreat_guilty_rate_b = cndct_pretreat_guilty_count_b / months_pre,
+    cndct_pretreat_guilty_rate_c = cndct_pretreat_guilty_count_c / months_pre,
+  )
 # ================================================================= ####
 # Temporary Descriptive Stats Britte ####
 
@@ -433,7 +433,7 @@ conduct %>%
   slice_head(n = 10)  # top 10
 # ================================================================= ####
 # Reorganize Variables ####
-conduct <- reorder_vars(conduct)
+conduct_rct <- reorder_vars(conduct_rct)
 # ================================================================= ####
 # Save Dataframe ####
 saveRDS(conduct, file = "data/processed/de_identified/2_conduct_cleaned.Rds")
