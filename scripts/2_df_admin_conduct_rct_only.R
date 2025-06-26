@@ -48,8 +48,7 @@ standardize_uppercase <- function(x) {
 # -- Read in Data ####
 conduct <- readRDS("data/processed/de_identified/1b_conduct_masked.Rds")
 admission <- readRDS("data/processed/de_identified/2b_admissions.Rds")
-
-
+randassign <- readRDS("data/processed/de_identified/1b_randassign_masked.Rds")
 # ================================================================= ####
 # Code to align with merged administrative data files ####
 conduct$date_datapull <- ymd(20250623)
@@ -98,6 +97,21 @@ comment(conduct$vrdict_guilty_raw) <-  "raw data, not fully cleaned variable ava
 comment(conduct$category_charge1_raw) <- "raw data, no cleaned variable available (6/4/25)"
 comment(conduct$chrg_description_raw) <- "raw data, cleaned variable available as cndct_chrg_desc (6/4/25)"
 # ================================================================= ####
+# Merge in treatment status and treatment date and subset to rct sample ####
+admission <- admission %>% 
+  filter(rct %in% c(0,1)) %>%
+  distinct(research_id, adm_rct, rct_treat_dt, rct_treat_wave, rct_stratum, rct)
+
+conduct_rct <- conduct %>%
+  left_join(admission, 
+            by = "research_id",
+            relationship = "many-to-one") %>%
+  filter(!is.na(adm_rct)) %>%
+  # Drop all misconducts before the rct admission
+  filter(cndct_date > adm_rct)
+
+rm(conduct)
+# ================================================================= ####
 # New Variables ####
 # -- Misconduct Count by Individual ####
 # count by individual the number of misconduct incidents prior to the date of the first wave
@@ -106,12 +120,15 @@ comment(conduct$chrg_description_raw) <- "raw data, cleaned variable available a
 # -- define wave dates
 
 rand_dates <- tibble(
-  wave = 0:7,
-  rand_date = as.Date(c(rand1_date, rand1_date, rand2_date, rand3_date, 
+  wave = c(0,1,2,2.5,3,4,5,6,7),
+  rand_date = as.Date(c(rand1_date, rand1_date, rand2_date, 
+                        rand2.5_date,
+                        rand3_date, 
                         rand4_date, rand5_date, rand6_date, rand7_date)))
 
 # -- Get unique misconducts with date
-misconducts <- conduct %>%
+# -- -- count based on misconduct number meaning there could be multiple charges but only counted as one
+misconducts <- conduct_rct %>%
   select(research_id, cndct_num, cndct_date) %>%
   distinct() %>%
   mutate(cndct_date = as.Date(cndct_date))
@@ -129,13 +146,31 @@ cumulative_counts <- misconducts_expanded %>%
   pivot_wider(names_from = varname, values_from = cum_cndct)
 
 # -- Join back into your original conduct data
-conduct <- conduct %>%
+conduct_rct <- conduct_rct %>%
   left_join(cumulative_counts, by = "research_id")
+
+
+conduct_rct <- conduct_rct %>%
+  mutate(
+    cndct_pretreat_all = case_when(
+      rct_treat_wave == 0 ~ cndct_rand0_all,
+      rct_treat_wave == 1 ~ cndct_rand1_all,
+      rct_treat_wave == 2 ~ cndct_rand2_all,
+      rct_treat_wave == 2.5 ~ cndct_rand2.5_all,
+      rct_treat_wave == 3 ~ cndct_rand3_all,
+      rct_treat_wave == 4 ~ cndct_rand4_all,
+      rct_treat_wave == 5 ~ cndct_rand5_all,
+      rct_treat_wave == 6 ~ cndct_rand6_all,
+      rct_treat_wave == 7 ~ cndct_rand7_all,
+      TRUE ~ NA_real_
+    )
+  ) %>%
+  ungroup()
 
 # -- Guilty Misconduct Count by Individual ####
 # only the conducts in which people were found guilty
 # -- Filter misconducts to those that were found guilty ("001")
-guilty_misconducts <- conduct %>%
+guilty_misconducts <- conduct_rct %>%
   filter(cndct_guilty == "1") %>%
   select(research_id, cndct_num, cndct_date) %>%
   distinct() %>%
@@ -161,22 +196,36 @@ names(guilty_counts) <- names(guilty_counts) %>%
   gsub("^cndct_rand(\\d+)$", "cndct_rand\\1_guilty", .)
 
 # -- Join back into conduct
-conduct <- conduct %>%
+conduct_rct <- conduct_rct %>%
   select(-starts_with("cndct_rand")) %>%
   left_join(cumulative_counts, by = "research_id") %>%
   left_join(guilty_counts, by = "research_id")
 
+conduct_rct <- conduct_rct %>%
+  rename(cndct_rand2.5_guilty = cndct_rand2.5)
+
+conduct_rct <- conduct_rct %>%
+  mutate(
+    cndct_pretreat_guilty = case_when(
+      rct_treat_wave == 0 ~ cndct_rand0_guilty,
+      rct_treat_wave == 1 ~ cndct_rand1_guilty,
+      rct_treat_wave == 2 ~ cndct_rand2_guilty,
+      rct_treat_wave == 2.5 ~ cndct_rand2.5_guilty,
+      rct_treat_wave == 3 ~ cndct_rand3_guilty,
+      rct_treat_wave == 4 ~ cndct_rand4_guilty,
+      rct_treat_wave == 5 ~ cndct_rand5_guilty,
+      rct_treat_wave == 6 ~ cndct_rand6_guilty,
+      rct_treat_wave == 7 ~ cndct_rand7_guilty,
+      TRUE ~ NA_real_
+    )
+  ) %>%
+  ungroup()
+
+
 # -- Misconduct Monthly Rate ####
-admission <- admission %>% 
-  filter(rct %in% c(0,1)) %>%
-  distinct(research_id, adm_rct, rct_treat_dt, rct_treat_wave)
-
-conduct <- conduct %>%
-  left_join(admission %>% select(research_id, adm_rct, rct_treat_wave), by = "research_id")
-
 add_pretreatment_rates <- function(conduct, admission) {
   
-  for (i in 0:7) {
+  for (i in c(0,1,2,2.5,3,4,5,6,7)) {
     date_col <- sym(paste0("rand", i, "_date"))
     count_col <- sym(paste0("cndct_rand", i, "_all"))
     rate_col  <- paste0("cndct_mnthly_rand", i, "_all")
@@ -193,6 +242,7 @@ add_pretreatment_rates <- function(conduct, admission) {
         rct_treat_wave == 0 ~ cndct_mnthly_rand0_all,
         rct_treat_wave == 1 ~ cndct_mnthly_rand1_all,
         rct_treat_wave == 2 ~ cndct_mnthly_rand2_all,
+        rct_treat_wave == 2.5 ~ cndct_mnthly_rand2.5_all,
         rct_treat_wave == 3 ~ cndct_mnthly_rand3_all,
         rct_treat_wave == 4 ~ cndct_mnthly_rand4_all,
         rct_treat_wave == 5 ~ cndct_mnthly_rand5_all,
@@ -205,12 +255,12 @@ add_pretreatment_rates <- function(conduct, admission) {
   
   return(conduct)
 }
-conduct <- add_pretreatment_rates(conduct,admission)
+conduct_rct <- add_pretreatment_rates(conduct_rct,admission)
 
 # -- Misconduct Monthly Guilty Rate ####
 add_pretreatment_guilty_rates <- function(conduct, admission) {
   
-  for (i in 0:7) {
+  for (i in c(0,1,2,2.5,3,4,5,6,7)) {
     date_col <- sym(paste0("rand", i, "_date"))
     count_col <- sym(paste0("cndct_rand", i, "_guilty"))
     rate_col  <- paste0("cndct_mnthly_rand", i, "_guilty")
@@ -223,10 +273,11 @@ add_pretreatment_guilty_rates <- function(conduct, admission) {
   
   conduct <- conduct %>%
     mutate(
-      cndct_mnthly_pretreat_all = case_when(
+      cndct_mnthly_pretreat_guilty = case_when(
         rct_treat_wave == 0 ~ cndct_mnthly_rand0_guilty,
         rct_treat_wave == 1 ~ cndct_mnthly_rand1_guilty,
         rct_treat_wave == 2 ~ cndct_mnthly_rand2_guilty,
+        rct_treat_wave == 2.5 ~ cndct_mnthly_rand2.5_guilty,
         rct_treat_wave == 3 ~ cndct_mnthly_rand3_guilty,
         rct_treat_wave == 4 ~ cndct_mnthly_rand4_guilty,
         rct_treat_wave == 5 ~ cndct_mnthly_rand5_guilty,
@@ -239,10 +290,34 @@ add_pretreatment_guilty_rates <- function(conduct, admission) {
   
   return(conduct)
 }
-conduct <- add_pretreatment_guilty_rates(conduct,admission)
+conduct_rct <- add_pretreatment_guilty_rates(conduct_rct,admission)
+
+# Keep only the pretreatment columns ####
+# Vector of column names you want to subset from
+vars_to_consider <- grep("all|guilty", names(conduct_rct), value = TRUE)
+
+# Filter only those that contain '_pretreat_'
+vars_to_keep <- vars_to_consider[grepl("_pretreat_", vars_to_consider)]
+
+# Drop all vars_to_consider except those in vars_to_keep
+conduct_rct <- conduct_rct |>
+  select(-all_of(setdiff(vars_to_consider, vars_to_keep)))
+
+# Set all NA values to zero
+conduct_rct[is.na(conduct_rct)] <- 0
 
 # ================================================================= ####
-# Temporary Descriptive Stats ####
+# Temporary Descriptive Stats Britte ####
+
+temp <- conduct_rct %>%
+  distinct(research_id, rct, rct_stratum, cndct_pretreat_all,
+           cndct_pretreat_guilty, cndct_mnthly_pretreat_all, cndct_mnthly_pretreat_guilty)
+
+summary(temp$cndct_mnthly_pretreat_all[temp$rct==1])
+summary(temp$cndct_mnthly_pretreat_all[temp$rct==0])
+
+# ================================================================= ####
+# Temporary Descriptive Stats Gabby ####
 # -- number of misconducts per unique control number
 # -- -- NOTE: individuals are only in this dataset if they have committed atleast
 #             one misconduct, does not include anyone with 0 misconducts

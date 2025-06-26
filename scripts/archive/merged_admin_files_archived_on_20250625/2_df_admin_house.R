@@ -25,10 +25,6 @@ remove_leading_zeros <- function(x) {
 }
 # -- Read in Data ####
 house <- readRDS("data/processed/de_identified/1b_house_masked.Rds")
-# ================================================================= ####
-# Code to align with merged administrative data files ####
-house$date_datapull <- ymd(20250623)
-house$wave <- 0
 # =================================================================== ####
 # Rename Raw Variables ####
 # Append _raw to all columns except specified columns

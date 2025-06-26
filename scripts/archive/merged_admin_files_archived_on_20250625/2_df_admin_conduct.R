@@ -51,10 +51,6 @@ admission <- readRDS("data/processed/de_identified/2b_admissions.Rds")
 
 
 # ================================================================= ####
-# Code to align with merged administrative data files ####
-conduct$date_datapull <- ymd(20250623)
-conduct$wave <- 0
-# ================================================================= ####
 # Rename Raw Variables ####
 # Append _raw to all columns except specified columns
 conduct <- conduct |>
@@ -72,7 +68,7 @@ conduct <- conduct %>%
   # -- standardize wave by removing decimal
   mutate(wave = floor(as.numeric(wave))) %>%
   # DATES
-  mutate(cndct_date = ymd(cndct_date)) %>%
+  mutate(cndct_date = ymd(as_date(cndct_date))) %>%
   # MISCONDUCT
   mutate(cndct_chrg_desc = standardize_uppercase(cndct_chrg_desc)) %>%
   # -- some entries for cndct_guilty have 2 leading zeros, drop these for standardization
@@ -167,6 +163,14 @@ conduct <- conduct %>%
   left_join(guilty_counts, by = "research_id")
 
 # -- Misconduct Monthly Rate ####
+
+# cndct_mnthly_pretreat_all
+# cndct_mnthly_pretreat_guilty
+# cndct_mnthly_rand1_all
+# cndct_mnthly_rand1_guilty
+# cndct_rand1_all
+# cndct_rand1_guilty
+
 admission <- admission %>% 
   filter(rct %in% c(0,1)) %>%
   distinct(research_id, adm_rct, rct_treat_dt, rct_treat_wave)
@@ -240,6 +244,9 @@ add_pretreatment_guilty_rates <- function(conduct, admission) {
   return(conduct)
 }
 conduct <- add_pretreatment_guilty_rates(conduct,admission)
+
+# ================================================================= ####
+# Merge in RCT Data + Calculate Conduct Rates Pre and Post Treatment ####
 
 # ================================================================= ####
 # Temporary Descriptive Stats ####

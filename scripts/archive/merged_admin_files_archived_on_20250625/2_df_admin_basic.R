@@ -57,10 +57,6 @@ standardize_uppercase <- function(x) {
 basic <- readRDS("data/processed/de_identified/1b_basic_masked.Rds")
 randassign <- readRDS("data/processed/de_identified/1b_randassign_masked.Rds")
 # ================================================================= ####
-# Code to align with merged administrative data files ####
-basic$date_datapull <- ymd(20250623)
-basic$wave <- 0
-# ================================================================= ####
 # Rename raw variables ####
 # Append _raw to all columns except specified columns
 basic <- basic |>
@@ -80,7 +76,7 @@ basic <- basic %>%
          sent_max_expir_dt = max_expir_date_raw,
          sent_max_expir_recmp_dt = RecmpMax_Dt_raw,
          sent_commitment_cnty = cnty_name_raw,
-         sent_off_asca = Ranking_raw)%>%
+         sent_off_asca = `ASCA Category - Ranked_raw`)%>%
   mutate(chg_off_code = offense_code_raw,
          chg_des = offense_raw) %>%
   mutate(pris_loc = location_permanent_raw,
@@ -90,8 +86,8 @@ basic <- basic %>%
          dem_sex = sex_raw,
          dem_marital = marital_status_code_raw,
          dem_edu_grade = grade_complete_raw,
-         dem_mhcode = mh_code_raw,
-         dem_stg_yes = stg_raw) %>%
+         dem_mhcode = MHCode_raw,
+         dem_stg_yes = STG_raw) %>%
   relocate(ends_with("_raw"), .after = last_col()) 
 
 # Clean variables ####
@@ -249,7 +245,7 @@ comment(basic$commit_cnty_raw) <- "raw data, cleaned non raw variable avail as s
 comment(basic$cnty_name_raw) <- "raw data, cleaned non raw variable avail as sent_comitment_cnty"
 comment(basic$offense_code_raw) <- "raw data, cleaned non raw variable avail as chg_off_code"
 comment(basic$offense_raw) <- "raw data, cleaned non raw variable avail as chg_des"
-comment(basic$Ranking_raw) <- "raw data, cleaned non raw variable avail as sent_off_asca"
+comment(basic$`ASCA Category - Ranked_raw`) <- "raw data, cleaned non raw variable avail as sent_off_asca"
 comment(basic$min_expir_date_raw) <- "raw data, cleaned non raw variable avail as sent_min_expir_dt"
 comment(basic$max_expir_date_raw) <- "raw data, cleaned non raw variable avail as sent_max_expir_dt"
 comment(basic$RecmpMax_Dt_raw) <- "raw data, cleaned non raw variable avail as sent_max_expir_recmp_dt"
@@ -261,8 +257,8 @@ comment(basic$sex_raw) <- "raw data, cleaned non raw variable avail as dem_sex"
 comment(basic$marital_status_code_raw) <- "raw data, cleaned non raw variable avail as dem_marital"
 comment(basic$marital_status_raw) <- "raw data, cleaned non raw variable avail as dem_marital"
 comment(basic$grade_complete_raw) <- "raw data, cleaned non raw variable avail as dem_edu_grade"
-comment(basic$mh_code_raw) <-"raw data, cleaned non raw variable avail as dem_mhcode"
-comment(basic$stg_raw) <- "raw data, cleaned non raw variable avail as dem_stg_yes"
+comment(basic$MHCode_raw) <-"raw data, cleaned non raw variable avail as dem_mhcode"
+comment(basic$STG_raw) <- "raw data, cleaned non raw variable avail as dem_stg_yes"
 
 # ================================================================= ####
 # Merge in treatment status ####
@@ -311,7 +307,7 @@ basic <- basic %>%
 # ================================================================= ####
 # Crude De-duplication ####
 basic <- basic |>
-  arrange(research_id, desc(sent_min_in_days)) %>%
+  arrange(research_id, wave, desc(sent_min_in_days)) %>%
   # Keep only the first time we pulled data for this person 
   # -- For the majority of people, this will be the conviction for the admission
   # -- that is linked to their RCT participation 

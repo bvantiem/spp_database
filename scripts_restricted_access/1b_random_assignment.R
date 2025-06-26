@@ -232,10 +232,6 @@ saveRDS(randassign, file="data_restricted_access/processed/identified/1b_randass
 i <- unique(control_lookup$control_number)
 id.link <- mask_control_nos(i) # Generate masked Research IDs
 
-# Missing data on 3 individuals in our sample! TODO ####
-# Temporarily assign them zz9999 
-randassign[which(is.na(randassign$control_number)),"control_number"] <- "zz9999"
-
 randassign_masked <- randassign %>%
   left_join(id.link, by = "control_number") %>%
   select(-any_of(c("inmate_id", "control_number"))) %>%
