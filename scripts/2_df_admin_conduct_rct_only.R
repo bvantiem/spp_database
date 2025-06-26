@@ -275,14 +275,14 @@ for (i in c(0,1,2,2.5,3,4,5,6,7)) {
   count_col <- sym(paste0("cndct_rand", i, "_guilty"))
   rate_col  <- paste0("cndct_mnthly_rand", i, "_guilty")
     
-  conduct <- conduct %>%
+  conduct_rct <- conduct_rct %>%
     mutate(
       !!rate_col := !!count_col / (as.numeric(!!date_col - adm_rct) / 30) 
     )
 }
  
 # 2. Create single pre-treatment guilty rate column based on rct_treat_wave 
-conduct <- conduct %>%
+conduct_rct <- conduct_rct %>%
   mutate(
     cndct_mnthly_pretreat_guilty = case_when(
       rct_treat_wave == 0 ~ cndct_mnthly_rand0_guilty,
@@ -301,12 +301,12 @@ conduct <- conduct %>%
 
 
 
-# Keep only the pretreatment columns ####
+# Keep only the pretreatment columns and cndct_guilty ####
 # Vector of column names you want to subset from
 vars_to_consider <- grep("all|guilty", names(conduct_rct), value = TRUE)
 
 # Filter only those that contain '_pretreat_'
-vars_to_keep <- vars_to_consider[grepl("_pretreat_", vars_to_consider)]
+vars_to_keep <- vars_to_consider[grepl("_pretreat_|cndct_guilty", vars_to_consider)]
 
 # Drop all vars_to_consider except those in vars_to_keep
 conduct_rct <- conduct_rct |>
