@@ -11,13 +11,6 @@
 # -- -- Once we have admit dates, add variables for the number and rate of incidences
 # in most recent sentence
 # 1. pre treatment counts and rates by misconduct category
-# 2. misconduct category equals the most serious charge category in which there was 
-# -- a guilty verdict
-# 3. example: reserach_id XX cndct_num = 1 cndct_charge_cat = A,B but only guilty on B so misconduct category = B
-# Approach:
-# 4. create new column that is called "cndct_charge_cat_most_serious_guilty" that is a constant within cndct_num, 
-# -- for example case it would all be B's 
-# -- -- second column called "cndct_charge_cat_most_serious" calculates most serious charge cat regardless of guilt
 # 5. take similar approach to existing code in calculating numbers and rates but this time by most serious category
 # 6. columns names would be "cndct_pretreat_all", "cndct_pretreat_guilty", "cndct_pretreat_all_mnthly", "cndct_pretreat_guilty_mnthly",
 # -- new col names: "cndct_pretreat_all_a", "cndct_pretreat_guilty_a", etc.
