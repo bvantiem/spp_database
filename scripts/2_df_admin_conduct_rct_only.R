@@ -10,10 +10,6 @@
 # but want to confirm with PADOC
 # -- -- Once we have admit dates, add variables for the number and rate of incidences
 # in most recent sentence
-# 1. pre treatment counts and rates by misconduct category
-# 5. take similar approach to existing code in calculating numbers and rates but this time by most serious category
-# 6. columns names would be "cndct_pretreat_all", "cndct_pretreat_guilty", "cndct_pretreat_all_mnthly", "cndct_pretreat_guilty_mnthly",
-# -- new col names: "cndct_pretreat_all_a", "cndct_pretreat_guilty_a", etc.
 # ================================================================= ####
 # Set up ####
 # -- Prepare environment ####
