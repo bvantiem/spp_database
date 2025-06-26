@@ -315,6 +315,25 @@ conduct_rct <- conduct_rct |>
 # Set all NA values to zero
 conduct_rct[is.na(conduct_rct)] <- 0
 
+# -- Pretreatment Counts by Misconduct Category ####
+# -- -- create new column with the highest cndct_charge_cat per misconduct number ("cndct_charge_cat_most_serious")
+conduct_rct <- conduct_rct %>%
+  group_by(research_id, cndct_num) %>%
+  # -- build new column with the lowest alphabetical letter (aka highest charge cat)
+  mutate(cndct_charge_cat_most_serious = min(cndct_chrg_cat, na.rm = TRUE)) %>%
+  ungroup()
+# -- -- create another column with the highest cndct_charge_cat found guilty of per misconduct number ("cndct_charge_cat_most_serious_guilty")
+conduct_rct <- conduct_rct %>%
+  group_by(research_id, cndct_num) %>%
+  mutate(
+    cndct_charge_cat_most_serious_guilty = if (any(cndct_guilty == "1")) {
+      min(cndct_chrg_cat[cndct_guilty == "1"], na.rm = TRUE)
+    } else {
+      NA
+    }
+  ) %>%
+  ungroup()
+# -- Pretreatment Rates by Misconduct Category ####
 # ================================================================= ####
 # Temporary Descriptive Stats Britte ####
 
