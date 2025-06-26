@@ -10,6 +10,17 @@
 # but want to confirm with PADOC
 # -- -- Once we have admit dates, add variables for the number and rate of incidences
 # in most recent sentence
+# 1. pre treatment counts and rates by misconduct category
+# 2. misconduct category equals the most serious charge category in which there was 
+# -- a guilty verdict
+# 3. example: reserach_id XX cndct_num = 1 cndct_charge_cat = A,B but only guilty on B so misconduct category = B
+# Approach:
+# 4. create new column that is called "cndct_charge_cat_most_serious_guilty" that is a constant within cndct_num, 
+# -- for example case it would all be B's 
+# -- -- second column called "cndct_charge_cat_most_serious" calculates most serious charge cat regardless of guilt
+# 5. take similar approach to existing code in calculating numbers and rates but this time by most serious category
+# 6. columns names would be "cndct_pretreat_all", "cndct_pretreat_guilty", "cndct_pretreat_all_mnthly", "cndct_pretreat_guilty_mnthly",
+# -- new col names: "cndct_pretreat_all_a", "cndct_pretreat_guilty_a", etc.
 # ================================================================= ####
 # Set up ####
 # -- Prepare environment ####
@@ -223,74 +234,72 @@ conduct_rct <- conduct_rct %>%
 
 
 # -- Misconduct Monthly Rate ####
-add_pretreatment_rates <- function(conduct, admission) {
+# Calculate monthly misconduct rates before treatment using rct_treat_wave
+
+# 1. Loop through waves 0–7 + 2.5 to create monthly misconduct rate variables
+for (i in c(0, 1, 2, 2.5, 3, 4, 5, 6, 7)) {
+  date_col <- sym(paste0("rand", i, "_date"))
+  count_col <- sym(paste0("cndct_rand", i, "_all"))
+  rate_col  <- paste0("cndct_mnthly_rand", i, "_all")
   
-  for (i in c(0,1,2,2.5,3,4,5,6,7)) {
-    date_col <- sym(paste0("rand", i, "_date"))
-    count_col <- sym(paste0("cndct_rand", i, "_all"))
-    rate_col  <- paste0("cndct_mnthly_rand", i, "_all")
-    
-    conduct <- conduct %>%
-      mutate(
-        !!rate_col := !!count_col / (as.numeric(!!date_col - adm_rct) / 30)
-      )
-  }
-  
-  conduct <- conduct %>%
+  conduct_rct <- conduct_rct %>%
     mutate(
-      cndct_mnthly_pretreat_all = case_when(
-        rct_treat_wave == 0 ~ cndct_mnthly_rand0_all,
-        rct_treat_wave == 1 ~ cndct_mnthly_rand1_all,
-        rct_treat_wave == 2 ~ cndct_mnthly_rand2_all,
-        rct_treat_wave == 2.5 ~ cndct_mnthly_rand2.5_all,
-        rct_treat_wave == 3 ~ cndct_mnthly_rand3_all,
-        rct_treat_wave == 4 ~ cndct_mnthly_rand4_all,
-        rct_treat_wave == 5 ~ cndct_mnthly_rand5_all,
-        rct_treat_wave == 6 ~ cndct_mnthly_rand6_all,
-        rct_treat_wave == 7 ~ cndct_mnthly_rand7_all,
-        TRUE ~ NA_real_
-      )
-    ) %>%
-    ungroup()
-  
-  return(conduct)
+      !!rate_col := !!count_col / (as.numeric(!!date_col - adm_rct) / 30)
+    )
 }
-conduct_rct <- add_pretreatment_rates(conduct_rct,admission)
+
+# 2. Create single pre-treatment misconduct rate column based on rct_treat_wave
+conduct_rct <- conduct_rct %>%
+  mutate(
+    cndct_mnthly_pretreat_all = case_when(
+      rct_treat_wave == 0   ~ cndct_mnthly_rand0_all,
+      rct_treat_wave == 1   ~ cndct_mnthly_rand1_all,
+      rct_treat_wave == 2   ~ cndct_mnthly_rand2_all,
+      rct_treat_wave == 2.5 ~ cndct_mnthly_rand2.5_all,
+      rct_treat_wave == 3   ~ cndct_mnthly_rand3_all,
+      rct_treat_wave == 4   ~ cndct_mnthly_rand4_all,
+      rct_treat_wave == 5   ~ cndct_mnthly_rand5_all,
+      rct_treat_wave == 6   ~ cndct_mnthly_rand6_all,
+      rct_treat_wave == 7   ~ cndct_mnthly_rand7_all,
+      TRUE ~ NA_real_
+    )
+  ) %>%
+  ungroup()
 
 # -- Misconduct Monthly Guilty Rate ####
-add_pretreatment_guilty_rates <- function(conduct, admission) {
-  
-  for (i in c(0,1,2,2.5,3,4,5,6,7)) {
-    date_col <- sym(paste0("rand", i, "_date"))
-    count_col <- sym(paste0("cndct_rand", i, "_guilty"))
-    rate_col  <- paste0("cndct_mnthly_rand", i, "_guilty")
+# Calculate monthly guilty rates before treatment using rct_treat_wave
+
+# 1. Loop through waves 0–7 + 2.5 to create monthly guilty rate variables
+for (i in c(0,1,2,2.5,3,4,5,6,7)) {
+  date_col <- sym(paste0("rand", i, "_date"))
+  count_col <- sym(paste0("cndct_rand", i, "_guilty"))
+  rate_col  <- paste0("cndct_mnthly_rand", i, "_guilty")
     
-    conduct <- conduct %>%
-      mutate(
-        !!rate_col := !!count_col / (as.numeric(!!date_col - adm_rct) / 30)
-      )
-  }
-  
   conduct <- conduct %>%
     mutate(
-      cndct_mnthly_pretreat_guilty = case_when(
-        rct_treat_wave == 0 ~ cndct_mnthly_rand0_guilty,
-        rct_treat_wave == 1 ~ cndct_mnthly_rand1_guilty,
-        rct_treat_wave == 2 ~ cndct_mnthly_rand2_guilty,
-        rct_treat_wave == 2.5 ~ cndct_mnthly_rand2.5_guilty,
-        rct_treat_wave == 3 ~ cndct_mnthly_rand3_guilty,
-        rct_treat_wave == 4 ~ cndct_mnthly_rand4_guilty,
-        rct_treat_wave == 5 ~ cndct_mnthly_rand5_guilty,
-        rct_treat_wave == 6 ~ cndct_mnthly_rand6_guilty,
-        rct_treat_wave == 7 ~ cndct_mnthly_rand7_guilty,
-        TRUE ~ NA_real_
-      )
-    ) %>%
-    ungroup()
-  
-  return(conduct)
+      !!rate_col := !!count_col / (as.numeric(!!date_col - adm_rct) / 30) 
+    )
 }
-conduct_rct <- add_pretreatment_guilty_rates(conduct_rct,admission)
+ 
+# 2. Create single pre-treatment guilty rate column based on rct_treat_wave 
+conduct <- conduct %>%
+  mutate(
+    cndct_mnthly_pretreat_guilty = case_when(
+      rct_treat_wave == 0 ~ cndct_mnthly_rand0_guilty,
+      rct_treat_wave == 1 ~ cndct_mnthly_rand1_guilty,
+      rct_treat_wave == 2 ~ cndct_mnthly_rand2_guilty,
+      rct_treat_wave == 2.5 ~ cndct_mnthly_rand2.5_guilty,
+      rct_treat_wave == 3 ~ cndct_mnthly_rand3_guilty,
+      rct_treat_wave == 4 ~ cndct_mnthly_rand4_guilty,
+      rct_treat_wave == 5 ~ cndct_mnthly_rand5_guilty,
+      rct_treat_wave == 6 ~ cndct_mnthly_rand6_guilty,
+      rct_treat_wave == 7 ~ cndct_mnthly_rand7_guilty,
+      TRUE ~ NA_real_
+    )
+  ) %>%
+  ungroup()
+
+
 
 # Keep only the pretreatment columns ####
 # Vector of column names you want to subset from
