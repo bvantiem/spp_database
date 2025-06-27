@@ -19,6 +19,9 @@
 # -- count of unique misconduct numbers by individual prior to rct_treat_dt on which they were found guilty on atleast one charge
 # cndct_pretreat_guilty_count_a
 # -- count of unique misconduct numbers by individual prior to rct_treat_dt on which the most serious charge on which they were found guilty was cat a
+# cndct_posttreat_all
+# -- count of unique misconduct numbers by individual from rct_treat_dt to rel_rct for people who have an rel_rct date,
+# -- -- and from rct_treat_dt to date_datapull if there is no rel_rct date (still in custody)
 # ================================================================= ####
 # Set up ####
 # -- Prepare environment ####
@@ -58,10 +61,6 @@ standardize_uppercase <- function(x) {
 conduct <- readRDS("data/processed/de_identified/1b_conduct_masked.Rds")
 admission <- readRDS("data/processed/de_identified/2b_admissions.Rds")
 randassign <- readRDS("data/processed/de_identified/1b_randassign_masked.Rds")
-# ================================================================= ####
-# Code to align with merged administrative data files ####
-conduct$date_datapull <- ymd(20250623)
-conduct$wave <- 0
 # ================================================================= ####
 # Rename Raw Variables ####
 # Append _raw to all columns except specified columns
@@ -363,7 +362,7 @@ conduct_rct <- conduct_rct %>%
   left_join(pretreat_window, by = "research_id")
 
 
-# -- Pretreatment Counts/Rates by Guilty Misconduct Category ####
+# -- Pretreatment Counts/Rates by Guilty Misconduct Category -- CODE BREAKS HERE ####
 # 1. Filter to pre-treatment GUILTY misconducts
 pretreat_guilty <- conduct_rct %>%
   distinct(research_id, cndct_num, cndct_charge_cat_most_serious_guilty, cndct_date, rct_treat_dt, adm_rct) %>%
@@ -388,6 +387,12 @@ guilty_cat_counts_wide <- guilty_cat_counts %>%
 conduct_rct <- conduct_rct %>%
   left_join(guilty_cat_counts_wide, by = "research_id")
 
+# ================================================================= ####
+# Reorganize Variables ####
+conduct_rct <- reorder_vars(conduct_rct)
+# ================================================================= ####
+# Save Dataframe ####
+saveRDS(conduct, file = "data/processed/de_identified/2_conduct_cleaned.Rds")
 # ================================================================= ####
 # Temporary Descriptive Stats Britte ####
 
@@ -417,10 +422,3 @@ conduct %>%
 conduct %>%
   count(cndct_chrg_desc, sort = TRUE) %>%
   slice_head(n = 10)  # top 10
-# ================================================================= ####
-# Reorganize Variables ####
-conduct_rct <- reorder_vars(conduct_rct)
-# ================================================================= ####
-# Save Dataframe ####
-saveRDS(conduct, file = "data/processed/de_identified/2_conduct_cleaned.Rds")
-# ================================================================= ####
