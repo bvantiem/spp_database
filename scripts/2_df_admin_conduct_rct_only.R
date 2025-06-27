@@ -369,7 +369,8 @@ pretreat_window <- pretreat_cat_counts_wide %>%
 
 # 7. Join back into conduct_rct
 conduct_rct <- conduct_rct %>%
-  left_join(pretreat_window, by = c("research_id", "adm_rct", "rct_treat_dt"))
+  left_join(pretreat_window, by = c("research_id", "adm_rct", "rct_treat_dt")) %>%
+  select(-months_pre)
 
 
 # -- Pretreatment Counts/Rates by Guilty Misconduct Category ####
@@ -395,8 +396,12 @@ guilty_cat_counts_wide <- guilty_cat_counts %>%
 
 # 4. Join into conduct_rct
 conduct_rct <- conduct_rct %>%
-  left_join(guilty_cat_counts_wide, by = "research_id")
-
+  left_join(guilty_cat_counts_wide, by = "research_id") %>%
+  # -- replace NA (for no guilty misconducts) with 0
+  mutate(across(
+    starts_with("cndct_pretreat_guilty_count_"),
+    ~ replace_na(., 0)
+  ))
 # ================================================================= ####
 # Reorganize Variables ####
 conduct_rct <- reorder_vars(conduct_rct)
