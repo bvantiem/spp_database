@@ -417,6 +417,9 @@ for (cat in c("a", "b", "c")) {
 # -- -- drop helper column
 conduct_rct <- conduct_rct %>% 
   select(-"months_pre")
+# -- Posttreatment Counts by Misconduct Category ####
+# -- Posttreatment Counts by Guilt Misconduct Category ####
+# -- Posttreatment Rates by Misconduct Cat for All and Guilty Misconducts ####
 # ================================================================= ####
 # Reorganize Variables ####
 conduct_rct <- reorder_vars(conduct_rct)
