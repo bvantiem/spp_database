@@ -10,7 +10,7 @@
 # but want to confirm with PADOC
 # -- -- Once we have admit dates, add variables for the number and rate of incidences
 # in most recent sentence
-# Definitions: (find home for)
+# -- Var Definitions: ####
 # cndct_pretreat_all
 # -- count of unique misconduct numbers by individual prior to rct_treat_dt
 # cndct_pretreat_all_count_a
@@ -22,6 +22,16 @@
 # cndct_posttreat_all
 # -- count of unique misconduct numbers by individual from rct_treat_dt to rel_rct for people who have an rel_rct date,
 # -- -- and from rct_treat_dt to date_datapull if there is no rel_rct date (still in custody)
+# cndct_posttreat_all_count_a
+# -- count of unique misconduct numbers by individual from rct_treat_dt to rel_rct for people who have a rel_rct date,
+# -- -- and from rct_treat_dt to date_datapull if there is no rel_rct date, where the most serious charge was cat A.
+# cndct_posttreat_guilty
+# -- count of unique misconduct numbers by individual from rct_treat_dt to rel_rct for people who have a rel_rct date,
+# -- --  and from rct_treat_dt to date_datapull if there is no rel_rct, on which they were found guilty on atleast one charge
+# cndct_posttreat_guilty_count_a
+# -- count of unique misconduct numbers by individual from rct_treat_dt to rel_rct for people who have a rel_rct date,
+# -- -- and from rct_treaT_dt to date_datapull if there is no rel_rct date, where the most serious charge on which they were found
+# -- -- guilty was cat A
 # ================================================================= ####
 # Set up ####
 # -- Prepare environment ####
