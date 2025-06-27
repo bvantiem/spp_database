@@ -369,10 +369,10 @@ pretreat_window <- pretreat_cat_counts_wide %>%
 
 # 7. Join back into conduct_rct
 conduct_rct <- conduct_rct %>%
-  left_join(pretreat_window, by = "research_id")
+  left_join(pretreat_window, by = c("research_id", "adm_rct", "rct_treat_dt"))
 
 
-# -- Pretreatment Counts/Rates by Guilty Misconduct Category -- CODE BREAKS HERE ####
+# -- Pretreatment Counts/Rates by Guilty Misconduct Category ####
 # 1. Filter to pre-treatment GUILTY misconducts
 pretreat_guilty <- conduct_rct %>%
   distinct(research_id, cndct_num, cndct_charge_cat_most_serious_guilty, cndct_date, rct_treat_dt, adm_rct) %>%
