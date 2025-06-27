@@ -237,7 +237,7 @@ house_final %>%
 
 # ================================================================= ####
 # Extract admission stats ####
-admission.stats <- house_final %>%
+admission.stats <- house_final_with_releases %>%
   distinct(research_id,
            adm_date, 
            adm_n_total, 
@@ -253,12 +253,13 @@ admission.stats <- house_final %>%
            rct_treat_wave,
            adm_rct,
            adm_treatment_start_after_n_total,
-           adm_treatment_start_before_n_total)
+           adm_treatment_start_before_n_total,
+           rel_rct)
 
 # ================================================================= ####
 # Save ####
 # -- House with Admission Information ####
-saveRDS(house_final, "data/processed/de_identified/2b_house_with_admissions.Rds")
+saveRDS(house_final_with_releases, "data/processed/de_identified/2b_house_with_admissions.Rds")
 # -- Admission Stats by Research ID ####
 saveRDS(admission.stats, "data/processed/de_identified/2b_admissions.Rds")
 
