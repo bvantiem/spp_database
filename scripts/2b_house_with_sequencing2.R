@@ -215,8 +215,18 @@ house_final_with_releases <- house_final_with_releases %>%
   select(-rel_rct_corrected, -delete_date)
 
 # ================================================================= ####
+# Time treated and time since admission (for RCT Sample Only) ####
+house_final_with_releases_and_treatment_time <- house_final_with_releases %>% 
+  mutate(rel_rct = as.Date(rel_rct),
+         adm_rct = as.Date(adm_rct)) %>% # To do: Fix where we generate this variable 
+  mutate(rct_mnths_to_exit = interval(rct_treat_dt, rct_exit_dt)/months(1),
+         rct_mnths_to_release = interval(rct_treat_dt, rel_rct)/months(1),
+         rct_mnths_since_release = interval(rel_rct, today()) / months(1),
+         rct_mnths_pretreat = interval(adm_rct, rct_treat_dt) / months(1))
+
+# ================================================================= ####
 # Reorder Variables ####
-house_final <- reorder_vars(house_final)
+house_final_with_releases_and_treatment_time <- reorder_vars(house_final_with_releases_and_treatment_time)
 
 # ================================================================= ####
 # Descriptives ####
@@ -237,7 +247,7 @@ house_final %>%
 
 # ================================================================= ####
 # Extract admission stats ####
-admission.stats <- house_final_with_releases %>%
+admission.stats <- house_final_with_releases_and_treatment_time %>%
   distinct(research_id,
            adm_date, 
            adm_n_total, 
@@ -251,6 +261,10 @@ admission.stats <- house_final_with_releases %>%
            rct_stratum,
            rct_treat_dt,
            rct_treat_wave,
+           rct_mnths_to_exit,
+           rct_mnths_to_release,
+           rct_mnths_since_release,
+           rct_mnths_pretreat,
            adm_rct,
            adm_treatment_start_after_n_total,
            adm_treatment_start_before_n_total,
@@ -259,12 +273,9 @@ admission.stats <- house_final_with_releases %>%
 # ================================================================= ####
 # Save ####
 # -- House with Admission Information ####
-saveRDS(house_final_with_releases, "data/processed/de_identified/2b_house_with_admissions.Rds")
+saveRDS(house_final_with_releases_and_treatment_time, "data/processed/de_identified/2b_house_with_admissions.Rds")
 # -- Admission Stats by Research ID ####
 saveRDS(admission.stats, "data/processed/de_identified/2b_admissions.Rds")
-
-  
-
 
 # ================================================================= ####
 # Discarded code ####
