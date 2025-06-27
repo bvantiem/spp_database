@@ -322,7 +322,7 @@ conduct_rct <- conduct_rct |>
 # Set all NA values to zero
 conduct_rct[is.na(conduct_rct)] <- 0
 
-# -- Pretreatment Counts/Rates by Misconduct Category ####
+# -- Pretreatment Counts by Misconduct Category ####
 # -- -- NA for created pretreatment vars is due to having 0 pretreat misconducts (should these be handled differently?)
 # 1. create new column with the highest cndct_charge_cat per misconduct number ("cndct_charge_cat_most_serious")
 conduct_rct <- conduct_rct %>%
@@ -364,16 +364,12 @@ pretreat_cat_counts_wide <- pretreat_cat_counts %>%
 
 # 6. create person-level pre-treatment duration (in months) for rates
 pretreat_window <- pretreat_cat_counts_wide %>%
-  distinct(research_id, adm_rct, rct_treat_dt) %>%
   mutate(months_pre = as.numeric(difftime(rct_treat_dt, adm_rct, units = "days")) / 30.44)
 
 # 7. Join back into conduct_rct
 conduct_rct <- conduct_rct %>%
-  left_join(pretreat_window, by = c("research_id", "adm_rct", "rct_treat_dt")) %>%
-  select(-months_pre)
-
-
-# -- Pretreatment Counts/Rates by Guilty Misconduct Category ####
+  left_join(pretreat_window, by = c("research_id", "adm_rct", "rct_treat_dt"))
+# -- Pretreatment Counts by Guilty Misconduct Category ####
 # 1. Filter to pre-treatment GUILTY misconducts
 pretreat_guilty <- conduct_rct %>%
   distinct(research_id, cndct_num, cndct_charge_cat_most_serious_guilty, cndct_date, rct_treat_dt, adm_rct) %>%
@@ -402,6 +398,25 @@ conduct_rct <- conduct_rct %>%
     starts_with("cndct_pretreat_guilty_count_"),
     ~ replace_na(., 0)
   ))
+# -- Pretreatment Rates by Misconduct Cat for All and Guilty Misconducts ####
+# -- -- Loop through category codes to build rate columns
+for (cat in c("a", "b", "c")) {
+  all_count_col   <- sym(paste0("cndct_pretreat_all_count_", cat))
+  guilty_count_col <- sym(paste0("cndct_pretreat_guilty_count_", cat))
+  
+  all_rate_col    <- paste0("cndct_pretreat_all_rate_", cat)
+  guilty_rate_col <- paste0("cndct_pretreat_guilty_rate_", cat)
+  
+  conduct_rct <- conduct_rct %>%
+    mutate(
+      !!all_rate_col    := !!all_count_col / months_pre,
+      !!guilty_rate_col := !!guilty_count_col / months_pre
+    )
+}
+
+# -- -- drop helper column
+conduct_rct <- conduct_rct %>% 
+  select(-"months_pre")
 # ================================================================= ####
 # Reorganize Variables ####
 conduct_rct <- reorder_vars(conduct_rct)
