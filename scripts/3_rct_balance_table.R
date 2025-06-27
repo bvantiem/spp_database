@@ -19,9 +19,9 @@ source("scripts/0_utils.R")
 randassign <- readRDS("data/processed/de_identified/1b_randassign_masked.Rds")
 basic <- readRDS("data/processed/de_identified/2_basic_cleaned.Rds")
 admissions <- readRDS("data/processed/de_identified/2b_admissions.Rds")
+conduct <- readRDS("data/processed/de_identified/2_conduct_rct_cleaned.Rds")
 
 # ================================================================= ####
-
 # Build dataframe for balance table 
 # -- Merge with static characteristics from basic ####
 data.balance <- left_join(randassign, 
@@ -31,31 +31,49 @@ data.balance <- left_join(randassign,
                                    "dem_marital_married",
                                    "dem_race_black",
                                    "dem_race_white",
-                                   "dem_stg_yes",
                                    "sent_min_in_days",
                                    "sent_max_in_days",
                                    "sent_off_asca_violent",
                                    "sent_off_asca_drugs",
-                                   "sent_off_asca_prop",
-                                   "sent_off_asca_puborder")],
+                                   "sent_off_asca_prop")],
                           by = "research_id",
                           relationship = "one-to-one")
 
-# -- Merge with pretreatment time served in admissions data ####
+# -- Merge with pre-treatment time served in admissions data ####
 # Admissions file is at the admissions level 
 # Subset admissions data to rct sample only
 # Get unique combinations of research_id and rct_time_pretreat 
 admissions_rct <- admissions %>%
   filter(rct %in% c(0,1)) %>%
-  select(research_id, rct_time_pretreat) %>%
+  select(research_id, rct_mnths_pretreat) %>%
   distinct()
 
 # Merge in admissions data 
 data.balance <- left_join(data.balance,
                           admissions_rct[,c("research_id",
-                                        "rct_time_pretreat")],
+                                        "rct_mnths_pretreat")],
                           by = "research_id",
                           relationship = "one-to-one")
+
+# -- Merge with pre-treatment misconduct rates ####
+conduct_by_id <- conduct %>%
+  distinct(research_id, cndct_pretreat_all_rate, cndct_pretreat_all_rate_a)
+
+# Assign people who do not appear in data.balance a zero rate on all columns 
+# -- They don't appear because they did not have incidents 
+data.balance <- data.balance %>%
+  left_join(conduct_by_id, by = "research_id") %>%
+  mutate(
+    across(
+      c(
+        cndct_pretreat_all_rate,
+        cndct_pretreat_all_rate_a,
+      ),
+      ~ replace_na(.x, 0)
+    )
+  )
+
+
 
 # -- Drop lifers ####
 data.balance <- data.balance[which(data.balance$rct_stratum!="lifer"),]
@@ -68,20 +86,22 @@ prepare_summary_column <- function(data.balance){
       # Sentence Characteristics
       r01a_minimum_sentence = sent_min_in_days/365,
       r01b_maximum_sentence = sent_max_in_days/365,
-      r01c_time_served_at_treatment = rct_time_pretreat,
+      r01c_time_served_at_treatment = rct_mnths_pretreat,
       # r01c_life = life,
       # Offense Characteristics
       r02a_violent_offense = sent_off_asca_violent,
       r02b_property_offense = sent_off_asca_prop,
       r02c_drugs_offense = sent_off_asca_drugs,
-      r02d_public_order_offense = sent_off_asca_puborder, 
       # Demographics
       r03a_black = dem_race_black,
       r03b_white = dem_race_white,
       r03c_age_at_treatment = dem_age_at_treatment,
       r03d_married = dem_marital_married,
       r03e_high_school_degree = dem_edu_high_school,
-      r03f_security_threat_group = dem_stg_yes)
+      #Misconduct rates
+      r04a_monthly_misconduct_rate_overall = cndct_pretreat_all_rate,
+      r04b_monthly_misconduct_rate_most_serious = cndct_pretreat_all_rate_a
+      )
   
   tab <- tab %>%
     tidyr::gather(variable, value) %>%
@@ -119,15 +139,39 @@ tab <- cbind(prepare_summary_column(data.balance),
 
 tab$`T-C Diff` <- round(as.numeric(tab$LSU)-as.numeric(tab$Control),3)
 tab$`T-C Diff`[nrow(tab)] <- ""
+tab
 
 # Randomization inference for pvalues ####
 # F-test on Balance test
-data.balance.reg <- data.balance[,c("treated", "stratum", static_vars)]
-balance.test <- lm(treated ~ ., data=data.balance.reg[,-which(names(data.balance.reg)=="stratum")])
+data.balance.reg <- data.balance[,c("rct", 
+                                    "dem_age_at_treatment",
+                                    "dem_edu_high_school",
+                                    "dem_marital_married",
+                                    "dem_race_black",
+                                    "dem_race_white",
+                                    "sent_min_in_days",
+                                    "sent_max_in_days",
+                                    "sent_off_asca_violent",
+                                    "sent_off_asca_drugs",
+                                    "sent_off_asca_prop",
+                                    "rct_mnths_pretreat",
+                                    "cndct_pretreat_all_rate",
+                                    "cndct_pretreat_all_rate_a")]
+
+balance.test <- lm(rct ~ ., data=data.balance.reg)
 summary(balance.test)
 fstat.pvalue.sample <- pf(summary(balance.test)$fstatistic[1],
                           summary(balance.test)$fstatistic[2],
                           summary(balance.test)$fstatistic[3],lower.tail=FALSE)
+
+
+
+# data.balance.reg <- data.balance[,c("rct", "rct_stratum", static_vars)]
+# balance.test <- lm(treated ~ ., data=data.balance.reg[,-which(names(data.balance.reg)=="stratum")])
+# summary(balance.test)
+# fstat.pvalue.sample <- pf(summary(balance.test)$fstatistic[1],
+#                           summary(balance.test)$fstatistic[2],
+#                           summary(balance.test)$fstatistic[3],lower.tail=FALSE)
 
 # Manual randomization inference with 1000 permutations
 # f.stat.list <- list()
