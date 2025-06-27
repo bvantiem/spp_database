@@ -85,6 +85,8 @@ move <- move |>
   mutate(across(everything(), ~ replace(., grepl("^\\s*$", .), NA))) |>
   # -- Some responses were coded as NULL change this to NA
   mutate(across(where(is.character), ~ na_if(., "NULL"))) |>
+  # Remove white space in mve_desc
+  mutate(mve_desc = gsub("\\s+", "", mve_desc)) %>%
   mutate(mve_desc = case_when(
   # -- full description of the move description codes
   # -- RTN (return?), DTT, ATT do not exist in movedescription_raw (33 entries for these)
@@ -116,7 +118,7 @@ move <- move |>
     mve_desc == "SC" ~ "Change - Status Change")) %>%
   # DATES
   # -- put in ymd formate
-  mutate(mve_date = ymd(as_date(mve_date))) 
+  mutate(mve_date = ymd(mve_date))
 # ================================================================= ####
 # Add Notes to Variables ####
 # to view notes added use str() or comment()

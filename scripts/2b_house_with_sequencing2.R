@@ -25,77 +25,14 @@ source("scripts/0_utils.R")
 house <- readRDS("data/processed/de_identified/2_house_cleaned.Rds")
 move <- readRDS("data/processed/de_identified/2_move_cleaned.Rds")
 randassign <- readRDS("data/processed/de_identified/1b_randassign_masked.Rds")
-# ================================================================= ####
-# Deduplicate house ####
-house_deduped <- house |>
-  # Drop fully NA rows 
-  mutate(na_count = rowSums(is.na(across(everything())))) |>
-  filter(na_count<10) |>
-  select(-na_count) |>
-  # Create a group key 
-  # Wave, date_datapull, loc_days_spent, loc_date_out vary across waves
-  # This is very slow if we include all raw columns, too. So specifying columns to group on
-  group_by(across(c(research_id, dem_hndcap, loc_bed_num, loc_bed_stat, loc_bld, loc_cell, loc_date_in, loc_date_out))) |>
-  
-  # Keep only the row with the earliest date_datapull in each group
-  slice_min(order_by = date_datapull, with_ties = FALSE) |>
-  
-  ungroup()
-
-# The last assignment within datapulls has a NA date
-# We want to drop it
-house_deduped2 <- house_deduped %>%
-  # -- Identify the last date within a datapull
-  group_by(date_datapull) %>%
-  mutate(last_date_within_pull = case_when(
-    loc_date_in == max(loc_date_in, na.rm = TRUE) ~ 1,
-    TRUE ~ 0)) %>%
-  ungroup() %>%
-  group_by(research_id) %>%
-  # -- We want to drop this row except when this is the last datapull an individual was a part of.
-  mutate(drop = case_when(
-    last_date_within_pull == 1 & is.na(loc_date_out) & date_datapull != max(date_datapull) ~ 1,
-    TRUE ~ 0)) %>%
-  ungroup() %>%
-  filter(drop == 0) %>%
-  select(-last_date_within_pull, -drop)
-
-# -- Within data pulls, for the last cell assignment, we observe two rows in the data, with the cell number saved as "2016" and as "061", or as "1014" and "014".
-# -- Delete the second observation
-house_deduped3 <- house_deduped2 %>%
-  group_by(research_id) %>%
-  mutate(drop = case_when(
-    date_datapull == max(date_datapull) & nchar(loc_cell)!=4  ~ 1,
-    TRUE ~ 0)) %>%
-  filter(drop == 0) %>%
-  select(-drop)
-
-# -- We sometimes observe one date_in with multiple date_outs for the same individual. When this happens, we often see someone move in and out of a cell on the same day. We delete those instances.
-house_deduped4 <- house_deduped3 %>%
-  group_by(research_id, loc_date_in) %>%
-  mutate(n_date_ins = n()) %>%
-  ungroup() %>%
-  filter(!(n_date_ins > 1 & loc_date_in == loc_date_out)) |>
-  select(-n_date_ins)
-
-# Deduplicate move ####
-move_deduped <- move |>
-  # Create a group key 
-  # Wave, date_datapull, vary across waves
-  # This is very slow if we include all raw columns, too. So specifying columns to group on
-  group_by(across(c(research_id, mve_date, mve_desc))) |>
-  
-  # Keep only the row with the earliest date_datapull in each group
-  slice_min(order_by = date_datapull, with_ties = FALSE) |>
-  
-  ungroup()
+release <- readRDS("data/processed/de_identified/1b_release_masked.Rds")
 
 # ================================================================= ####
 # Admissions ####
 # -- Get move descriptions which suggest a new admission ####
 # -- All move descriptions that start with "Add" suggest a new admission
 # -- Some of these are court commitments, others are parole violators 
-move_deduped_admissions <- move_deduped |>
+move_admissions <- move |>
   filter(grepl("Add", mve_desc)) %>%
   group_by(research_id, mve_date) |>
   summarise(
@@ -104,9 +41,9 @@ move_deduped_admissions <- move_deduped |>
   )
 
 # -- Merge new admission markers into house ####
-house_deduped_merged <- left_join(
-  house_deduped4,
-  move_deduped_admissions,
+house_merged <- left_join(
+  house,
+  move_admissions,
   by = c(
     "research_id" = "research_id",
     "loc_date_in" = "mve_date"
@@ -114,8 +51,8 @@ house_deduped_merged <- left_join(
 )
 
 # -- Merge treatment status into house ####
-house_deduped_merged2 <- left_join(
-  house_deduped_merged,
+house_merged2 <- left_join(
+  house_merged,
   randassign,
   by = c(
     "research_id" = "research_id"
@@ -123,7 +60,7 @@ house_deduped_merged2 <- left_join(
 )
 
 # -- Identify distinct sentences and prison stays - for all time, since study start, and since treatment ####
-house_final <- house_deduped_merged2 %>%
+house_final <- house_merged2 %>%
 # -- -- Identify admission dates and sequence numbers for all time ####
   # -- -- Sort data so we can detect chronological sequences within each individual 
   arrange(research_id, loc_date_in) %>%
@@ -207,9 +144,8 @@ house_final <- house_deduped_merged2 %>%
 # ================================================================= ####
 # Releases ####
 # -- Get move descriptions which suggest a release ####
-# -- All move descriptions that start with "Add" suggest a new admission
-# -- Some of these are court commitments, others are parole violators 
-move_deduped_releases <- move_deduped |>
+# -- "Delete - Discharge/Delete" suggest a release 
+move_releases <- move |>
   mutate(mve_desc_release = mve_desc) %>%
   select(-mve_desc) %>%
   filter(mve_desc_release == "Delete - Discharge/Delete") %>%
@@ -222,27 +158,62 @@ move_deduped_releases <- move_deduped |>
 # -- Merge release markers into house ####
 house_final_with_releases <- left_join(
   house_final,
-  move_deduped_releases,
+  move_releases,
   by = c(
     "research_id" = "research_id",
     "loc_date_out" = "mve_date"
-  )
-)
-
-house_final_with_releases %>%
-  filter(!is.na(adm_rct) & adm_treatment_start_rel_n == 0  & !is.na(mve_desc_release)) %>%
-  select(adm_rct, adm_treatment_start_rel_n, mve_desc_release, loc_date_out)
-
-# -- Identify release dates for the rct admission ####
-house_final_with_releases <- house_final_with_releases %>%
-  mutate(rel_rct = case_when(
-    !is.na(adm_rct) & adm_treatment_start_rel_n == 0  & !is.na(mve_desc_release) ~ loc_date_out,
-    TRUE ~ NA
   ))
 
-house_final_with_releases %>%
-  filter(!is.na(adm_rct) & adm_treatment_start_rel_n == 0  & !is.na(mve_desc_release)) %>%
-  select(adm_treatment_start_rel_n, mve_desc_release, loc_date_out, adm_rct, rel_rct)
+# -- Identify release dates for the rct admission ####
+# -- -- This code finds an rct release date that aligns with the delete_date in the release file shared by PADOC 
+house_final_with_releases <- house_final_with_releases %>%
+  group_by(research_id) %>%
+  mutate(after_admission = ifelse(loc_date_out > rct_treat_dt, 1, 0)) %>%
+  mutate(
+    rel_rct = case_when(
+      !is.na(adm_rct) & 
+        adm_treatment_start_rel_n == 0 &
+        after_admission == 1 & 
+        !is.na(mve_desc_release) ~ loc_date_out,
+      TRUE ~ as.Date(NA)
+    ),
+    rel_rct = if (all(is.na(rel_rct))) NA_Date_ else max(rel_rct, na.rm = TRUE)
+  ) %>%
+  ungroup() %>%
+  select(-after_admission)
+
+# -- Fix release dates for selected IDs ####
+# -- -- Delete second release in release file ####
+duplicates <- release %>%
+  count(research_id) %>%
+  filter(n > 1) %>%
+  pull(research_id)
+
+release <- release %>% 
+  mutate(duplicate = ifelse(research_id %in% duplicates, 1, 0)) %>%
+  group_by(research_id) %>%
+  mutate(drop = ifelse(duplicate == 1 & delete_date == max(delete_date), 1, 0)) %>%
+  filter(drop == 0)
+
+# -- -- Merge in release dates ####
+house_final_with_releases <- left_join(house_final_with_releases,
+                                       release[,c("research_id", "delete_date")],
+                                       relationship = "many-to-one")
+
+
+# rid_034543 move data suggests was first released on 2023-02-20 (my date)
+# -- came back in as a parole violator and was then released on 2023-08-30 (the date listed by PADOC)
+# -- Keep my date
+# rid_877173 - I have they were released on 2024-10-01, PADOC says they were released on 2023-07-12 - PADOC is likely correct
+# -- The issue is that I have two releases in the adm_treatment_start_rel_n, and my code takes the last release
+# rid_033938 and rid_034614 generated an error because there is a release date in move that doesn't exist in house
+# -- so my code did not merge in. PADIC is correct FIX THIS in the overall code (needs some thinking through)
+house_final_with_releases <- house_final_with_releases %>% 
+  mutate(rel_rct_corrected = rel_rct) %>%
+  mutate(rel_rct_corrected = if_else(research_id %in% c("rid_877173", "rid_033938", "rid_034614"), delete_date, rel_rct_corrected)) %>%
+  mutate(rel_rct = rel_rct_corrected) %>%
+  select(-rel_rct_corrected, -delete_date)
+
 # ================================================================= ####
 # Reorder Variables ####
 house_final <- reorder_vars(house_final)
@@ -293,3 +264,83 @@ saveRDS(admission.stats, "data/processed/de_identified/2b_admissions.Rds")
 
   
 
+
+# ================================================================= ####
+# Discarded code ####
+# # Deduplicate house ####
+# house <- house |>
+#   # Drop fully NA rows 
+#   mutate(na_count = rowSums(is.na(across(everything())))) |>
+#   filter(na_count<10) |>
+#   select(-na_count) |>
+#   # Create a group key 
+#   # Wave, date_datapull, loc_days_spent, loc_date_out vary across waves
+#   # This is very slow if we include all raw columns, too. So specifying columns to group on
+#   group_by(across(c(research_id, dem_hndcap, loc_bed_num, loc_bed_stat, loc_bld, loc_cell, loc_date_in, loc_date_out))) |>
+#   
+#   # Keep only the row with the earliest date_datapull in each group
+#   slice_min(order_by = date_datapull, with_ties = FALSE) |>
+#   
+#   ungroup()
+# 
+# # The last assignment within datapulls has a NA date
+# # We want to drop it
+# house_deduped2 <- house %>%
+#   # -- Identify the last date within a datapull
+#   group_by(date_datapull) %>%
+#   mutate(last_date_within_pull = case_when(
+#     loc_date_in == max(loc_date_in, na.rm = TRUE) ~ 1,
+#     TRUE ~ 0)) %>%
+#   ungroup() %>%
+#   group_by(research_id) %>%
+#   # -- We want to drop this row except when this is the last datapull an individual was a part of.
+#   mutate(drop = case_when(
+#     last_date_within_pull == 1 & is.na(loc_date_out) & date_datapull != max(date_datapull) ~ 1,
+#     TRUE ~ 0)) %>%
+#   ungroup() %>%
+#   filter(drop == 0) %>%
+#   select(-last_date_within_pull, -drop)
+# 
+# # -- Within data pulls, for the last cell assignment, we observe two rows in the data, with the cell number saved as "2016" and as "061", or as "1014" and "014".
+# # -- Delete the second observation
+# house_deduped3 <- house_deduped2 %>%
+#   group_by(research_id) %>%
+#   mutate(drop = case_when(
+#     date_datapull == max(date_datapull) & nchar(loc_cell)!=4  ~ 1,
+#     TRUE ~ 0)) %>%
+#   filter(drop == 0) %>%
+#   select(-drop)
+# 
+# # -- We sometimes observe one date_in with multiple date_outs for the same individual. When this happens, we often see someone move in and out of a cell on the same day. We delete those instances.
+# house_deduped4 <- house_deduped3 %>%
+#   group_by(research_id, loc_date_in) %>%
+#   mutate(n_date_ins = n()) %>%
+#   ungroup() %>%
+#   filter(!(n_date_ins > 1 & loc_date_in == loc_date_out)) |>
+#   select(-n_date_ins)
+# 
+# # Deduplicate move ####
+# move <- move |>
+#   # Create a group key 
+#   # Wave, date_datapull, vary across waves
+#   # This is very slow if we include all raw columns, too. So specifying columns to group on
+#   group_by(across(c(research_id, mve_date, mve_desc))) |>
+#   
+#   # Keep only the row with the earliest date_datapull in each group
+#   slice_min(order_by = date_datapull, with_ties = FALSE) |>
+#   
+#   ungroup()
+
+# # Trouble shoot IDS who don't match in release file and housing data ####
+# # Check this code worked 
+# temp <- house_final_with_releases %>%
+#   filter(rct==1) %>%
+#   select(research_id, adm_rct, rct_treat_dt, rel_rct, delete_date) %>%
+#   mutate(correct = ifelse(delete_date==rel_rct, 1, 0)) %>%
+#   distinct()
+# house_final_with_releases %>% 
+#   filter(research_id=="rid_034543") %>%
+#   select(research_id, adm_rct, rct_treat_dt, loc_date_out, mve_desc_release, mve_desc, rel_rct, delete_date) %>%
+#   print(n=200)
+# move %>% filter(research_id == "rid_034543")
+# move_releases %>% filter(research_id == "rid_034614")
