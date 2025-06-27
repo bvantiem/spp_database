@@ -308,8 +308,33 @@ basic <- basic %>%
     sent_max_in_days = (sent_max_cort_yrs*365)+(sent_max_cort_mths*30)+sent_max_cort_days) %>%
   relocate(starts_with("sent_min_in_days"), .after = sent_max_cort_days) %>%
   relocate(starts_with("sent_max_in_days"), .after = sent_min_in_days)
+
+# New Variables Specific to RCT Sample ####
+basic <- basic %>%
+  mutate(dem_edu_high_school = ifelse(dem_edu_grade>=12, 1,0)) %>%
+  mutate(
+    dem_age_treat1 = decimal_date(ymd(rand1_date))-decimal_date(dem_dob_dt),
+    dem_age_treat2 = decimal_date(ymd(rand2_date))-decimal_date(dem_dob_dt),
+    dem_age_treat2.5 = decimal_date(ymd(rand2.5_date))-decimal_date(dem_dob_dt),
+    dem_age_treat3 = decimal_date(ymd(rand3_date))-decimal_date(dem_dob_dt),
+    dem_age_treat4 = decimal_date(ymd(rand4_date))-decimal_date(dem_dob_dt),
+    dem_age_treat5 = decimal_date(ymd(rand5_date))-decimal_date(dem_dob_dt),
+    dem_age_treat6 = decimal_date(ymd(rand6_date))-decimal_date(dem_dob_dt),
+    dem_age_treat7 = decimal_date(ymd(rand7_date))-decimal_date(dem_dob_dt)) %>%
+  mutate(dem_age_at_treatment = case_when(
+    rct_treat_wave == 1 ~ dem_age_treat1,
+    rct_treat_wave == 2 ~ dem_age_treat2,
+    rct_treat_wave == 2.5 ~ dem_age_treat2.5,
+    rct_treat_wave == 3 ~ dem_age_treat3,
+    rct_treat_wave == 4 ~ dem_age_treat4,
+    rct_treat_wave == 5 ~ dem_age_treat5,
+    rct_treat_wave == 6 ~ dem_age_treat6,
+    rct_treat_wave == 7 ~ dem_age_treat7
+  )) %>%
+  select(-starts_with("dem_age_treat"))
+
 # ================================================================= ####
-# Crude De-duplication ####
+# Crude De-duplication - Improve this ####
 basic <- basic |>
   arrange(research_id, desc(sent_min_in_days)) %>%
   # Keep only the first time we pulled data for this person 
@@ -357,12 +382,6 @@ basic <- reorder_vars(basic)
 # ================================================================= ####
 # Save dataframes ####
 saveRDS(basic, file = "data/processed/de_identified/2_basic_cleaned.Rds")
-# ================================================================= ####
-# Known Issues #### 
-# To Do ####
-# -- for some research_ids we have demographic information but sentencing information
-# is missing [NA]
-ids_w_missing_sent_info <- basic %>% filter(is.na(sent_class))
 # ================================================================= ####
 # # RELEVANT OLD CODE TO INTEGRATE LATER, INCL TIME SERVED ####
 # 
