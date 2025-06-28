@@ -83,6 +83,15 @@ conduct <- conduct |>
          cndct_chrg_cat = category_charge1_raw) %>%
   mutate(pris_loc = institution_raw)
 # Clean Variables ####
+# Define conduct charge types 
+drugs <- c("Possession Or Use Of Dangerous Or Contro",
+                "Possession Or Use Of Dangerous Substance")
+violent <- c("Fighting", 
+             "Assault", 
+             "Sexual Harassment", 
+             "Aggravated Assault", 
+             "Rape") # Not included, discuss: "Robbery","Extortion By Threat Of Violence"
+
 conduct <- conduct %>%
   # -- Set any empty strings to NA
   mutate(across(everything(), ~ replace(., grepl("^\\s*$", .), NA))) %>%
@@ -92,6 +101,11 @@ conduct <- conduct %>%
   mutate(cndct_date = ymd(cndct_date)) %>%
   # MISCONDUCT
   mutate(cndct_chrg_desc = standardize_uppercase(cndct_chrg_desc)) %>%
+  mutate(cndct_chrg_type = case_when(
+    cndct_chrg_desc %in% drugs ~ "Drugs",
+    cndct_chrg_desc %in% violent ~ "Violent",
+    TRUE ~ "Other"
+  )) %>%
   # -- some entries for cndct_guilty have 2 leading zeros, drop these for standardization
   mutate(cndct_guilty = sub("^00", "", cndct_guilty)) %>%
   # PRISON
@@ -115,7 +129,7 @@ comment(conduct$vrdict_guilty_raw) <-  "raw data, not fully cleaned variable ava
 comment(conduct$category_charge1_raw) <- "raw data, no cleaned variable available (6/4/25)"
 comment(conduct$chrg_description_raw) <- "raw data, cleaned variable available as cndct_chrg_desc (6/4/25)"
 # ================================================================= ####
-# Merge in treatment status and treatment date and subset to rct sample admis####
+# Merge in treatment status and treatment date and subset to rct sample admission ####
 admission <- admission %>% 
   filter(rct %in% c(0,1)) %>%
   distinct(research_id, rct, adm_rct, rct_treat_dt, rct_treat_wave, rct_stratum, rel_rct, rct_mnths_pretreat, rct_mnths_to_release)
@@ -134,7 +148,7 @@ rm(conduct)
 
 conduct_rct <- conduct_rct %>%
   # filter(research_id==conduct_rct$research_id[1]) %>%
-  # Helper Columns 
+  # Helper Columns ####
   # -- Incidents before and after treatment 
   mutate(cndct_before_treat = if_else(cndct_date < rct_treat_dt, 1, 0)) %>%
   mutate(cndct_after_treat = case_when(
@@ -150,14 +164,14 @@ conduct_rct <- conduct_rct %>%
   mutate(cndct_most_serious_guilty = min(cndct_chrg_cat)) %>%
   ungroup() %>%
   # -- Posttreatment months
-  # -- These are months to release or to today 
+  # -- These are months to release or to date datapull 
   # -- -- Note that these are called mnths_to_release because the data 
   # -- -- -- distinguishes between mnths_to_exit, mnths_to_release and mnths_since_release
   mutate(rct_mnths_postrelease = case_when(
     !is.na(rel_rct) ~ rct_mnths_to_release,
-    is.na(rel_rct) ~ interval(rct_treat_dt, today())/months(1),
+    is.na(rel_rct) ~ interval(rct_treat_dt, unique(conduct_rct$date_datapull))/months(1),
   )) %>%
-  # Pretreatment counts and rates  
+  # Pre-treatment counts and rates #### 
   # -- Pre-treatment counts 
   # -- -- All
   group_by(research_id) %>%
@@ -181,6 +195,7 @@ conduct_rct <- conduct_rct %>%
   mutate(cndct_pretreat_guilty_rate_a = cndct_pretreat_guilty_count_a/rct_mnths_pretreat) %>% 
   mutate(cndct_pretreat_guilty_rate_b = cndct_pretreat_guilty_count_b/rct_mnths_pretreat) %>% 
   mutate(cndct_pretreat_guilty_rate_c = cndct_pretreat_guilty_count_c/rct_mnths_pretreat) %>% 
+  # Post-treatment counts and rates #### 
   # -- Post-treatment counts 
   # -- -- All
   mutate(cndct_posttreat_all_count = n_distinct(cndct_num[cndct_after_treat == 1])) %>%
@@ -226,25 +241,6 @@ summary(conduct_rct$cndct_posttreat_all_rate_c[which(conduct_rct$rct==1)])
 summary(conduct_rct$cndct_posttreat_all_rate_c[which(conduct_rct$rct==0)])
 
 # ================================================================= ####
-# Temporary Descriptive Stats Gabby ####
-# -- number of misconducts per unique control number
-# -- -- NOTE: individuals are only in this dataset if they have committed atleast
-#             one misconduct, does not include anyone with 0 misconducts
-misconducts_per_person <- conduct %>%
-  group_by(research_id) %>%
-  summarize(n_misconducts = n())
-summary(misconducts_per_person$n_misconducts)
-
-# -- likelihood of each verdict result
-conduct %>%
-  count(cndct_guilty) %>%
-  mutate(percent = n / sum(n) * 100)
-
-# -- most common misconduct charges
-conduct %>%
-  count(cndct_chrg_desc, sort = TRUE) %>%
-  slice_head(n = 10)  # top 10
-# ================================================================= ####
 # OLD CODE ####
 # # -- Misconduct Count by Individual ####
 # # count by individual the number of misconduct incidents prior to the date of the first wave
@@ -254,9 +250,9 @@ conduct %>%
 # 
 # rand_dates <- tibble(
 #   wave = c(0,1,2,2.5,3,4,5,6,7),
-#   rand_date = as.Date(c(rand1_date, rand1_date, rand2_date, 
+#   rand_date = as.Date(c(rand1_date, rand1_date, rand2_date,
 #                         rand2.5_date,
-#                         rand3_date, 
+#                         rand3_date,
 #                         rand4_date, rand5_date, rand6_date, rand7_date)))
 # 
 # # -- Get unique misconducts with date
@@ -363,7 +359,7 @@ conduct %>%
 # #   date_col <- sym(paste0("rand", i, "_date"))
 # #   count_col <- sym(paste0("cndct_rand", i, "_all"))
 # #   rate_col  <- paste0("cndct_mnthly_rand", i, "_all")
-# #   
+# #
 # #   conduct_rct <- conduct_rct %>%
 # #     mutate(
 # #       !!rate_col := !!count_col / (as.numeric(!!date_col - adm_rct) / 30)
@@ -371,21 +367,21 @@ conduct %>%
 # # }
 # 
 # for (i in c(0, 1, 2, 2.5, 3, 4, 5, 6, 7)) {
-#   
+# 
 #   date_col  <- paste0("rand", i, "_date")
 #   count_col <- paste0("cndct_rand", i, "_all")
 #   rate_col  <- paste0("cndct_mnthly_rand", i, "_all")
-#   
+# 
 #   # if the date column is missing altogether, make sure it exists as NA_Date_
 #   if (!date_col %in% names(conduct_rct)) {
 #     conduct_rct[[date_col]] <- NA_Date_
 #   }
-#   
+# 
 #   conduct_rct <- conduct_rct %>%
 #     mutate(
 #       !!rate_col := ifelse(
 #         is.na(.data[[date_col]]),
-#         NA_real_, 
+#         NA_real_,
 #         .data[[count_col]] / (interval(adm_rct, .data[[date_col]]) / months(1))
 #       )
 #     )
@@ -417,23 +413,23 @@ conduct %>%
 # #   date_col <- sym(paste0("rand", i, "_date"))
 # #   count_col <- sym(paste0("cndct_rand", i, "_guilty"))
 # #   rate_col  <- paste0("cndct_mnthly_rand", i, "_guilty")
-# #     
+# #
 # #   conduct_rct <- conduct_rct %>%
 # #     mutate(
-# #       !!rate_col := !!count_col / (as.numeric(!!date_col - adm_rct) / 30) 
+# #       !!rate_col := !!count_col / (as.numeric(!!date_col - adm_rct) / 30)
 # #     )
 # # }
 # 
 # for (i in c(0,1,2,2.5,3,4,5,6,7)) {
-#   
+# 
 #   date_col  <- paste0("rand", i, "_date")
 #   count_col <- paste0("cndct_rand", i, "_guilty")
 #   rate_col  <- paste0("cndct_mnthly_rand", i, "_guilty")
-#   
+# 
 #   if (!date_col %in% names(conduct_rct)) {
 #     conduct_rct[[date_col]] <- NA_Date_
 #   }
-#   
+# 
 #   conduct_rct <- conduct_rct %>%
 #     mutate(
 #       !!rate_col := ifelse(
@@ -444,7 +440,7 @@ conduct %>%
 #     )
 # }
 # 
-# # 2. Create single pre-treatment guilty rate column based on rct_treat_wave 
+# # 2. Create single pre-treatment guilty rate column based on rct_treat_wave
 # conduct_rct <- conduct_rct %>%
 #   mutate(
 #     cndct_mnthly_pretreat_guilty = case_when(
@@ -464,7 +460,7 @@ conduct %>%
 # 
 # 
 # 
-# # Keep only the pretreatment columns and cndct_guilty 
+# # Keep only the pretreatment columns and cndct_guilty
 # # Vector of column names you want to subset from
 # vars_to_consider <- grep("all|guilty", names(conduct_rct), value = TRUE)
 # 
@@ -526,7 +522,7 @@ conduct %>%
 # 
 # # 6. Join back into conduct_rct
 # conduct_rct <- conduct_rct %>%
-#   left_join(pretreat_cat_counts_wide, 
+#   left_join(pretreat_cat_counts_wide,
 #             by = c("research_id", "adm_rct", "rct_treat_dt"))
 # 
 # # -- -- Create person-level pre-treatment duration (in months) for rates ####
@@ -575,10 +571,10 @@ conduct %>%
 # for (cat in c("a", "b", "c")) {
 #   all_count_col   <- sym(paste0("cndct_pretreat_all_count_", cat))
 #   guilty_count_col <- sym(paste0("cndct_pretreat_guilty_count_", cat))
-#   
+# 
 #   all_rate_col    <- paste0("cndct_pretreat_all_rate_", cat)
 #   guilty_rate_col <- paste0("cndct_pretreat_guilty_rate_", cat)
-#   
+# 
 #   conduct_rct <- conduct_rct %>%
 #     mutate(
 #       !!all_rate_col    := !!all_count_col / months_pre,
@@ -587,7 +583,7 @@ conduct %>%
 # }
 # 
 # # -- -- drop helper column
-# # conduct_rct <- conduct_rct %>% 
+# # conduct_rct <- conduct_rct %>%
 # #   select(-"months_pre")
 # 
 # # -- Posttreatment Counts by Misconduct Category ####
@@ -596,7 +592,7 @@ conduct %>%
 #   distinct(research_id, cndct_num, cndct_charge_cat_most_serious, cndct_date, rct_treat_dt, adm_rct, rel_rct) %>%
 #   mutate(keep = case_when(
 #     !is.na(rel_rct) & cndct_date > rct_treat_dt & cndct_date < rel_rct ~ 1,
-#     is.na(rel_rct) & cndct_date > rct_treat_dt ~ 1, 
+#     is.na(rel_rct) & cndct_date > rct_treat_dt ~ 1,
 #     TRUE ~ 0
 #   )) %>%
 #   filter(keep == 1) %>%
@@ -627,17 +623,17 @@ conduct %>%
 # 
 # # 4. Join back into conduct_rct
 # conduct_rct <- conduct_rct %>%
-#   left_join(posttreat_cat_counts_wide, 
+#   left_join(posttreat_cat_counts_wide,
 #             by = c("research_id", "adm_rct", "rct_treat_dt"))
 # 
 # # -- -- Create person-level post-treatment duration (in months) for rates ####
 # # -- Time from treatment to release for those who are released
-# # -- Time from treatment to today (date code was run) for those who are not yet released 
+# # -- Time from treatment to today (date code was run) for those who are not yet released
 # conduct_rct <- conduct_rct %>%
 #   mutate(months_post = case_when(
 #     !is.na(rel_rct) ~ as.numeric(difftime(rel_rct, rct_treat_dt, units = "days")) / 30.44,
 #     is.na(rel_rct) ~ as.numeric(difftime(today(), rct_treat_dt, units = "days")) / 30.44,
-#     TRUE ~ NA)) 
+#     TRUE ~ NA))
 # 
 # # -- Posttreatment Counts by Guilty Misconduct Category ####
 # # 1. Filter to pre-treatment GUILTY misconducts
@@ -677,12 +673,12 @@ conduct %>%
 # # -- Posttreatment Rates by Misconduct Cat for All and Guilty Misconducts ####
 # # -- -- Loop through category codes to build rate columns
 # for (cat in c("a", "b", "c")) {
-#   
+# 
 #   all_count_col     <- paste0("cndct_posttreat_all_count_", cat)
 #   guilty_count_col  <- paste0("cndct_posttreat_guilty_count_", cat)
 #   all_rate_col      <- paste0("cndct_posttreat_all_rate_", cat)
 #   guilty_rate_col   <- paste0("cndct_posttreat_guilty_rate_", cat)
-#   
+# 
 #   # force missing count columns to exist
 #   if (!all_count_col %in% names(conduct_rct)) {
 #     conduct_rct[[all_count_col]] <- NA
@@ -690,7 +686,7 @@ conduct %>%
 #   if (!guilty_count_col %in% names(conduct_rct)) {
 #     conduct_rct[[guilty_count_col]] <- NA
 #   }
-#   
+# 
 #   conduct_rct <- conduct_rct %>%
 #     mutate(
 #       !!all_rate_col    := !!sym(all_count_col) / months_post,
@@ -699,5 +695,24 @@ conduct %>%
 # }
 # 
 # # -- -- drop helper column
-# # conduct_rct <- conduct_rct %>% 
+# # conduct_rct <- conduct_rct %>%
 # #   select(-"months_post")
+
+# Temporary Descriptive Stats Gabby ####
+# -- number of misconducts per unique control number
+# -- -- NOTE: individuals are only in this dataset if they have committed atleast
+#             one misconduct, does not include anyone with 0 misconducts
+# misconducts_per_person <- conduct %>%
+#   group_by(research_id) %>%
+#   summarize(n_misconducts = n())
+# summary(misconducts_per_person$n_misconducts)
+# 
+# # -- likelihood of each verdict result
+# conduct %>%
+#   count(cndct_guilty) %>%
+#   mutate(percent = n / sum(n) * 100)
+# 
+# # -- most common misconduct charges
+# conduct %>%
+#   count(cndct_chrg_desc, sort = TRUE) %>%
+#   slice_head(n = 10)  # top 10
