@@ -49,14 +49,18 @@ standardize_uppercase <- function(x) {
 conduct <- readRDS("data/processed/de_identified/1b_conduct_masked.Rds")
 admission <- readRDS("data/processed/de_identified/2b_admissions.Rds")
 
-# -- Variable Defs: 
+# -- Variable Definitions ####
+# cndct_pre_wave1_all
+# -- count of unique misconduct numbers by individual for individuals who were in prison at the study start from adm_study to wave1_date
+# cndct_pre_wave1_all_count_a
+# -- count of unique misconduct numbers by individual for individuals who were in prison at the study start from adm_study to wave1_date,
+# -- -- where the most serious charge of which they were charged with was cat A
+# cndct_pre_Wave1_guilty
+# -- count of unique misconduct numbers by individual for individuals who were in prison at the study start from adm_study to wave1_date,
+# -- -- and found guilty of atleast one charge
 # cndct_pre_wave1_guilty_count_a
 # -- count of unique misconduct numbers by individual for individuals who were in prison at the study start from adm_study to wave1_date,
 # -- -- where the most serious charge on which they were found guilty was cat A
-# cndct_posttreat_guilty_count_a
-# -- count of unique misconduct numbers by individual from rct_treat_dt to rel_rct for people who have a rel_rct date,
-# -- -- and from rct_treaT_dt to date_datapull if there is no rel_rct date, where the most serious charge on which they were found
-# -- -- guilty was cat A
 # ================================================================= ####
 # Code to align with merged administrative data files ####
 conduct$date_datapull <- ymd(20250623)
