@@ -135,8 +135,8 @@ data.balance <- data.balance %>%
     )
   )
 
-# -- Drop lifers ####
-data.balance <- data.balance[which(data.balance$rct_stratum!="lifer"),]
+# -- Drop lifers and those with commuted death sentences ####
+data.balance <- data.balance[which(data.balance$rct_stratum %ni% c("lifer", "commuted death")),]
 # -- Finalize dataframe #### 
 # -- Note: These should be in the same order as the variables in the means table
 data.balance <- data.balance[,c("research_id",
