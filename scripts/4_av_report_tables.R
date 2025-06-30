@@ -27,6 +27,10 @@ conduct <- readRDS("data/processed/de_identified/2_conduct_rct_cleaned.Rds")
 # -- Constants ####
 report_date <- unique(conduct$date_datapull)
 # ================================================================= ####
+# Drop lifers and commuted death cases ####
+randassign <- randassign %>%
+  filter(rct_stratum %ni% c("lifer", "commuted death")) 
+
 # Merge release dates into randassign ####
 admission_rel_dates <- admission %>%
   filter(rct %in% c(0,1)) %>%
@@ -38,15 +42,12 @@ randassign <- left_join(randassign,
                         by = "research_id",
                         relationship = "one-to-one")
 
-
-# -- -- Fix factors for stratum ####
+# Fix factors for stratum ####
 randassign <- randassign %>%
   mutate(rct_stratum = factor(
     rct_stratum,
-    levels = c("lifer", "commuted death", "00_06_m", "06_12_m", "12_60_m", "60_pl_m"),
+    levels = c("00_06_m", "06_12_m", "12_60_m", "60_pl_m"),
     labels = c(
-      "lifer",
-      "commuted death",
       "0–6 Months",
       "6–12 Months",
       "12–60 Months",
@@ -61,7 +62,6 @@ randassign <- randassign %>%
 # -- -- -- Subset to treated
 treatment_compliance <- randassign %>%
   filter(rct == 1) %>%
-  filter(rct_stratum %ni% c("lifer", "commuted death")) %>%
   mutate(onunit = ifelse(is.na(rct_exit_dt), 1, 0)) 
 
 # -- -- -- Integer rows: number of people 
@@ -157,7 +157,11 @@ tab_combined_with_totals %>%
            hline_after=TRUE,
            extra_css = "border-bottom: 1px solid") %>%
   footnote(threeparttable = T,
-  "This table summarizes the distribution of treatment compliance by cohort for individuals enrolled in the RCT.  Percentages are based on the full table total (n = 164).") %>% 
+  "This table summarizes the distribution of treatment compliance by cohort for individuals in the treated group.  Percentages are based on the full table total (n = 164).
+  Individuals who were `Released from Unit' remained on the Little Scandinavia Unit from their date of randomziation until their release to the community.
+  Individuals who were `Transferred' were transferred out of SCI Chester for reasons including ICE detainers, transfers to hospital or to other prisons for programming reasons. 
+  Individuals who were `Removed' were removed from the unit for reasons that are generally related to repeated misconduct.
+  Individuals who `Refused Treatment' refused to move to the Little Scandinavia Unit upon treatment notification and did not spend time on the unit.") %>% 
   landscape() %>%
   # kable_styling(latex_options = c("scale_down")) %>% 
   save_kable(file = paste0("output/tables/", file_name, ".tex"),
@@ -239,11 +243,15 @@ tab_combined_stratum %>%
   kable_classic(full_width = F,
                 html_font = "Times New Roman") %>%
   # column_spec(7, border_left=T, extra_css = "border-left: 1px solid black;")  %>% 
-  row_spec(c(nrow(tab_combined_with_totals)-1),
+  row_spec(c(nrow(tab_combined_stratum)-1),
            hline_after=TRUE,
            extra_css = "border-bottom: 1px solid") %>%
   footnote(threeparttable = T,
-           "This table summarizes the distribution of treatment compliance by stratum for individuals enrolled in the RCT.  Percentages are based on the full table total (n = 164).") %>% 
+           "This table summarizes the distribution of treatment compliance by stratum for individuals in the treated group.  Percentages are based on the full table total (n = 164).
+  Individuals who were `Released from Unit' remained on the Little Scandinavia Unit from their date of randomziation until their release to the community.
+  Individuals who were `Transferred' were transferred out of SCI Chester for reasons including ICE detainers, transfers to hospital or to other prisons for programming reasons. 
+  Individuals who were `Removed' were removed from the unit for reasons that are generally related to repeated misconduct.
+  Individuals who `Refused Treatment' refused to move to the Little Scandinavia Unit upon treatment notification and did not spend time on the unit.") %>% 
   landscape() %>%
   # kable_styling(latex_options = c("scale_down")) %>% 
   save_kable(file = paste0("output/tables/", file_name, ".tex"),
@@ -254,11 +262,9 @@ tab_combined_stratum %>%
 # ================================================================= ####
 # ENROLLMENT ####
 # -- By Treatment cohort ####
-
 # -- -- Prepare table: Enrolled ####
 # -- -- -- Subset relevant groups 
-enrollment <- randassign %>%
-  filter(rct_stratum %ni% c("lifer", "commuted death")) 
+enrollment <- randassign 
 
 # -- -- -- Prepare table A: Integrer rows, count enrolled per cohort and treatment group 
 enrollment_count <- enrollment %>% 
@@ -268,7 +274,7 @@ enrollment_count <- enrollment %>%
   ) %>% 
   pivot_wider(names_from = "rct",
               values_from = "enrolled") %>% 
-  rename(control = `0`, treatment = `1`) %>% 
+  rename(control = `0`, treatment = `1`) %>% # Bad practice!
   relocate(treatment, .before= control) %>% 
   mutate(total = control+treatment) 
 
@@ -329,8 +335,7 @@ names(tab_combined_enrolled_with_totals) <- str_to_title(gsub("_", " ", names(ta
 
 # -- -- Prepare table: Enrolled & Released ####
 # -- -- -- Subset relevant groups: only those released  
-enrollment_released <- randassign %>%
-  filter(rct_stratum %ni% c("lifer", "commuted death")) %>%
+enrollment_released <- randassign %>% 
   mutate(released = ifelse(is.na(rel_rct), 0, 1)) %>%
   filter(released == 1)
 
@@ -354,11 +359,13 @@ grand_total_released <- sum(enrollment_released_count$total, na.rm=T)
 grand_total_released
 
 # -- -- Percent rows, enrolled and released, of total treatment+control
+# NEVER ROUND until the very end - This leads to funny results, like 2 released observations accounting for 0.00 percent..
+# Change this here and elsewhere 
 enrollment_released_pct <- enrollment_released_count %>%
   mutate(
     pct_treatment = round(sum(treatment, na.rm=T) / grand_total_released * 100, 2),
-    pct_control   = round(sum(treatment, na.rm=T) / grand_total_released * 100, 2),
-    pct_total     = round(sum(treatment, na.rm=T) / grand_total_released * 100, 2)
+    pct_control   = round(sum(control, na.rm=T) / grand_total_released * 100, 2),
+    pct_total     = round(sum(total, na.rm=T) / grand_total_released * 100, 2)
   )
 
 # -- Combine counts and percent for enrolled and released
@@ -632,112 +639,80 @@ tab_combined_enrolled_released_stratum %>%
 
 # ================================================================= ####
 # TREATMENT DURATION ####
-# -- By Cohort ####
-# -- -- Subset relevant groups 
+# -- Base Data  ####
+# Released individuals only for these tables
 time_spent <- randassign %>%
-  filter(rct_stratum %ni% c("lifer", "commuted death")) %>%
-  mutate(released = ifelse(is.na(rel_rct), 0, 1)) %>%
+  mutate(released = ifelse(is.na(rel_rct), 0, 1)) %>% 
   filter(released == 1)
 
-# -- -- Integer rows: number of people 
-time_spent_mean <- time_spent %>% 
-  complete(rct_treat_wave, rct) %>%  # ensure all combinations exist
+# -- By Cohort ####
+# -- -- Average Time Spent 
+time_spent_mean_by_cohort <- time_spent %>% 
+  complete(rct_treat_wave, rct) %>%  # ensure waves with no released individuals do not get dropped 
   group_by(rct_treat_wave, rct) %>%
-  summarise(released = n(),
-            mean_rct_mnths_to_exit = round(mean(rct_mnths_to_exit, na.rm=T),1),
-            mean_rct_mnths_to_release = round(mean(rct_mnths_to_release, na.rm=T),1),
-            mean_rct_mnths_since_release = round(mean(rct_mnths_since_release, na.rm=T),1), 
-            .groups = "drop")
+  mutate(released = sum(!is.na(research_id)), # Number of released individuals. Not using n() as this counts one row for wave 7, where no one was released
+         mean_rct_mnths_to_exit = round(mean(rct_mnths_to_exit, na.rm=T),1),
+         mean_rct_mnths_to_release = round(mean(rct_mnths_to_release, na.rm=T),1),
+         mean_rct_mnths_since_release = round(mean(rct_mnths_since_release, na.rm=T),1), 
+         .groups = "drop") %>%
+  ungroup() %>%
+  select(rct_treat_wave, rct, released, mean_rct_mnths_to_exit, mean_rct_mnths_to_release, mean_rct_mnths_since_release, rct_treat_dt) %>%
+  distinct() 
 
-# -- -- Add wave date to cohort label 
-rct_wave_lookup <- time_spent %>% 
-  select(rct_treat_wave, rct_treat_dt) %>% 
-  distinct()
+time_spent_mean_overall <- time_spent %>% 
+  group_by(rct) %>%
+  mutate(released = n(), # Number of released individuals
+         mean_rct_mnths_to_exit = round(mean(rct_mnths_to_exit, na.rm=T),1),
+         mean_rct_mnths_to_release = round(mean(rct_mnths_to_release, na.rm=T),1),
+         mean_rct_mnths_since_release = round(mean(rct_mnths_since_release, na.rm=T),1), 
+         .groups = "drop") %>%
+  ungroup() %>%
+  mutate(rct_treat_wave = "Average") %>%
+  select(rct_treat_wave, rct, released, mean_rct_mnths_to_exit, mean_rct_mnths_to_release, mean_rct_mnths_since_release, rct_treat_dt) %>%
+  distinct(rct, released, .keep_all = TRUE) # We want to drop the distinct rct_treat_dates here 
 
-# change cohort name
-time_spent_mean <- time_spent_mean %>% 
-  left_join(rct_wave_lookup, by = "rct_treat_wave") %>% 
-  mutate(rct_treat_wave = paste0("Cohort ", rct_treat_wave, " (", rct_treat_dt, ")")) %>% 
-  rename(cohort = rct_treat_wave) %>% 
-  select(-rct_treat_dt)
+tab_time_spent_cohort_and_overall <- rbind(time_spent_mean_by_cohort,
+                                           time_spent_mean_overall)
 
-# -- -- -- Table for treated 
-time_spent_treated <- time_spent_mean %>% 
-  filter(rct==1) %>% 
-  select(-rct) %>%
-  mutate(across(everything(), as.character)) #for binding
+# Turn this into a table with Treated and Control groups side by side 
+tab_time_spent_side_by_side <- cbind(tab_time_spent_cohort_and_overall %>% 
+                                       filter(rct==1) %>%
+                                       select(-rct), # We don't need a column with treatment status 
+                                     tab_time_spent_cohort_and_overall %>% 
+                                       filter(rct==0) %>%
+                                       select(-rct_treat_wave,-rct, -mean_rct_mnths_to_exit) %>% # We only need the rct_treat_wave column once, controls don't have months to exit
+                                       rename_with(~ paste0(., "_control"), .cols = everything())) # To avoid duplicate names 
 
-# -- -- -- -- Add total row for treated 
-total_time_spent_treated <- time_spent_treated %>% 
-  summarise(
-    cohort = "Average",
-    released = round(mean(as.numeric(released), na.rm = TRUE),1),
-    mean_rct_mnths_to_exit  = round(mean(as.numeric(mean_rct_mnths_to_exit), na.rm = TRUE),1),
-    mean_rct_mnths_to_release  = round(mean(as.numeric(mean_rct_mnths_to_release), na.rm = TRUE),1),
-    mean_rct_mnths_since_release  = round(mean(as.numeric(mean_rct_mnths_since_release), na.rm = TRUE),1),
-    .groups="drop"
-  ) %>%
-  mutate(across(everything(), as.character)) 
-
-# -- -- Bind rows and clean NaN for final treated table
-tab_time_spent_treated <- bind_rows(time_spent_treated,
-                                    total_time_spent_treated) %>%
+# Formatting 
+# Purposfully doing this before we move dataframes side by side
+tab_time_spent_formatted <- tab_time_spent_side_by_side %>%
   mutate(across(everything(), ~ ifelse(str_detect(as.character(.), "NaN"), "-", .))) %>%
-  mutate(released = ifelse(cohort == "Average", "-", released))
+  # We don't want an average of the number of people released
+  mutate(released = ifelse(rct_treat_wave == "Average", "-", released)) %>% 
+  mutate(released_control = ifelse(rct_treat_wave == "Average", "-", released_control)) %>% 
+  # Correctly name cohort columns in format Cohort X (yyyy-mm-dd)
+  mutate(rct_treat_dt = ifelse(is.na(rct_treat_dt), rct_treat_dt_control, rct_treat_dt)) %>% # To avoid NA dates in rows with zero observations
+  mutate(rct_treat_wave = paste0("Cohort ", rct_treat_wave, " (", as.Date(rct_treat_dt), ")")) %>%
+  mutate(rct_treat_wave = ifelse(grepl("average", rct_treat_wave, ignore.case = TRUE), "Average", rct_treat_wave)) %>%
+  rename(cohort = rct_treat_wave) %>%
+  select(-rct_treat_dt, -rct_treat_dt_control) 
 
-# -- -- -- Table for control 
-time_spent_control <- time_spent_mean %>% 
-  filter(rct==0) %>% 
-  select(-rct) %>%
-  mutate(across(everything(), as.character)) #for binding
-
-# remove 0 that must be error
-time_spent_control <- time_spent_control %>% mutate(mean_rct_mnths_to_exit = ifelse(str_detect(mean_rct_mnths_to_exit, "0"), "NaN", mean_rct_mnths_to_exit))
-
-# -- -- -- -- Add total row for released 
-total_time_spent_control <- time_spent_control %>% 
-  summarise(
-    cohort = "Average",
-    released = round(mean(as.numeric(released), na.rm = TRUE),1),
-    mean_rct_mnths_to_exit  = round(mean(as.numeric(mean_rct_mnths_to_exit), na.rm = TRUE),1),
-    mean_rct_mnths_to_release  = round(mean(as.numeric(mean_rct_mnths_to_release), na.rm = TRUE),1),
-    mean_rct_mnths_since_release  = round(mean(as.numeric(mean_rct_mnths_since_release), na.rm = TRUE),1),
-    .groups="drop"
-  ) %>%
-  mutate(across(everything(), as.character))
-
-# bind rows and clean NaN
-tab_time_spent_control <- bind_rows(time_spent_control,
-          total_time_spent_control) %>%
-  mutate(across(everything(), ~ ifelse(str_detect(as.character(.), "NaN"), "-", .))) %>%
-  mutate(released = ifelse(cohort == "Average", "-", released)) %>%
-  mutate(cohort = ifelse(cohort == "Average", "Average Time in Months", cohort))
-
-# -- -- Save table ####
-# -- --- Merge table tab_time_spent_treated and tab_time_spent_control 
-time_spent_control_trimmed <- tab_time_spent_control %>% select(-cohort)
-
-tab_time_spent <- bind_cols(tab_time_spent_treated, 
-                            time_spent_control_trimmed)
-# to title
-names(tab_time_spent) <- str_to_title(gsub("_", " ", names(tab_time_spent)))
-
-# -- -- Create Latex table for time_spent 
+# -- -- Table ####
 file_name <- "tabx_treatment_duration"
-tab_time_spent[,-7] %>%
-  kbl(caption = "Treatment Duration in Months, by Cohort and Treatment Status",
+tab_time_spent_formatted %>%
+  kbl(caption = "Treatment Duration in Months, by Cohort",
       align = c("lrrrrrrr"),
       label = file_name,
       format.args = list(big.mark = ","),
       booktabs = T,
       col.names = c("Cohort",
-                    "Released", 
-                    "Time to Unit Exit", 
-                    "Time to Release",
-                    "Time Since Release",
-                    "Released", 
-                    "Time to Release",
-                    "Time Since Release"),
+                    "# Released", 
+                    "Months to Unit Exit", 
+                    "Months to Release",
+                    "Months Since Release",
+                    "# Released", 
+                    "Months to Release",
+                    "Months Since Release"),
       linesep = "",
       row.names = F,
       format = "latex") %>%
@@ -746,12 +721,12 @@ tab_time_spent[,-7] %>%
   add_header_above(c(" " = 1, "Treated" = 4, "Control" = 3)) %>%
   kable_classic(full_width = F,
                 html_font = "Times New Roman") %>%
-  row_spec(c(nrow(tab_time_spent)-1),
+  row_spec(c(nrow(tab_time_spent_formatted)-1),
            hline_after=TRUE,
            extra_css = "border-bottom: 1px solid") %>%
   footnote(threeparttable = T,
            paste0("This table contains the average number of months between randomization and release, as well as the time between release and the date until data was available (", report_date, "). 
-                  For treated individuals, the table also contains the time between randomization and exit from the Little Scandinavia Unit, as some individuals leave the unit prior to release. 
+                  For treated individuals, the table also contains the time between randomization and exit from the Little Scandinavia Unit, as some individuals leave the unit prior to release (see Treatment Compliance Table). 
                   The table is split by treatment cohort and treatment group. Dashes inidicate no data.")) %>% 
   landscape() %>%
   save_kable(file = paste0("output/tables/", file_name, ".tex"),
@@ -760,97 +735,77 @@ tab_time_spent[,-7] %>%
              self_contained = T,density = 200)
 
 # -- By Stratum ####
-# -- -- Integer rows: number of people
-time_spent_mean_stratum <- time_spent %>% 
-  complete(rct_stratum, rct) %>%  # ensure all combinations exist
+# -- -- Average Time Spent 
+time_spent_mean_by_stratum <- time_spent %>% 
+  complete(rct_stratum, rct) %>%  # ensure waves with no released individuals do not get dropped 
   group_by(rct_stratum, rct) %>%
-  mutate(released = ifelse(is.na(rel_rct), 0, 1)) %>%
-  summarise(released = sum(released, na.rm=T),
-            mean_rct_mnths_to_exit = round(mean(rct_mnths_to_exit, na.rm=T),1),
-            mean_rct_mnths_to_release = round(mean(rct_mnths_to_release, na.rm=T),1),
-            mean_rct_mnths_since_release = round(mean(rct_mnths_since_release, na.rm=T),1), 
-            .groups = "drop") %>%
-  filter(rct_stratum %ni% c("lifer", "commuted death"))
-  
+  mutate(released = sum(!is.na(research_id)), # Number of released individuals. Not using n() as this counts one row even if there are no observations, because of complete()
+         mean_rct_mnths_to_exit = round(mean(rct_mnths_to_exit, na.rm=T),1),
+         mean_rct_mnths_to_release = round(mean(rct_mnths_to_release, na.rm=T),1),
+         mean_rct_mnths_since_release = round(mean(rct_mnths_since_release, na.rm=T),1), 
+         .groups = "drop") %>%
+  ungroup() %>%
+  select(rct_stratum, rct, released, mean_rct_mnths_to_exit, mean_rct_mnths_to_release, mean_rct_mnths_since_release, rct_treat_dt) %>%
+  distinct(rct, released, .keep_all = TRUE) # We don't care about the distinct rct_treat_dates here 
 
-# -- -- -- Table for treated 
-time_spent_treated_stratum <- time_spent_mean_stratum %>% 
-  filter(rct==1) %>% 
-  select(-rct) %>%
-  mutate(across(everything(), as.character)) #for binding
+time_spent_mean_by_stratum_overall <- time_spent %>% 
+  group_by(rct) %>%
+  mutate(released = n(), # Number of released individuals
+         mean_rct_mnths_to_exit = round(mean(rct_mnths_to_exit, na.rm=T),1),
+         mean_rct_mnths_to_release = round(mean(rct_mnths_to_release, na.rm=T),1),
+         mean_rct_mnths_since_release = round(mean(rct_mnths_since_release, na.rm=T),1), 
+         .groups = "drop") %>%
+  ungroup() %>%
+  mutate(rct_stratum = "Average") %>%
+  select(rct_stratum, rct, released, mean_rct_mnths_to_exit, mean_rct_mnths_to_release, mean_rct_mnths_since_release, rct_treat_dt) %>%
+  distinct(rct, released, .keep_all = TRUE) # We don't care about the distinct rct_treat_dates here 
 
-# -- -- -- -- Add total row for treated 
-total_time_spent_treated_stratum <- time_spent_treated_stratum %>% 
-  summarise(
-    rct_stratum = "Average",
-    released = round(mean(as.numeric(released), na.rm = TRUE),1),
-    mean_rct_mnths_to_exit  = round(mean(as.numeric(mean_rct_mnths_to_exit), na.rm = TRUE),1),
-    mean_rct_mnths_to_release  = round(mean(as.numeric(mean_rct_mnths_to_release), na.rm = TRUE),1),
-    mean_rct_mnths_since_release  = round(mean(as.numeric(mean_rct_mnths_since_release), na.rm = TRUE),1),
-    .groups="drop"
-  ) %>%
-  mutate(across(everything(), as.character))
+tab_time_spent_stratum_and_overall <- rbind(time_spent_mean_by_stratum,
+                                            time_spent_mean_by_stratum_overall)
+
+# Turn this into a table with Treated and Control groups side by side 
+tab_time_spent_side_by_side <- cbind(tab_time_spent_stratum_and_overall %>% 
+                                       filter(rct==1) %>%
+                                       select(-rct), # We don't need a column with treatment status 
+                                     tab_time_spent_stratum_and_overall %>% 
+                                       filter(rct==0) %>%
+                                       select(-rct_stratum,-rct, -mean_rct_mnths_to_exit) %>% # We only need the rct_treat_wave column once, controls don't have months to exit
+                                       rename_with(~ paste0(., "_control"), .cols = everything())) # To avoid duplicate names 
 
 
-# -- -- Bind rows and clean NaN for final treated table
-tab_time_spent_treated_stratum <- bind_rows(time_spent_treated_stratum,
-                                            total_time_spent_treated_stratum) %>%
-  mutate(across(everything(), ~ ifelse(str_detect(as.character(.), "NaN"), "-", .))) 
+# Formatting 
+# Purposfully doing this before we move dataframes side by side
+tab_time_spent_formatted <- tab_time_spent_side_by_side %>%
+  mutate(across(everything(), ~ ifelse(str_detect(as.character(.), "NaN"), "-", .))) %>% # FIX this and knock on rows - this sets rct_stratum to 1,2,3,4,5..
+  mutate(rct_treat_dt = ifelse(is.na(rct_treat_dt), rct_treat_dt_control, rct_treat_dt)) %>% # To avoid NA dates in rows with zero observations
+  # We don't want an average of the number of people released
+  mutate(released = ifelse(rct_stratum == "5", "-", released)) %>% 
+  mutate(released_control = ifelse(rct_stratum == "5", "-", released_control)) %>% 
+  select(-rct_treat_dt, -rct_treat_dt_control) %>%
+  # Jonas - this is a temporary fix. This shouldn't be happening.. I think a result of conversion to character above + your use of factor labels. 
+  mutate(rct_stratum = case_when(
+    rct_stratum == "1" ~ "0–6 Months",
+    rct_stratum == "2" ~ "12–60 Months",
+    rct_stratum == "3" ~ "12–60 Months",
+    rct_stratum == "4" ~ "60+ Months",
+    rct_stratum == "5" ~ "Average"))
 
-# -- -- -- Table for control 
-time_spent_control_stratum <- time_spent_mean_stratum %>% 
-  filter(rct==0) %>% 
-  select(-rct) %>%
-  mutate(across(everything(), as.character)) #for binding
-
-#remove 0 that must be error
-# time_spent_control_stratum <- time_spent_control_stratum %>% mutate(mean_rct_mnths_to_exit = ifelse(str_detect(mean_rct_mnths_to_exit, "0"), "NaN", mean_rct_mnths_to_exit))
-
-# -- -- -- -- Add total row for control 
-total_time_spent_control_stratum <- time_spent_control_stratum %>% 
-  summarise(
-    rct_stratum = "Average",
-    released = round(mean(as.numeric(released), na.rm = TRUE),1),
-    mean_rct_mnths_to_exit  = round(mean(as.numeric(mean_rct_mnths_to_exit), na.rm = TRUE),1),
-    mean_rct_mnths_to_release  = round(mean(as.numeric(mean_rct_mnths_to_release), na.rm = TRUE),1),
-    mean_rct_mnths_since_release  = round(mean(as.numeric(mean_rct_mnths_since_release), na.rm = TRUE),1),
-    .groups="drop"
-  ) %>%
-  mutate(across(everything(), as.character))
-
-# bind rows and clean NaN
-tab_time_spent_control_stratum <- bind_rows(time_spent_control_stratum,
-                                    total_time_spent_control_stratum) %>%
-  mutate(across(everything(), ~ ifelse(str_detect(as.character(.), "NaN"), "-", .))) %>%
-  mutate(released = ifelse(rct_stratum   == "Average", "-", released)) %>%
-  mutate(rct_stratum   = ifelse(rct_stratum   == "Average", "Average Time in Months", rct_stratum))
-
-# -- --- Merge table tab_time_spent_treated and tab_time_spent_control 
-time_spent_control_trimmed_stratum <- tab_time_spent_control_stratum %>% select(-rct_stratum)
-
-tab_time_spent_stratum <- bind_cols(tab_time_spent_treated_stratum, 
-                                    time_spent_control_trimmed_stratum)
-
-# to title
-names(tab_time_spent_stratum) <- str_to_title(gsub("_", " ", names(tab_time_spent_stratum)))
-
-# -- -- Save table ####
-# -- -- Create Latex table for time_spent 
+# -- -- Table ####
 file_name <- "tabx_treatment_duration_stratum"
-tab_time_spent_stratum[,-7] %>%
-  kbl(caption = "Treatment Duration in Months, by Statum and Treatment Status",
+tab_time_spent_formatted %>%
+  kbl(caption = "Treatment Duration in Months, by Stratum",
       align = c("lrrrrrrr"),
       label = file_name,
       format.args = list(big.mark = ","),
       booktabs = T,
       col.names = c("Cohort",
-                    "Released", 
-                    "Time to Unit Exit", 
-                    "Time to Release",
-                    "Time Since Release",
-                    "Released", 
-                    "Time to Release",
-                    "Time Since Release"),
+                    "# Released", 
+                    "Months to Unit Exit", 
+                    "Months to Release",
+                    "Months Since Release",
+                    "# Released", 
+                    "Months to Release",
+                    "Months Since Release"),
       linesep = "",
       row.names = F,
       format = "latex") %>%
@@ -859,16 +814,15 @@ tab_time_spent_stratum[,-7] %>%
   add_header_above(c(" " = 1, "Treated" = 4, "Control" = 3)) %>%
   kable_classic(full_width = F,
                 html_font = "Times New Roman") %>%
-  row_spec(c(nrow(tab_time_spent_stratum)-1),
+  row_spec(c(nrow(tab_time_spent_formatted)-1),
            hline_after=TRUE,
            extra_css = "border-bottom: 1px solid") %>%
   footnote(threeparttable = T,
            paste0("This table contains the average number of months between randomization and release, as well as the time between release and the date until data was available (", report_date, "). 
-                  For treated individuals, the table also contains the time between randomization and exit from the Little Scandinavia Unit, as some individuals leave the unit prior to release. 
-                  The table is split by treatment stratum and treatment group. Dashes inidicate no data.")) %>% 
+                  For treated individuals, the table also contains the time between randomization and exit from the Little Scandinavia Unit, as some individuals leave the unit prior to release (see treatment compliance table). 
+                  The table is split by stratum and treatment group. Dashes inidicate no data.")) %>% 
   landscape() %>%
   save_kable(file = paste0("output/tables/", file_name, ".tex"),
              self_contained = T,density = 200) %>%
   save_kable(file = paste0("C:/Users/britt/Dropbox/Apps/Overleaf/SPP/tables_arnold_report/", file_name, ".tex"),
              self_contained = T,density = 200)
-
