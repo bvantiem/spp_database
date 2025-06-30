@@ -252,10 +252,136 @@ add_pretreatment_guilty_rates <- function(conduct, admission) {
 }
 conduct <- add_pretreatment_guilty_rates(conduct,admission)
 
-# -- Misconducts by Charge Cat ####
-# -- -- Pre Wave 1 ####
-# -- -- - All Counts/Rates ####
-# -- -- - Guilty Counts/Rates ####
+# ================================================================= ####
+# Define conduct charge types ####
+drugs <- c("Possession Or Use Of Dangerous Or Contro",
+           "Possession Or Use Of Dangerous Substance")
+violent <- c("Fighting", 
+             "Assault", 
+             "Sexual Harassment", 
+             "Aggravated Assault", 
+             "Rape") # Not included, discuss: "Robbery","Extortion By Threat Of Violence"
+
+conduct <- conduct %>%
+  # filter(research_id==conduct_rct$research_id[1]) %>%
+  # Conduct charge types 
+  mutate(cndct_chrg_type = case_when(
+    cndct_chrg_desc %in% drugs ~ "Drugs",
+    cndct_chrg_desc %in% violent ~ "Violent",
+    TRUE ~ "Other"
+  ))
+# Merge in Admission data ####
+rm(admission)
+admission <- readRDS("data/processed/de_identified/2b_admissions.Rds") %>%
+  group_by(research_id) %>%
+  slice_max(adm_study, with_ties = FALSE) %>% 
+  ungroup()
+
+conduct <- conduct %>%
+  left_join(admission, 
+            by = "research_id",
+            relationship = "many-to-one") %>%
+  # Drop all cases where they were not in prison at study start (need release dates)
+  filter(in_prison_at_study_start == "1") %>%
+  filter(cndct_date >= adm_study) %>%
+  # Helper Columns ####
+  # -- Incidents before and after study ####
+mutate(cndct_before_study = if_else(in_prison_at_study_start == 1, 1, 0)) %>%
+  # -- cannot do post without release dates
+  # mutate(cndct_after_treat = case_when(
+  #   !is.na(rel_rct) & cndct_date > rct_treat_dt & cndct_date < rel_rct ~ 1,
+  #   is.na(rel_rct) & cndct_date > rct_treat_dt ~ 1, 
+  #   TRUE ~ 0
+  # )) %>%
+  # -- Most serious charge categories #####
+group_by(research_id, cndct_num) %>%
+  mutate(cndct_most_serious = min(cndct_chrg_cat)) %>%
+  ungroup() %>%
+  group_by(research_id, cndct_num, cndct_guilty) %>%
+  mutate(cndct_most_serious_guilty = min(cndct_chrg_cat)) %>%
+  ungroup() %>%
+  # -- Pre-study months ####
+mutate(mnths_prestudy = as.numeric(difftime(wave1_date, adm_study, units = "days")) / 30.44) %>%
+  # -- Post-treatment months #####
+# -- do not have release dates yet
+# mutate(rct_mnths_posttreat = case_when(
+#   !is.na(rel_rct) ~ rct_mnths_to_release,
+#   is.na(rel_rct) ~ interval(rct_treat_dt, unique(conduct_rct$date_datapull))/months(1),
+# )) %>%
+  # Pre-treatment counts and rates #### 
+# -- Pre-treatment counts 
+# -- -- All
+group_by(research_id) %>%
+  mutate(cndct_pre_wave1_all_count = n_distinct(cndct_num[cndct_before_study == 1])) %>%
+  mutate(cndct_pre_wave1_all_count_a = n_distinct(cndct_num[cndct_before_study == 1 & cndct_most_serious=="A"])) %>%
+  mutate(cndct_pre_wave1_all_count_b = n_distinct(cndct_num[cndct_before_study == 1 & cndct_most_serious=="B"])) %>%
+  mutate(cndct_pre_wave1_all_count_c = n_distinct(cndct_num[cndct_before_study == 1 & cndct_most_serious=="C"])) %>%
+  # -- -- Guilty
+  mutate(cndct_pre_wave1_guilty_count = n_distinct(cndct_num[cndct_before_study == 1 & cndct_guilty == 1])) %>%
+  mutate(cndct_pre_wave1_guilty_count_a = n_distinct(cndct_num[cndct_before_study == 1 & cndct_guilty == 1 & cndct_most_serious_guilty=="A"])) %>%
+  mutate(cndct_pre_wave1_guilty_count_b = n_distinct(cndct_num[cndct_before_study == 1 & cndct_guilty == 1 & cndct_most_serious_guilty=="B"])) %>%
+  mutate(cndct_pre_wave1_guilty_count_c = n_distinct(cndct_num[cndct_before_study == 1 & cndct_guilty == 1 & cndct_most_serious_guilty=="C"])) %>%
+  # -- -- Drug, Violent
+  group_by(research_id) %>%
+  mutate(cndct_pre_wave1_all_count_drug = n_distinct(cndct_num[cndct_before_study == 1 & cndct_chrg_type == "Drugs"])) %>%
+  mutate(cndct_pre_wave1_all_count_violent = n_distinct(cndct_num[cndct_before_study == 1 & cndct_chrg_type == "Violent"])) %>%
+  # -- -- Drug, Violent Guilty
+  mutate(cndct_pre_wave1_guilty_count_drug = n_distinct(cndct_num[cndct_before_study == 1 & cndct_guilty == 1 & cndct_chrg_type == "Drugs"])) %>%
+  mutate(cndct_pre_wave1_guilty_count_violent = n_distinct(cndct_num[cndct_before_study == 1 & cndct_guilty == 1 & cndct_chrg_type == "Violent"])) %>%
+  # -- Pre-treatment rates 
+  # -- -- All
+  mutate(cndct_pre_wave1_all_rate = cndct_pre_wave1_all_count/mnths_prestudy) %>%
+  mutate(cndct_pre_wave1_all_rate_a = cndct_pre_wave1_all_count_a/mnths_prestudy) %>% 
+  mutate(cndct_pre_wave1_all_rate_b = cndct_pre_wave1_all_count_b/mnths_prestudy) %>% 
+  mutate(cndct_pre_wave1_all_rate_c = cndct_pre_wave1_all_count_c/mnths_prestudy) %>% 
+  # -- -- Guilty
+  mutate(cndct_pre_wave1_guilty_rate = cndct_pre_wave1_guilty_count/mnths_prestudy) %>%
+  mutate(cndct_pre_wave1_guilty_rate_a = cndct_pre_wave1_guilty_count_a/mnths_prestudy) %>% 
+  mutate(cndct_pre_wave1_guilty_rate_b = cndct_pre_wave1_guilty_count_b/mnths_prestudy) %>% 
+  mutate(cndct_pre_wave1_guilty_rate_c = cndct_pre_wave1_guilty_count_c/mnths_prestudy) %>% 
+  # -- -- Drug, Violent
+  mutate(cndct_pre_wave1_all_rate_drug = cndct_pre_wave1_all_count_drug/mnths_prestudy) %>%
+  mutate(cndct_pre_wave1_all_rate_violent = cndct_pre_wave1_all_count_violent/mnths_prestudy) %>%
+  # -- -- Guilty
+  mutate(cndct_pre_wave1_guilty_rate_drug = cndct_pre_wave1_guilty_count_drug/mnths_prestudy) %>%
+  mutate(cndct_pre_wave1_guilty_rate_violent = cndct_pre_wave1_guilty_count_violent/mnths_prestudy)
+  # Post-treatment counts and rates #### 
+# -- Post-treatment counts 
+# -- -- All
+mutate(cndct_posttreat_all_count = n_distinct(cndct_num[cndct_after_treat == 1])) %>%
+  mutate(cndct_posttreat_all_count_a = n_distinct(cndct_num[cndct_after_treat == 1 & cndct_most_serious=="A"])) %>%
+  mutate(cndct_posttreat_all_count_b = n_distinct(cndct_num[cndct_after_treat == 1 & cndct_most_serious=="B"])) %>%
+  mutate(cndct_posttreat_all_count_c = n_distinct(cndct_num[cndct_after_treat == 1 & cndct_most_serious=="C"])) %>%
+  # -- -- Guilty
+  mutate(cndct_posttreat_guilty_count = n_distinct(cndct_num[cndct_after_treat == 1 & cndct_guilty == 1])) %>%
+  mutate(cndct_posttreat_guilty_count_a = n_distinct(cndct_num[cndct_after_treat == 1 & cndct_guilty == 1 & cndct_most_serious_guilty=="A"])) %>%
+  mutate(cndct_posttreat_guilty_count_b = n_distinct(cndct_num[cndct_after_treat == 1 & cndct_guilty == 1 & cndct_most_serious_guilty=="B"])) %>%
+  mutate(cndct_posttreat_guilty_count_c = n_distinct(cndct_num[cndct_after_treat == 1 & cndct_guilty == 1 & cndct_most_serious_guilty=="C"])) %>%
+  # -- -- Drug, Violent
+  group_by(research_id) %>%
+  mutate(cndct_posttreat_all_count_drug = n_distinct(cndct_num[cndct_after_treat == 1 & cndct_chrg_type == "Drugs"])) %>%
+  mutate(cndct_posttreat_all_count_violent = n_distinct(cndct_num[cndct_after_treat == 1 & cndct_chrg_type == "Violent"])) %>%
+  # -- -- Drug, Violent Guilty
+  mutate(cndct_posttreat_guilty_count_drug = n_distinct(cndct_num[cndct_after_treat == 1 & cndct_guilty == 1 & cndct_chrg_type == "Drugs"])) %>%
+  mutate(cndct_posttreat_guilty_count_violent = n_distinct(cndct_num[cndct_after_treat == 1 & cndct_guilty == 1 & cndct_chrg_type == "Violent"])) %>%
+  # -- Post-treatment rates 
+  # -- -- All by category
+  mutate(cndct_posttreat_all_rate = cndct_posttreat_all_count/rct_mnths_posttreat) %>%
+  mutate(cndct_posttreat_all_rate_a = cndct_posttreat_all_count_a/rct_mnths_posttreat) %>% 
+  mutate(cndct_posttreat_all_rate_b = cndct_posttreat_all_count_b/rct_mnths_posttreat) %>% 
+  mutate(cndct_posttreat_all_rate_c = cndct_posttreat_all_count_c/rct_mnths_posttreat) %>% 
+  # -- -- Guilty by category
+  mutate(cndct_posttreat_guilty_rate = cndct_posttreat_guilty_count/rct_mnths_posttreat) %>%
+  mutate(cndct_posttreat_guilty_rate_a = cndct_posttreat_guilty_count_a/rct_mnths_posttreat) %>% 
+  mutate(cndct_posttreat_guilty_rate_b = cndct_posttreat_guilty_count_b/rct_mnths_posttreat) %>% 
+  mutate(cndct_posttreat_guilty_rate_c = cndct_posttreat_guilty_count_c/rct_mnths_posttreat) %>% 
+  # -- -- Drug, Violent
+  mutate(cndct_posttreat_all_rate_drug = cndct_posttreat_all_count_drug/rct_mnths_posttreat) %>%
+  mutate(cndct_posttreat_all_rate_violent = cndct_posttreat_all_count_violent/rct_mnths_posttreat) %>%
+  # -- -- Guilty
+  mutate(cndct_posttreat_guilty_rate_drug = cndct_posttreat_guilty_count_drug/rct_mnths_posttreat) %>%
+  mutate(cndct_posttreat_guilty_rate_violent = cndct_posttreat_guilty_count_violent/rct_mnths_posttreat) %>%
+  ungroup() 
 # ================================================================= ####
 # Temporary Descriptive Stats ####
 # -- number of misconducts per unique control number
