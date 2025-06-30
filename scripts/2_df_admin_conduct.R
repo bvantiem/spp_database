@@ -252,6 +252,10 @@ add_pretreatment_guilty_rates <- function(conduct, admission) {
 }
 conduct <- add_pretreatment_guilty_rates(conduct,admission)
 
+# -- Misconducts by Charge Cat ####
+# -- -- Pre Wave 1 ####
+# -- -- - All Counts/Rates ####
+# -- -- - Guilty Counts/Rates ####
 # ================================================================= ####
 # Temporary Descriptive Stats ####
 # -- number of misconducts per unique control number
