@@ -269,7 +269,8 @@ conduct <- conduct %>%
     cndct_chrg_desc %in% drugs ~ "Drugs",
     cndct_chrg_desc %in% violent ~ "Violent",
     TRUE ~ "Other"
-  ))
+  )) %>%
+  select(-rct_treat_wave, -adm_rct)
 # Merge in Admission data ####
 rm(admission)
 admission <- readRDS("data/processed/de_identified/2b_admissions.Rds") %>%
