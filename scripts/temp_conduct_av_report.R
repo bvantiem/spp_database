@@ -38,6 +38,11 @@ conduct <- conduct %>%
   filter(cndct_date > adm_rct)
 
 length(unique(conduct$research_id))
+# -- Notes/Findings ####
+# -- 1. only those in the treatment/control group seem to be in conduct_2
+# -- 2. conduct_2 only includes post-treat misconducts
+# -- -- conduct_2 time range: 2022-06-07 -> 2025-05-16
+# -- -- conduct time range: 2000-07-06 <- 2025-06-20
 # ======================================================================= ####
 # Variables in new dataframe that are also in our existing dataframe ####
 names(conduct_2)[which(names(conduct_2) %in% names(conduct_raw))]
@@ -64,7 +69,7 @@ assess_variable(conduct_2$MisconductDate)
 assess_variable(conduct_2$category_charge1)
 assess_variable(conduct_2$chrg_description)
 assess_variable(conduct_2$place_hvl_code)
-# -- location of misconduct
+# -- specific location of misconduct
 assess_variable(conduct_2$place_hvl_desc)
 assess_variable(conduct_2$inmte_plea_gilty)
 assess_variable(conduct_2$inmte_plea_ngilty)
@@ -83,22 +88,12 @@ ids_conduct_2 <- unique(conduct_2$research_id)
 # In conduct but not in conduct_2
 missing_from_conduct_2 <- conduct %>%
   filter(!research_id %in% conduct_2$research_id)
+# -- 153 research_ids missing from conduct_2
 
 # In conduct_2 but not in conduct
 missing_from_conduct <- conduct_2 %>%
   filter(!research_id %in% conduct$research_id)
-# -- reserach_id's missing from conduct
-# rid_061684
-# rid_067282
-# rid_039819
-# rid_845680
-# rid_514153
-# rid_015455
-# rid_033410
-# rid_016680
-# rid_025983
-# rid_069834
-# rid_033761
+# -- 11 research_ids missing from conduct
 
 # 3. Is there a pattern to which research_ids are missing? ####
 # -- just treated/control?
@@ -123,4 +118,34 @@ missing_from_conduct <- conduct_2 %>%
 
 
 
+# 5. Subset conduct df for the date range of the conduct_2 df and waves 1-6 ####
+temp <- conduct %>% filter(
+  cndct_date >= as.Date("2022-06-07") & cndct_date <= as.Date("2025-05-16")) %>%
+    filter(rct_treat_wave.x >= "0" & rct_treat_wave.x <= "6")
+# -- same research_ids? ####
+ids_temp <- unique(temp$research_id)
+ids_conduct_2 <- unique(conduct_2$research_id)
+# In temp but not in conduct_2
+missing_from_conduct_2 <- temp %>%
+  filter(!research_id %in% conduct_2$research_id)
+# -- 47 research_ids missing from conduct_2
+
+# In conduct_2 but not in temp
+missing_from_temp <- conduct_2 %>%
+  filter(!research_id %in% temp$research_id)
+# -- 11 reserach_ids missing from temp
+
+# -- same cndct_nums? ####
+cndct_nums_temp <- unique(temp$cndct_num) 
+cndct_nums_conduct_2 <- unique(conduct_2$control_number)
+
+# In temp but not in conduct_2
+cndct_num_missing_from_conduct_2 <- temp %>%
+  filter(!cndct_num %in% conduct_2$misconduct_number)
+# -- 105 misconduct numbers missing from conduct_2
+
+# In conduct_2 but not in temp
+cndct_num_missing_from_temp <- conduct_2 %>%
+  filter(!misconduct_number %in% temp$cndct_num)
+# -- 33 misconduct numbers missing from temp
 # ======================================================================= ####
