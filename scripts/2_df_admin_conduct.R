@@ -303,13 +303,13 @@ group_by(research_id, cndct_num) %>%
   ungroup() %>%
   # -- Pre-study months ####
 mutate(mnths_prestudy = as.numeric(difftime(wave1_date, adm_study, units = "days")) / 30.44) %>%
-  # -- Post-treatment months #####
+  # -- Post-study months #####
 # -- do not have release dates yet
 # mutate(rct_mnths_posttreat = case_when(
 #   !is.na(rel_rct) ~ rct_mnths_to_release,
 #   is.na(rel_rct) ~ interval(rct_treat_dt, unique(conduct_rct$date_datapull))/months(1),
 # )) %>%
-  # Pre-treatment counts and rates #### 
+  # Pre-study counts and rates #### 
 # -- Pre-treatment counts 
 # -- -- All
 group_by(research_id) %>%
@@ -346,7 +346,7 @@ group_by(research_id) %>%
   # -- -- Guilty
   mutate(cndct_pre_wave1_guilty_rate_drug = cndct_pre_wave1_guilty_count_drug/mnths_prestudy) %>%
   mutate(cndct_pre_wave1_guilty_rate_violent = cndct_pre_wave1_guilty_count_violent/mnths_prestudy)
-  # Post-treatment counts and rates #### 
+  # Post-study counts and rates #### 
 # -- Post-treatment counts 
 # -- -- All
 mutate(cndct_posttreat_all_count = n_distinct(cndct_num[cndct_after_treat == 1])) %>%
