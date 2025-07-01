@@ -112,6 +112,8 @@ missing_from_conduct <- conduct_2 %>%
 # -- other ideas?
 # -- Ideas on how to check this
 # -- -- Use assess_variable
+# -- -- -- conduct_2$misconduct_number has 322 unique misconduct numbers
+# -- -- -- conduct$misconduct_number has 1115 unique misconduct numbers
 # -- -- Look at all IDs that are conduct but not in conduct_2 and vice versa 
 
 # 4. For research_ids that overlap - do the dataframes include the same misconduct numbers? ####
