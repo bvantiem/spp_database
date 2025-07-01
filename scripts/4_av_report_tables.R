@@ -25,10 +25,14 @@ randassign <- readRDS("data/processed/de_identified/1b_randassign_masked.Rds")
 admission <- readRDS("data/processed/de_identified/2b_admissions.Rds")
 conduct <- readRDS("data/processed/de_identified/2_conduct_rct_cleaned.Rds")
 # -- Constants ####
-report_date <- unique(conduct$date_datapull)
+# -- Used in table footnote to indicate the date until which data was available when this report was run 
+report_date <- "2025-06-23"
 # ================================================================= ####
 # Drop lifers and commuted death cases ####
 randassign <- randassign %>%
+  filter(rct_stratum %ni% c("lifer", "commuted death")) 
+
+conduct <- conduct %>%
   filter(rct_stratum %ni% c("lifer", "commuted death")) 
 
 # Merge release dates into randassign ####
@@ -139,7 +143,7 @@ names(tab_combined_with_totals)[which(names(tab_combined_with_totals)=="Released
 # -- -- -- Latex Table - treatment compliance 
 file_name <- "tabx_treatment_compliance"
 tab_combined_with_totals %>%
-  kbl(caption = "Treatment Compliance by Cohort",
+  kbl(caption = "Treatment Compliance, by Cohort",
       align = c("lrrrrrr"),
       label = file_name,
       format.args = list(big.mark = ","),
@@ -229,7 +233,7 @@ names(tab_combined_stratum)[which(names(tab_combined_with_totals)=="Released")] 
 # -- -- -- Latex Table - treatment compliance 
 file_name <- "tabx_treatment_compliance_stratum"
 tab_combined_stratum %>%
-  kbl(caption = "Treatment Compliance by Stratum",
+  kbl(caption = "Treatment Compliance, by Stratum",
       align = c("lrrrrrr"),
       label = file_name,
       format.args = list(big.mark = ","),
@@ -446,13 +450,13 @@ tab_combined_enrolled_released <- bind_cols(tab_combined_enrolled_with_totals,
 # -- -- Create Latex table enrollment, and enrolled and released 
 file_name <- "tabx_enrollment"
 tab_combined_enrolled_released %>%
-  kbl(caption = "RCT Enrollment by Cohort",
+  kbl(caption = "RCT Enrollment, by Cohort",
       align = c("lrrr"),
       label = file_name,
       format.args = list(big.mark = ","),
       booktabs = T,
       col.names = c("Cohort (date)", 
-                    rep(c("Treatment", "Control", "Total"),2)),
+                    rep(c("Treated", "Control", "Total"),2)),
       linesep = "",
       row.names = F,
       format = "latex") %>%
@@ -605,7 +609,7 @@ names(tab_combined_enrolled_released_stratum) <- str_to_title(gsub("_", " ", nam
 # -- -- Create Latex table enrollment, and enrolled and released
 file_name <- "tabx_enrollment_stratum"
 tab_combined_enrolled_released_stratum %>%
-  kbl(caption = "RCT Enrollment by Stratum",
+  kbl(caption = "RCT Enrollment, by Stratum",
       align = c("lrrr"),
       label = file_name,
       format.args = list(big.mark = ","),
@@ -684,7 +688,6 @@ tab_time_spent_side_by_side <- cbind(tab_time_spent_cohort_and_overall %>%
                                        rename_with(~ paste0(., "_control"), .cols = everything())) # To avoid duplicate names 
 
 # Formatting 
-# Purposfully doing this before we move dataframes side by side
 tab_time_spent_formatted <- tab_time_spent_side_by_side %>%
   mutate(across(everything(), ~ ifelse(str_detect(as.character(.), "NaN"), "-", .))) %>%
   # We don't want an average of the number of people released
@@ -725,7 +728,7 @@ tab_time_spent_formatted %>%
            hline_after=TRUE,
            extra_css = "border-bottom: 1px solid") %>%
   footnote(threeparttable = T,
-           paste0("This table contains the average number of months between randomization and release, as well as the time between release and the date until data was available (", report_date, "). 
+           paste0("This table contains the average number of months between randomization and release, as well as the time since release (time from the date of release until ", report_date, ", the final day for which data was available at the time of preparing this report).
                   For treated individuals, the table also contains the time between randomization and exit from the Little Scandinavia Unit, as some individuals leave the unit prior to release (see Treatment Compliance Table). 
                   The table is split by treatment cohort and treatment group. Dashes inidicate no data.")) %>% 
   landscape() %>%
@@ -785,7 +788,7 @@ tab_time_spent_formatted <- tab_time_spent_side_by_side %>%
   # Jonas - this is a temporary fix. This shouldn't be happening.. I think a result of conversion to character above + your use of factor labels. 
   mutate(rct_stratum = case_when(
     rct_stratum == "1" ~ "0–6 Months",
-    rct_stratum == "2" ~ "12–60 Months",
+    rct_stratum == "2" ~ "6-12 Months",
     rct_stratum == "3" ~ "12–60 Months",
     rct_stratum == "4" ~ "60+ Months",
     rct_stratum == "5" ~ "Average"))
@@ -818,9 +821,121 @@ tab_time_spent_formatted %>%
            hline_after=TRUE,
            extra_css = "border-bottom: 1px solid") %>%
   footnote(threeparttable = T,
-           paste0("This table contains the average number of months between randomization and release, as well as the time between release and the date until data was available (", report_date, "). 
+           paste0("This table contains the average number of months between randomization and release, as well as the time since release (time from the date of release until ", report_date, ", the final day for which data was available at the time of preparing this report). 
                   For treated individuals, the table also contains the time between randomization and exit from the Little Scandinavia Unit, as some individuals leave the unit prior to release (see treatment compliance table). 
                   The table is split by stratum and treatment group. Dashes inidicate no data.")) %>% 
+  landscape() %>%
+  save_kable(file = paste0("output/tables/", file_name, ".tex"),
+             self_contained = T,density = 200) %>%
+  save_kable(file = paste0("C:/Users/britt/Dropbox/Apps/Overleaf/SPP/tables_arnold_report/", file_name, ".tex"),
+             self_contained = T,density = 200)
+
+# ================================================================= ####
+# MISCONDUCT RESULTS 
+# -- Merge with pre-treatment misconduct rates ####
+conduct_by_id <- conduct %>%
+  distinct(research_id, 
+           cndct_posttreat_all_rate, 
+           cndct_posttreat_all_rate_a,
+           cndct_posttreat_all_rate_drug,
+           cndct_posttreat_all_rate_violent,
+           cndct_posttreat_guilty_rate, 
+           cndct_posttreat_guilty_rate_a,
+           cndct_posttreat_guilty_rate_drug,
+           cndct_posttreat_guilty_rate_violent)
+
+# Assign people who do not appear a zero rate on all columns 
+# -- They don't appear because they did not have incidents 
+data.conduct <- randassign %>%
+  filter(rct_stratum %ni% c("lifer", "commuted death")) %>%
+  left_join(conduct_by_id, by = "research_id") %>%
+  mutate(
+    across(
+      c(
+        cndct_posttreat_all_rate, 
+        cndct_posttreat_all_rate_a,
+        cndct_posttreat_all_rate_drug,
+        cndct_posttreat_all_rate_violent,
+        cndct_posttreat_guilty_rate, 
+        cndct_posttreat_guilty_rate_a,
+        cndct_posttreat_guilty_rate_drug,
+        cndct_posttreat_guilty_rate_violent
+      ),
+      ~ replace_na(.x, 0)
+    )
+  )
+
+prepare_summary_column <- function(data){
+  # Note: numbering the rows because tidyr::gather puts variables in alphabetical order
+  tab <- data %>%
+    transmute(
+      # All
+      r01a_all_incidents = cndct_posttreat_all_rate,
+      r01b_category_a_incidents = cndct_posttreat_all_rate_a,
+      r01c_violent_incidents = cndct_posttreat_all_rate_violent,
+      r01d_drug_incidents = cndct_posttreat_all_rate_drug,
+      # Guilty
+      r02a_all_incidents = cndct_posttreat_guilty_rate,
+      r02b_category_a_incidents = cndct_posttreat_guilty_rate_a,
+      r02c_violent_incidents = cndct_posttreat_guilty_rate_violent,
+      r02d_drug_incidents = cndct_posttreat_guilty_rate_drug)
+  
+  tab <- tab %>%
+    tidyr::gather(variable, value) %>%
+    # Summarize by variable
+    group_by(variable) %>%
+    # summarise all columns
+    summarise(`Mean` = round(mean(value, na.rm=TRUE),3)) %>% # Check number of NA values after getting full data.balance
+    mutate(Mean = format(Mean, digits = 3))
+  
+  tab_2 <- data %>%
+    select(
+      r99a_N = research_id) %>%
+    tidyr::gather(variable, value) %>%
+    # Summarize by variable
+    group_by(variable) %>%
+    # summarise all columns
+    summarise(`Mean` = length(unique(value)))
+  
+  tab <- rbind(tab,
+               tab_2)
+  
+  variable_names <- gsub("(....)(_)(.*)", "\\3", tab$variable)
+  variable_names <- str_to_title(gsub("_", " ", variable_names))
+  # variable_names[which(variable_names=="Publicorder Offense")] <- "Public Order Offense"
+  tab$variable <- variable_names
+  names(tab) <- c("Variable", "Share/Mean")
+  rownames(tab) <- NULL
+  return(tab)
+}
+
+tab <- cbind(prepare_summary_column(data.conduct %>% filter(rct==1)),
+      prepare_summary_column(data.conduct %>% filter(rct==0)))
+tab <- tab[,c(1,2,4)]
+names(tab) <- c("Indicent Type", "Treated", "Control")    
+
+# Table ####
+file_name <- "tabx_conduct_results"
+tab %>%
+  kbl(caption = "Posttreatment Monthly Misconduct Rates, by Treatment Status",
+      align = c("lrr"),
+      label = file_name,
+      format.args = list(big.mark = ","),
+      booktabs = T,
+      linesep = "",
+      row.names = F,
+      format = "latex") %>%
+  kable_styling(latex_options = "hold_position") %>%
+  kable_styling(font_size = 7) %>%
+  pack_rows("All Recorded Incidents",1,4,bold=T) %>%
+  pack_rows("Incidents with a Guilty Fingint",5,8,bold=T) %>%
+  kable_classic(full_width = F,
+                html_font = "Times New Roman") %>%
+  row_spec(c(nrow(tab)-1),
+           hline_after=TRUE,
+           extra_css = "border-bottom: 1px solid") %>%
+  footnote(threeparttable = T,
+           paste0("Misconduct rates are the average monthly rate of unique misconduct numbers between the date of randomization and the date of release (for individuals who were released) or until ", report_date, " (for individuals who were not yet released). Misconduct incidents may contain more than one charge. They are categorized by their most serious charge. Incidents with a guilty finding are categorized by the most serious charge on which someone was found guilty. Category A incidents are a subset of all incidents in which the most serious charge (on which the individual was found guilty) was a Category A charge. The three most common Category A charge categories consist of the possession or use of dangerous or controlled substances, using abusive, obscene or inappropriate language and fighting. Violent / drug incidents are defined as any incident that included a violent / drug charge. Violent incidents include assault, aggravated assault, fighting and sexual harrassment. Drugs charges include the possession or use of controlled substances.")) %>%
   landscape() %>%
   save_kable(file = paste0("output/tables/", file_name, ".tex"),
              self_contained = T,density = 200) %>%
