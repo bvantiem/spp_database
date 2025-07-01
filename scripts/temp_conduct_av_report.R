@@ -43,6 +43,7 @@ length(unique(conduct$research_id))
 # -- 2. conduct_2 only includes post-treat misconducts
 # -- -- conduct_2 time range: 2022-06-07 -> 2025-05-16
 # -- -- conduct time range: 2000-07-06 <- 2025-06-20
+# -- 3. Wave 7 is missing from conduct_2
 # ======================================================================= ####
 # Variables in new dataframe that are also in our existing dataframe ####
 names(conduct_2)[which(names(conduct_2) %in% names(conduct_raw))]
@@ -50,6 +51,7 @@ names(conduct_2)[which(names(conduct_2) %in% names(conduct_raw))]
 # Variables in new dataframe that are not in our existing dataframe ####
 names(conduct_2)[which(names(conduct_2) %ni% names(conduct_raw))]
 
+# ======================================================================= ####
 # Some places to start digging.. ####
 # 1. Assess the variables we've got in conduct_2 ####
 assess_variable(conduct_2$control_number)
@@ -114,11 +116,7 @@ missing_from_conduct <- conduct_2 %>%
 # 4. For research_ids that overlap - do the dataframes include the same misconduct numbers? ####
 # -- If not, why not? 
 # -- -- Different date ranges (conduct_2 only starts from the admission date?)
-
-
-
-
-# 5. Subset conduct df for the date range of the conduct_2 df and waves 1-6 ####
+# 5. Subset conduct df for the date range of the conduct_2 df and waves 0-6 ####
 temp <- conduct %>% filter(
   cndct_date >= as.Date("2022-06-07") & cndct_date <= as.Date("2025-05-16")) %>%
     filter(rct_treat_wave.x >= "0" & rct_treat_wave.x <= "6")
