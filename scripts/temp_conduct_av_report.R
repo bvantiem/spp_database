@@ -16,6 +16,8 @@ conduct_2_raw <- read_excel("data_restricted_access/raw/1_admin_data/other/tbl_1
 masked_control_nos <- mask_control_nos(conduct_2_raw$control_number)
 masked_control_nos <- masked_control_nos %>% distinct()
 
+
+
 # Masked dataframes 
 conduct_2 <- left_join(conduct_2_raw, masked_control_nos,
                        by = "control_number",
@@ -41,8 +43,8 @@ conduct <- conduct %>%
 # -- 3. Wave 7 is missing from conduct_2
 # ======================================================================= ####
 # Variables difference ####
-names(conduct_2)[which(names(conduct_2) %in% names(conduct_raw))]
-names(conduct_2)[which(names(conduct_2) %ni% names(conduct_raw))]
+names(conduct_2)[which(names(conduct_2) %in% names(conduct))]
+names(conduct_2)[which(names(conduct_2) %ni% names(conduct))]
 
 # ======================================================================= ####
 # Difference in research IDs included ####
@@ -51,10 +53,14 @@ missing_from_conduct_2 <- conduct %>%
   filter(research_id %ni% conduct_2$research_id) %>%
   distinct(research_id)
 
+unmask_control_nos(missing_from_conduct_2$research_id)
+
 # 18 ids in longer list not in our data 
 missing_from_conduct <- conduct_2 %>%
   filter(!research_id %in% conduct$research_id) %>%
   distinct(research_id)
+
+unmask_control_nos(missing_from_conduct$research_id)
 
 # -- of which 8 are not in the rct sample per our randassign data
 missing_from_conduct %>%
@@ -83,4 +89,4 @@ cndct_num_missing_from_conduct <- conduct_overlap %>%
 cndct_num_missing_from_conduct_2 <- conduct_2_overlap %>%
   filter(misconduct_number %ni% conduct_overlap$misconduct_number_raw) %>%
   distinct(misconduct_number)
-# ======================================================================= ####
+ # ======================================================================= ####
